@@ -60,6 +60,11 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
 
     const getAuthFailureMessage = error => {
         const status = getResponseStatus(error)
+        const responseMessage = error?.response?.data?.message
+
+        if (responseMessage) {
+            return responseMessage
+        }
 
         if (status === 419) {
             return 'Unable to verify your session with Laravel. Check that the frontend and backend are using the same host name and retry.'
