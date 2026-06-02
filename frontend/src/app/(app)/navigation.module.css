@@ -1,0 +1,209 @@
+.desktopSidebar {
+    display: none;
+}
+
+.sidebar {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    gap: 1.5rem;
+    border-right: 1px solid #e7edf6;
+    background: #ffffff;
+    padding: 1.5rem 1rem;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0 0.5rem;
+}
+
+.brandMark,
+.mobileBrandMark {
+    display: grid;
+    place-items: center;
+    border-radius: 1rem;
+    background: linear-gradient(180deg, #3f73ff 0%, #2b5fe7 100%);
+    color: #ffffff;
+    box-shadow: 0 14px 30px rgba(43, 95, 231, 0.22);
+}
+
+.brandMark {
+    height: 3rem;
+    width: 3rem;
+}
+
+.schoolName {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #17233b;
+}
+
+.schoolMeta {
+    margin: 0.2rem 0 0;
+    font-size: 0.8rem;
+    color: #8190aa;
+}
+
+.navList {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.navLink {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    border-radius: 1rem;
+    padding: 0.9rem 1rem;
+    font-size: 0.94rem;
+    font-weight: 700;
+    color: #394965;
+    text-decoration: none;
+    transition:
+        background-color 140ms ease,
+        color 140ms ease,
+        transform 140ms ease,
+        box-shadow 140ms ease;
+}
+
+.navLink:hover {
+    background: #f3f7ff;
+    color: #2457de;
+    transform: translateX(2px);
+}
+
+.navLinkActive {
+    background: linear-gradient(180deg, #3f73ff 0%, #285fe8 100%);
+    color: #ffffff;
+    box-shadow: 0 16px 32px rgba(50, 102, 235, 0.22);
+}
+
+.navIcon {
+    height: 1.2rem;
+    width: 1.2rem;
+    flex: 0 0 auto;
+}
+
+.profileCard {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-top: auto;
+    border: 1px solid #e9eef8;
+    border-radius: 1.15rem;
+    background: #f7faff;
+    padding: 0.95rem;
+}
+
+.avatar {
+    display: grid;
+    place-items: center;
+    height: 2.7rem;
+    width: 2.7rem;
+    border-radius: 999px;
+    background: #dce8ff;
+    color: #2b5fe7;
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.profileCopy {
+    min-width: 0;
+}
+
+.profileName {
+    margin: 0;
+    font-size: 0.94rem;
+    font-weight: 700;
+    color: #17233b;
+}
+
+.profileRole {
+    margin: 0.12rem 0 0;
+    font-size: 0.76rem;
+    color: #7d8eaa;
+}
+
+.logoutButton,
+.mobileButton {
+    border: 1px solid #dfe7f3;
+    border-radius: 1rem;
+    background: #ffffff;
+    padding: 0.85rem 1rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #263651;
+    transition:
+        border-color 140ms ease,
+        color 140ms ease,
+        box-shadow 140ms ease;
+}
+
+.logoutButton:hover,
+.mobileButton:hover {
+    border-color: #3f73ff;
+    color: #2457de;
+    box-shadow: 0 12px 24px rgba(63, 115, 255, 0.12);
+}
+
+.mobileBar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e8edf6;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 1rem;
+    backdrop-filter: blur(18px);
+}
+
+.mobileBrand {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    text-decoration: none;
+}
+
+.mobileBrandMark {
+    height: 2.6rem;
+    width: 2.6rem;
+}
+
+.mobileOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgba(17, 27, 47, 0.34);
+    padding: 1rem;
+    backdrop-filter: blur(6px);
+}
+
+.mobileOverlayInner {
+    margin-left: auto;
+    max-width: 22rem;
+    height: 100%;
+}
+
+.mobileOverlayActions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.75rem;
+}
+
+@media (min-width: 1024px) {
+    .mobileBar {
+        display: none;
+    }
+
+    .desktopSidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        display: block;
+        width: 17.25rem;
+    }
+}

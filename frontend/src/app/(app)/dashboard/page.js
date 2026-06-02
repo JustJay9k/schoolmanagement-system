@@ -1,35 +1,58 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useAuth } from '@/hooks/auth'
+import styles from './dashboard.module.css'
+
+const statusMeta = {
+    P: {
+        label: 'Present',
+        short: 'P',
+        chipClass: styles.present,
+        softClass: styles.presentSoft,
+    },
+    L: {
+        label: 'Late',
+        short: 'L',
+        chipClass: styles.late,
+        softClass: styles.lateSoft,
+    },
+    S: {
+        label: 'Sick',
+        short: 'S',
+        chipClass: styles.sick,
+        softClass: styles.sickSoft,
+    },
+    A: {
+        label: 'Absent',
+        short: 'A',
+        chipClass: styles.absent,
+        softClass: styles.absentSoft,
+    },
+    E: {
+        label: 'Excused',
+        short: 'E',
+        chipClass: styles.excused,
+        softClass: styles.excusedSoft,
+    },
+}
 
 const teacherSnapshots = {
     primary: {
         className: 'Standard 5 - East',
         submissionLabel: 'AM register complete: 1/2 sessions',
         upcomingLabel: 'PM literacy block starts at 13:10',
-        metrics: [
-            { label: 'Present', value: '31' },
-            { label: 'Late', value: '04' },
-            { label: 'Medical notes', value: '03' },
-            { label: 'Escalations', value: '01' },
-        ],
         timetable: [
-            ['08:00', 'Morning register', 'Class teacher'],
+            ['08:00', 'Morning Register', 'Class teacher'],
             ['09:00', 'Mathematics', 'M. Banda'],
-            ['13:10', 'Literacy block', 'L. Phiri'],
-            ['15:00', 'PM register', 'Class teacher'],
+            ['13:10', 'Literacy Block', 'L. Phiri'],
+            ['15:00', 'PM Register', 'Class teacher'],
         ],
     },
     secondary: {
-        className: 'Form 2 - North',
+        className: 'Year 10 - English (10A)',
         submissionLabel: 'Register submissions complete: 2/6 periods',
         upcomingLabel: 'Period 3 Chemistry starts at 10:40',
-        metrics: [
-            { label: 'Present', value: '27' },
-            { label: 'Late', value: '02' },
-            { label: 'Excused', value: '01' },
-            { label: 'Missing periods', value: '04' },
-        ],
         timetable: [
             ['08:00', 'Period 1 English', 'R. Mbewe'],
             ['09:20', 'Period 2 Mathematics', 'P. Moyo'],
@@ -43,28 +66,48 @@ const registerData = {
     primary: [
         {
             id: 1,
-            name: 'Martha K.',
+            name: 'Martha Kalua',
+            tutorGroup: '5E',
             status: 'P',
             note: 'Breakfast voucher issued',
             counts: { late: 2, sick: 1, absent: 0 },
         },
         {
             id: 2,
-            name: 'Samuel N.',
+            name: 'Samuel Nkhoma',
+            tutorGroup: '5E',
             status: 'L',
             note: 'Arrived after transport delay',
             counts: { late: 6, sick: 0, absent: 1 },
         },
         {
             id: 3,
-            name: 'Fatsani J.',
+            name: 'Fatsani Jere',
+            tutorGroup: '5E',
             status: 'S',
             note: 'Clinic note submitted',
             counts: { late: 0, sick: 3, absent: 1 },
         },
         {
             id: 4,
-            name: 'Ruth B.',
+            name: 'Ruth Banda',
+            tutorGroup: '5E',
+            status: 'P',
+            note: '',
+            counts: { late: 1, sick: 0, absent: 0 },
+        },
+        {
+            id: 5,
+            name: 'Thoko Zulu',
+            tutorGroup: '5E',
+            status: 'E',
+            note: 'District reading event',
+            counts: { late: 0, sick: 0, absent: 1 },
+        },
+        {
+            id: 6,
+            name: 'Peter Mbewe',
+            tutorGroup: '5E',
             status: 'P',
             note: '',
             counts: { late: 1, sick: 0, absent: 0 },
@@ -73,45 +116,105 @@ const registerData = {
     secondary: [
         {
             id: 11,
-            name: 'Prince L.',
+            name: 'Prince Lungu',
+            tutorGroup: '10A',
             status: 'P',
             note: 'Present for double science block',
             counts: { late: 1, sick: 0, absent: 0 },
         },
         {
             id: 12,
-            name: 'Tadala S.',
+            name: 'Tadala Soko',
+            tutorGroup: '10A',
             status: 'A',
             note: 'Guardian follow-up requested',
             counts: { late: 0, sick: 0, absent: 5 },
         },
         {
             id: 13,
-            name: 'Yamikani D.',
+            name: 'Yamikani Daka',
+            tutorGroup: '10A',
             status: 'E',
             note: 'On debate assignment',
             counts: { late: 3, sick: 0, absent: 0 },
         },
         {
             id: 14,
-            name: 'Natasha P.',
+            name: 'Natasha Phiri',
+            tutorGroup: '10A',
             status: 'L',
             note: 'Late from assembly duty',
             counts: { late: 4, sick: 0, absent: 0 },
+        },
+        {
+            id: 15,
+            name: 'Aisha Moyo',
+            tutorGroup: '10A',
+            status: 'P',
+            note: '',
+            counts: { late: 1, sick: 0, absent: 0 },
+        },
+        {
+            id: 16,
+            name: 'Brian Chirwa',
+            tutorGroup: '10A',
+            status: 'P',
+            note: '',
+            counts: { late: 0, sick: 0, absent: 1 },
+        },
+        {
+            id: 17,
+            name: 'Esther Juma',
+            tutorGroup: '10A',
+            status: 'L',
+            note: 'Late to P2 (5 mins)',
+            counts: { late: 5, sick: 0, absent: 0 },
+        },
+        {
+            id: 18,
+            name: 'Moses Tembo',
+            tutorGroup: '10A',
+            status: 'P',
+            note: '',
+            counts: { late: 1, sick: 0, absent: 0 },
         },
     ],
 }
 
 const managementMetrics = {
     primary: [
-        { label: 'Class compliance', value: '94%', note: '18 of 19 AM/PM registers submitted' },
-        { label: 'Chronic absence watch', value: '09', note: 'Students above weekly threshold' },
-        { label: 'Outstanding balances', value: 'MWK 2.1M', note: 'Primary fee balances this month' },
+        {
+            label: 'Class compliance',
+            value: '94%',
+            note: '18 of 19 AM/PM registers submitted',
+        },
+        {
+            label: 'Chronic absence watch',
+            value: '09',
+            note: 'Students above weekly threshold',
+        },
+        {
+            label: 'Outstanding balances',
+            value: 'MWK 2.1M',
+            note: 'Primary fee balances this month',
+        },
     ],
     secondary: [
-        { label: 'Period compliance', value: '88%', note: '132 of 150 expected period registers submitted' },
-        { label: 'Teacher escalations', value: '06', note: 'Missing period logs or coverage issues' },
-        { label: 'Outstanding balances', value: 'MWK 4.8M', note: 'Secondary fee balances this month' },
+        {
+            label: 'Period compliance',
+            value: '88%',
+            note: '132 of 150 expected period registers submitted',
+        },
+        {
+            label: 'Teacher escalations',
+            value: '06',
+            note: 'Missing period logs or coverage issues',
+        },
+        {
+            label: 'Outstanding balances',
+            value: 'MWK 4.8M',
+            note: 'Secondary fee balances this month',
+        },
     ],
 }
 
@@ -159,36 +262,57 @@ const ledgerRows = [
 
 const attendanceOptions = ['P', 'L', 'S', 'A', 'E']
 
-const SectionHeading = ({ eyebrow, title, copy }) => (
-    <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--muted)]">
-            {eyebrow}
-        </p>
-        <h2 className="font-[var(--font-display)] text-3xl text-[var(--ink)]">
-            {title}
-        </h2>
-        {copy ? <p className="max-w-3xl text-sm text-[var(--muted)]">{copy}</p> : null}
-    </div>
-)
+const sessionColumns = {
+    primary: [
+        { label: 'AM' },
+        { label: 'PM' },
+        { label: 'Block 1', sub: 'Literacy' },
+        { label: 'Block 2', sub: 'Maths' },
+        { label: 'Block 3', sub: 'Health' },
+        { label: 'Block 4', sub: 'Games' },
+    ],
+    secondary: [
+        { label: 'AM' },
+        { label: 'PM' },
+        { label: 'Period 1', sub: '09:00-10:00' },
+        { label: 'Period 2', sub: '10:00-11:00' },
+        { label: 'Period 3', sub: '11:15-12:15' },
+        { label: 'Period 4', sub: '13:15-14:15' },
+    ],
+}
 
-const MetricCard = ({ label, value, note, accent = false }) => (
-    <div
-        className={`rounded-[28px] border p-5 ${
-            accent
-                ? 'border-transparent bg-[linear-gradient(180deg,rgba(18,50,57,0.98),rgba(11,93,87,0.94))] text-white shadow-[0_22px_60px_rgba(18,50,57,0.18)]'
-                : 'border-[var(--line)] bg-white/80 text-[var(--ink)] shadow-[0_18px_45px_rgba(18,50,57,0.08)]'
-        }`}>
-        <p className={`text-xs uppercase tracking-[0.24em] ${accent ? 'text-white/68' : 'text-[var(--muted)]'}`}>
-            {label}
-        </p>
-        <p className="mt-3 font-[var(--font-display)] text-4xl">{value}</p>
-        <p className={`mt-3 text-sm ${accent ? 'text-white/78' : 'text-[var(--muted)]'}`}>{note}</p>
-    </div>
-)
+const initials = name =>
+    name
+        .split(' ')
+        .slice(0, 2)
+        .map(part => part[0])
+        .join('')
+
+const formatShare = (value, total) =>
+    total === 0 ? '0%' : `${Math.round((value / total) * 1000) / 10}%`
+
+const buildSessionStates = (student, track) => {
+    if (student.status === 'P') return ['P', 'P', 'P', 'P', 'P', 'P']
+    if (student.status === 'A') return ['A', 'A', 'A', 'A', 'A', 'A']
+    if (student.status === 'S') return ['S', 'S', 'S', 'S', 'S', 'S']
+    if (student.status === 'E') return ['P', 'P', 'P', 'P', 'E', 'P']
+
+    return track === 'secondary'
+        ? ['P', 'P', 'P', 'L', 'P', 'P']
+        : ['L', 'P', 'P', 'P', 'P', 'P']
+}
+
+const StatusCell = ({ status }) => {
+    const meta = statusMeta[status]
+
+    return <span className={`${styles.statusBadge} ${meta.chipClass}`}>{meta.short}</span>
+}
 
 const Dashboard = () => {
+    const { user } = useAuth({ middleware: 'auth' })
+
     const [activeRole, setActiveRole] = useState('teacher')
-    const [activeTrack, setActiveTrack] = useState('primary')
+    const [activeTrack, setActiveTrack] = useState('secondary')
     const [registerState, setRegisterState] = useState(registerData)
     const [selectedStudent, setSelectedStudent] = useState({
         primary: registerData.primary[0].id,
@@ -216,6 +340,53 @@ const Dashboard = () => {
         activeRegister.find(student => student.id === selectedStudent[activeTrack]) ??
         activeRegister[0]
 
+    const counts = useMemo(
+        () =>
+            activeRegister.reduce(
+                (result, student) => {
+                    result[student.status] += 1
+                    return result
+                },
+                { P: 0, L: 0, S: 0, A: 0, E: 0 },
+            ),
+        [activeRegister],
+    )
+
+    const attendanceRate = useMemo(() => {
+        const attending = counts.P + counts.L + counts.E
+        return activeRegister.length
+            ? Math.round((attending / activeRegister.length) * 1000) / 10
+            : 0
+    }, [activeRegister.length, counts])
+
+    const summaryCards = [
+        {
+            status: 'P',
+            value: counts.P,
+            share: formatShare(counts.P, activeRegister.length),
+        },
+        {
+            status: 'A',
+            value: counts.A,
+            share: formatShare(counts.A, activeRegister.length),
+        },
+        {
+            status: 'L',
+            value: counts.L,
+            share: formatShare(counts.L, activeRegister.length),
+        },
+        {
+            status: 'E',
+            value: counts.E,
+            share: formatShare(counts.E, activeRegister.length),
+        },
+        {
+            status: 'S',
+            value: counts.S,
+            share: formatShare(counts.S, activeRegister.length),
+        },
+    ]
+
     const updateAttendance = (studentId, status) => {
         setRegisterState(current => ({
             ...current,
@@ -236,7 +407,7 @@ const Dashboard = () => {
 
     const simulateRequest = message =>
         new Promise(resolve => {
-            setTimeout(() => resolve(message), 650)
+            setTimeout(() => resolve(message), 550)
         })
 
     const submitRegister = async () => {
@@ -263,6 +434,33 @@ const Dashboard = () => {
                 activeTrack === 'primary'
                     ? 'AM register posted successfully. Compliance dashboard refreshed.'
                     : 'Period register posted successfully. Timetable-linked attendance refreshed.',
+        })
+    }
+
+    const markAllPresent = () => {
+        setRegisterState(current => ({
+            ...current,
+            [activeTrack]: current[activeTrack].map(student => ({
+                ...student,
+                status: 'P',
+            })),
+        }))
+
+        setRegisterStatus({
+            tone: 'success',
+            message: 'All learners marked present. Review notes before final submission.',
+        })
+    }
+
+    const exportRegister = async () => {
+        setRegisterStatus({
+            tone: 'loading',
+            message: 'Preparing export package...',
+        })
+        await simulateRequest(true)
+        setRegisterStatus({
+            tone: 'success',
+            message: 'Export package prepared for attendance review.',
         })
     }
 
@@ -298,125 +496,214 @@ const Dashboard = () => {
     }
 
     return (
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-            <section
-                id="dashboard-overview"
-                className="overflow-hidden rounded-[36px] border border-white/70 bg-[rgba(255,252,246,0.82)] p-6 shadow-[0_28px_70px_rgba(18,50,57,0.12)] backdrop-blur sm:p-8">
-                <div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
-                    <div className="space-y-6">
-                        <div className="inline-flex rounded-full border border-[var(--line)] bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.26em] text-[var(--muted)]">
-                            Live school operations workspace
-                        </div>
+        <div className={styles.page}>
+            <header className={styles.topBar}>
+                <div className={styles.titleGroup}>
+                    <button className={styles.menuGlyph} aria-hidden="true">
+                        <span />
+                        <span />
+                        <span />
+                    </button>
+                    <div>
+                        <p className={styles.pageEyebrow}>
+                            {activeRole === 'teacher' ? 'Live Register' : 'Leadership Dashboard'}
+                        </p>
+                        <h1 className={styles.pageTitle}>
+                            {activeTrack === 'primary' ? 'Primary Register' : 'Secondary Register'}
+                        </h1>
+                    </div>
+                </div>
 
-                        <div className="space-y-4">
-                            <h1 className="max-w-3xl font-[var(--font-display)] text-4xl leading-tight text-[var(--ink)] sm:text-5xl">
-                                One dashboard for class capture and leadership control.
-                            </h1>
-                            <p className="max-w-2xl text-base text-[var(--muted)] sm:text-lg">
-                                Toggle between the teacher-facing attendance flow and the management-facing compliance layer while keeping the same unified data model underneath.
+                <div className={styles.topBarRight}>
+                    <div className={styles.searchBox}>
+                        <svg viewBox="0 0 24 24" className={styles.searchIcon} aria-hidden="true">
+                            <path
+                                d="M11 5a6 6 0 104.3 10.2l3.3 3.3 1.4-1.4-3.3-3.3A6 6 0 0011 5z"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                            />
+                        </svg>
+                        <input
+                            className={styles.searchInput}
+                            placeholder="Search students..."
+                        />
+                    </div>
+
+                    <button className={styles.bellButton} aria-label="Notifications">
+                        <svg viewBox="0 0 24 24" className={styles.searchIcon} aria-hidden="true">
+                            <path
+                                d="M12 4.5a4.5 4.5 0 00-4.5 4.5v2.1c0 .8-.2 1.7-.7 2.4L5.6 15a1 1 0 00.8 1.5h11.2a1 1 0 00.8-1.5l-1.2-1.5c-.5-.7-.7-1.6-.7-2.4V9A4.5 4.5 0 0012 4.5zM10 18.5a2.1 2.1 0 004 0"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
+                        </svg>
+                        <span className={styles.bellDot}>3</span>
+                    </button>
+
+                    <div className={styles.userBadge}>
+                        <div className={styles.userAvatar}>{initials(user?.name ?? 'MS')}</div>
+                        <div className={styles.userCopy}>
+                            <p className={styles.userName}>{user?.name ?? 'Miss Smith'}</p>
+                            <p className={styles.userRole}>
+                                {activeTrack === 'secondary' ? 'English Teacher' : 'Class Teacher'}
                             </p>
                         </div>
-
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="rounded-[28px] border border-[var(--line)] bg-white/85 p-5">
-                                <p className="text-xs uppercase tracking-[0.24em] text-[var(--muted)]">
-                                    Role mode
-                                </p>
-                                <div className="mt-4 flex gap-2 rounded-full bg-[var(--canvas-deep)] p-1.5">
-                                    {[
-                                        ['teacher', 'Class Teacher'],
-                                        ['management', 'Head Teacher / HOD'],
-                                    ].map(([value, label]) => (
-                                        <button
-                                            key={value}
-                                            onClick={() => setActiveRole(value)}
-                                            className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                                                activeRole === value
-                                                    ? 'bg-[var(--ink)] text-white'
-                                                    : 'text-[var(--muted)]'
-                                            }`}>
-                                            {label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="rounded-[28px] border border-[var(--line)] bg-white/85 p-5">
-                                <p className="text-xs uppercase tracking-[0.24em] text-[var(--muted)]">
-                                    School track
-                                </p>
-                                <div className="mt-4 flex gap-2 rounded-full bg-[var(--canvas-deep)] p-1.5">
-                                    {[
-                                        ['primary', 'Primary'],
-                                        ['secondary', 'Secondary'],
-                                    ].map(([value, label]) => (
-                                        <button
-                                            key={value}
-                                            onClick={() => setActiveTrack(value)}
-                                            className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                                                activeTrack === value
-                                                    ? 'bg-[var(--signal)] text-white'
-                                                    : 'text-[var(--muted)]'
-                                            }`}>
-                                            {label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
                     </div>
+                </div>
+            </header>
 
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        <MetricCard
-                            label="Active class"
-                            value={activeSnapshot.className}
-                            note={activeSnapshot.upcomingLabel}
-                            accent
-                        />
-                        <MetricCard
-                            label="Submission status"
-                            value={activeTrack === 'primary' ? 'AM/PM' : '2/6'}
-                            note={activeSnapshot.submissionLabel}
-                        />
-                        {activeSnapshot.metrics.slice(0, 2).map(metric => (
-                            <MetricCard
-                                key={metric.label}
-                                label={metric.label}
-                                value={metric.value}
-                                note="Updated from the latest register snapshot."
-                            />
+            <section className={styles.toolbar}>
+                <div className={styles.filterRow}>
+                    <button className={styles.filterControl}>
+                        <span className={styles.filterLabel}>Date</span>
+                        <span>Tuesday, 21 May 2024</span>
+                    </button>
+                    <button className={styles.filterControl}>
+                        <span className={styles.filterLabel}>Class</span>
+                        <span>{activeSnapshot.className}</span>
+                    </button>
+                    <div className={styles.segmentedControl}>
+                        {[
+                            ['teacher', 'Teacher'],
+                            ['management', 'Management'],
+                        ].map(([value, label]) => (
+                            <button
+                                key={value}
+                                onClick={() => setActiveRole(value)}
+                                className={`${styles.segmentButton} ${
+                                    activeRole === value ? styles.segmentActive : ''
+                                }`}>
+                                {label}
+                            </button>
                         ))}
                     </div>
+                    <div className={styles.segmentedControl}>
+                        {[
+                            ['primary', 'Primary'],
+                            ['secondary', 'Secondary'],
+                        ].map(([value, label]) => (
+                            <button
+                                key={value}
+                                onClick={() => setActiveTrack(value)}
+                                className={`${styles.segmentButton} ${
+                                    activeTrack === value ? styles.segmentActive : ''
+                                }`}>
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className={styles.actionRow}>
+                    {activeRole === 'teacher' ? (
+                        <>
+                            <button onClick={markAllPresent} className={styles.primaryAction}>
+                                Mark All
+                            </button>
+                            <button onClick={submitRegister} className={styles.primaryGhost}>
+                                Submit Register
+                            </button>
+                        </>
+                    ) : null}
+                    <button onClick={exportRegister} className={styles.secondaryAction}>
+                        Export
+                    </button>
                 </div>
             </section>
 
             {activeRole === 'teacher' ? (
-                <div className="mt-8 space-y-8">
-                    <section id="register-center" className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-                        <div className="rounded-[32px] border border-[var(--line)] bg-white/80 p-6 shadow-[0_18px_45px_rgba(18,50,57,0.08)]">
-                            <SectionHeading
-                                eyebrow="Attendance Register"
-                                title={
-                                    activeTrack === 'primary'
-                                        ? 'Capture AM/PM attendance in one grid'
-                                        : 'Capture period attendance against timetable slots'
-                                }
-                                copy="These interactions mimic the same state transitions your axios-powered register payloads will use when wired to the Laravel API."
-                            />
+                <>
+                    <section className={styles.metricsRow}>
+                        {summaryCards.map(card => (
+                            <div
+                                key={card.status}
+                                className={`${styles.metricCard} ${
+                                    statusMeta[card.status].softClass
+                                }`}>
+                                <div className={styles.metricIconWrap}>
+                                    <span
+                                        className={`${styles.statusBadge} ${statusMeta[card.status].chipClass}`}>
+                                        {statusMeta[card.status].short}
+                                    </span>
+                                </div>
+                                <div>
+                                    <p className={styles.metricLabel}>
+                                        {statusMeta[card.status].label}
+                                    </p>
+                                    <p className={styles.metricValue}>{card.value}</p>
+                                    <p className={styles.metricMeta}>{card.share}</p>
+                                </div>
+                            </div>
+                        ))}
 
-                            <div className="mt-6 overflow-x-auto">
-                                <table className="min-w-full text-left text-sm">
-                                    <thead className="text-xs uppercase tracking-[0.24em] text-[var(--muted)]">
-                                        <tr>
-                                            <th className="pb-4 pr-4">Student</th>
-                                            <th className="pb-4 pr-4">Status</th>
-                                            <th className="pb-4">Note</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-[var(--line)]">
-                                        {activeRegister.map(student => (
-                                            <tr key={student.id}>
-                                                <td className="py-4 pr-4 align-top">
+                        <div className={styles.overallCard}>
+                            <div
+                                className={styles.donut}
+                                style={{
+                                    background: `conic-gradient(#42c96a ${attendanceRate}%, #e8effb ${attendanceRate}% 100%)`,
+                                }}>
+                                <div className={styles.donutInner} />
+                            </div>
+                            <div>
+                                <p className={styles.metricLabel}>Attendance</p>
+                                <p className={styles.overallValue}>{attendanceRate}%</p>
+                                <p className={styles.metricMeta}>Overall</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div
+                        className={`${styles.statusNotice} ${
+                            registerStatus.tone === 'success'
+                                ? styles.statusSuccess
+                                : registerStatus.tone === 'error'
+                                  ? styles.statusError
+                                  : registerStatus.tone === 'loading'
+                                    ? styles.statusLoading
+                                    : styles.statusIdle
+                        }`}>
+                        {registerStatus.message}
+                    </div>
+
+                    <section id="register-center" className={styles.tableCard}>
+                        <div className={styles.tableWrap}>
+                            <table className={styles.table}>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Student Name</th>
+                                        <th>Tutor Group</th>
+                                        <th>Quick Status</th>
+                                        {sessionColumns[activeTrack].map(column => (
+                                            <th key={column.label}>
+                                                <div className={styles.columnHeading}>
+                                                    <span>{column.label}</span>
+                                                    {column.sub ? (
+                                                        <small>{column.sub}</small>
+                                                    ) : null}
+                                                </div>
+                                            </th>
+                                        ))}
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {activeRegister.map((student, index) => {
+                                        const sessions = buildSessionStates(student, activeTrack)
+                                        const isSelected =
+                                            student.id === selectedStudent[activeTrack]
+
+                                        return (
+                                            <tr
+                                                key={student.id}
+                                                className={isSelected ? styles.selectedRow : ''}>
+                                                <td>{index + 1}</td>
+                                                <td>
                                                     <button
                                                         onClick={() =>
                                                             setSelectedStudent(current => ({
@@ -424,138 +711,140 @@ const Dashboard = () => {
                                                                 [activeTrack]: student.id,
                                                             }))
                                                         }
-                                                        className="text-left">
-                                                        <p className="font-semibold text-[var(--ink)]">
-                                                            {student.name}
-                                                        </p>
-                                                        <p className="mt-1 text-xs text-[var(--muted)]">
-                                                            Late: {student.counts.late} • Sick: {student.counts.sick} • Absent: {student.counts.absent}
-                                                        </p>
+                                                        className={styles.studentButton}>
+                                                        <span className={styles.studentAvatar}>
+                                                            {initials(student.name)}
+                                                        </span>
+                                                        <span>
+                                                            <strong>{student.name}</strong>
+                                                            <small>
+                                                                Late: {student.counts.late} • Sick:{' '}
+                                                                {student.counts.sick} • Absent:{' '}
+                                                                {student.counts.absent}
+                                                            </small>
+                                                        </span>
                                                     </button>
                                                 </td>
-                                                <td className="py-4 pr-4 align-top">
-                                                    <div className="flex flex-wrap gap-2">
+                                                <td>{student.tutorGroup}</td>
+                                                <td>
+                                                    <div className={styles.quickStatus}>
                                                         {attendanceOptions.map(option => (
                                                             <button
                                                                 key={option}
                                                                 onClick={() =>
-                                                                    updateAttendance(student.id, option)
+                                                                    updateAttendance(
+                                                                        student.id,
+                                                                        option,
+                                                                    )
                                                                 }
-                                                                className={`h-10 min-w-10 rounded-2xl border px-3 text-sm font-semibold transition ${
+                                                                className={`${styles.quickStatusButton} ${
                                                                     student.status === option
-                                                                        ? 'border-transparent bg-[var(--ink)] text-white'
-                                                                        : 'border-[var(--line)] bg-white text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent-strong)]'
+                                                                        ? statusMeta[option].chipClass
+                                                                        : ''
                                                                 }`}>
                                                                 {option}
                                                             </button>
                                                         ))}
                                                     </div>
                                                 </td>
-                                                <td className="py-4 align-top">
+                                                {sessions.map((status, sessionIndex) => (
+                                                    <td key={`${student.id}-${sessionIndex}`}>
+                                                        <StatusCell status={status} />
+                                                    </td>
+                                                ))}
+                                                <td>
                                                     <input
+                                                        className={styles.noteInput}
                                                         value={student.note}
                                                         onChange={event =>
-                                                            updateNote(student.id, event.target.value)
+                                                            updateNote(
+                                                                student.id,
+                                                                event.target.value,
+                                                            )
                                                         }
-                                                        placeholder="Add medical, meal, or context note"
-                                                        className="w-full rounded-2xl border border-[var(--line)] bg-[var(--panel-strong)] px-4 py-3 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
+                                                        placeholder="Add note"
                                                     />
                                                 </td>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <div className="mt-6 flex flex-col gap-4 rounded-[28px] border border-[var(--line)] bg-[var(--canvas)]/80 p-5 md:flex-row md:items-center md:justify-between">
-                                <div>
-                                    <p className="text-sm font-semibold text-[var(--ink)]">
-                                        {registerStatus.message}
-                                    </p>
-                                    <p className="mt-1 text-xs uppercase tracking-[0.2em] text-[var(--muted)]">
-                                        Transport state: {registerStatus.tone}
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={submitRegister}
-                                    className="inline-flex items-center justify-center rounded-full bg-[var(--signal)] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#c46d05]">
-                                    Submit {activeTrack === 'primary' ? 'daily' : 'period'} register
-                                </button>
-                            </div>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
                         </div>
 
-                        <div id="students" className="space-y-6">
-                            <div className="rounded-[32px] border border-[var(--line)] bg-white/80 p-6 shadow-[0_18px_45px_rgba(18,50,57,0.08)]">
-                                <SectionHeading
-                                    eyebrow="Student Profile Explorer"
-                                    title={activeStudent.name}
-                                    copy="High-level attendance history and pastoral context to support fast classroom decisions."
-                                />
-
-                                <div className="mt-6 grid gap-3">
-                                    <MetricCard
-                                        label="Late count"
-                                        value={String(activeStudent.counts.late).padStart(2, '0')}
-                                        note="Rolling four-week trend"
-                                    />
-                                    <MetricCard
-                                        label="Sick count"
-                                        value={String(activeStudent.counts.sick).padStart(2, '0')}
-                                        note="Medical notes and health follow-up"
-                                    />
-                                    <MetricCard
-                                        label="Absent count"
-                                        value={String(activeStudent.counts.absent).padStart(2, '0')}
-                                        note="Guardian or welfare escalation risk"
-                                    />
-                                </div>
+                        <div className={styles.tableFooter}>
+                            <div className={styles.legend}>
+                                {attendanceOptions.map(option => (
+                                    <div key={option} className={styles.legendItem}>
+                                        <span
+                                            className={`${styles.statusBadge} ${statusMeta[option].chipClass}`}>
+                                            {option}
+                                        </span>
+                                        <span>{statusMeta[option].label}</span>
+                                    </div>
+                                ))}
                             </div>
-
-                            <div className="rounded-[32px] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(18,50,57,0.98),rgba(11,93,87,0.94))] p-6 text-white shadow-[0_24px_60px_rgba(18,50,57,0.16)]">
-                                <p className="text-xs uppercase tracking-[0.24em] text-white/64">
-                                    Today schedule
-                                </p>
-                                <div className="mt-5 space-y-3">
-                                    {activeSnapshot.timetable.map(slot => (
-                                        <div
-                                            key={slot.join('-')}
-                                            className="flex items-start justify-between gap-4 rounded-3xl border border-white/10 bg-white/8 px-4 py-3">
-                                            <div>
-                                                <p className="text-sm font-semibold">{slot[1]}</p>
-                                                <p className="text-xs text-white/70">{slot[2]}</p>
-                                            </div>
-                                            <p className="text-sm font-semibold text-white/82">
-                                                {slot[0]}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                            <p className={styles.footerMeta}>
+                                Showing 1-{activeRegister.length} of {activeRegister.length} learners
+                            </p>
                         </div>
                     </section>
 
-                    <section id="discipline" className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-                        <div className="rounded-[32px] border border-[var(--line)] bg-white/80 p-6 shadow-[0_18px_45px_rgba(18,50,57,0.08)]">
-                            <SectionHeading
-                                eyebrow="Discipline Tracker"
-                                title="Log conduct quickly without leaving the dashboard"
-                                copy="Designed for fast teacher-side interventions that can later roll up into leadership-level behavior reporting."
-                            />
-
-                            <form onSubmit={submitDiscipline} className="mt-6 space-y-4">
+                    <section className={styles.lowerGrid}>
+                        <div id="students" className={styles.panel}>
+                            <div className={styles.panelHeader}>
                                 <div>
-                                    <label className="mb-2 block text-sm font-semibold text-[var(--ink)]">
-                                        Student
-                                    </label>
-                                    <div className="rounded-2xl border border-[var(--line)] bg-[var(--canvas)]/70 px-4 py-3 text-sm font-medium text-[var(--ink)]">
-                                        {activeStudent.name}
-                                    </div>
+                                    <p className={styles.panelEyebrow}>Student Profile</p>
+                                    <h2 className={styles.panelTitle}>{activeStudent.name}</h2>
                                 </div>
+                                <span className={styles.groupBadge}>
+                                    {activeStudent.tutorGroup}
+                                </span>
+                            </div>
+                            <div className={styles.profileStats}>
+                                <div className={styles.profileStat}>
+                                    <span>Late count</span>
+                                    <strong>{String(activeStudent.counts.late).padStart(2, '0')}</strong>
+                                </div>
+                                <div className={styles.profileStat}>
+                                    <span>Sick count</span>
+                                    <strong>{String(activeStudent.counts.sick).padStart(2, '0')}</strong>
+                                </div>
+                                <div className={styles.profileStat}>
+                                    <span>Absent count</span>
+                                    <strong>{String(activeStudent.counts.absent).padStart(2, '0')}</strong>
+                                </div>
+                            </div>
 
+                            <div className={styles.scheduleList}>
+                                {activeSnapshot.timetable.map(slot => (
+                                    <div key={slot.join('-')} className={styles.scheduleItem}>
+                                        <span>{slot[0]}</span>
+                                        <div>
+                                            <strong>{slot[1]}</strong>
+                                            <small>{slot[2]}</small>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div id="discipline" className={styles.panel}>
+                            <div className={styles.panelHeader}>
                                 <div>
-                                    <label className="mb-2 block text-sm font-semibold text-[var(--ink)]">
-                                        Incident type
-                                    </label>
+                                    <p className={styles.panelEyebrow}>Discipline Tracker</p>
+                                    <h2 className={styles.panelTitle}>Log classroom conduct</h2>
+                                </div>
+                            </div>
+
+                            <form onSubmit={submitDiscipline} className={styles.formGrid}>
+                                <label className={styles.fieldLabel}>
+                                    <span>Student</span>
+                                    <div className={styles.staticField}>{activeStudent.name}</div>
+                                </label>
+
+                                <label className={styles.fieldLabel}>
+                                    <span>Incident type</span>
                                     <select
                                         value={disciplineEntry.incident}
                                         onChange={event =>
@@ -564,18 +853,16 @@ const Dashboard = () => {
                                                 incident: event.target.value,
                                             }))
                                         }
-                                        className="w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]">
+                                        className={styles.selectField}>
                                         <option>Late arrival</option>
                                         <option>Uniform issue</option>
                                         <option>Missed prep task</option>
                                         <option>Disruptive conduct</option>
                                     </select>
-                                </div>
+                                </label>
 
-                                <div>
-                                    <label className="mb-2 block text-sm font-semibold text-[var(--ink)]">
-                                        Incident notes
-                                    </label>
+                                <label className={styles.fieldLabel}>
+                                    <span>Incident notes</span>
                                     <textarea
                                         value={disciplineEntry.note}
                                         onChange={event =>
@@ -585,171 +872,109 @@ const Dashboard = () => {
                                             }))
                                         }
                                         rows={4}
-                                        placeholder="Describe the incident, assigned detention, or guardian action."
-                                        className="w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
+                                        className={styles.textArea}
+                                        placeholder="Describe the incident, detention, or parent action."
                                     />
-                                </div>
+                                </label>
 
-                                <button
-                                    type="submit"
-                                    className="rounded-full bg-[var(--ink)] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)]">
+                                <button type="submit" className={styles.primaryAction}>
                                     Log discipline entry
                                 </button>
                             </form>
 
-                            <p className="mt-4 text-sm text-[var(--muted)]">
-                                {disciplineStatus}
-                            </p>
-                        </div>
-
-                        <div className="rounded-[32px] border border-[var(--line)] bg-white/80 p-6 shadow-[0_18px_45px_rgba(18,50,57,0.08)]">
-                            <SectionHeading
-                                eyebrow="Teacher Highlights"
-                                title="Context blocks teachers can act on immediately"
-                                copy="Focused cards for upcoming lessons, missing submissions, and special-case notes that need follow-up."
-                            />
-
-                            <div className="mt-6 grid gap-4 md:grid-cols-2">
-                                {activeSnapshot.metrics.map(metric => (
-                                    <MetricCard
-                                        key={metric.label}
-                                        label={metric.label}
-                                        value={metric.value}
-                                        note="Current active class snapshot"
-                                    />
-                                ))}
-                            </div>
+                            <p className={styles.helperMessage}>{disciplineStatus}</p>
                         </div>
                     </section>
-                </div>
+                </>
             ) : (
-                <div className="mt-8 space-y-8">
-                    <section className="grid gap-4 md:grid-cols-3">
-                        {managementMetrics[activeTrack].map((metric, index) => (
-                            <MetricCard
-                                key={metric.label}
-                                label={metric.label}
-                                value={metric.value}
-                                note={metric.note}
-                                accent={index === 0}
-                            />
+                <div className={styles.managementStack}>
+                    <section id="analytics" className={styles.managementCards}>
+                        {managementMetrics[activeTrack].map(metric => (
+                            <div key={metric.label} className={styles.managementCard}>
+                                <p className={styles.metricLabel}>{metric.label}</p>
+                                <p className={styles.managementValue}>{metric.value}</p>
+                                <p className={styles.metricMeta}>{metric.note}</p>
+                            </div>
                         ))}
                     </section>
 
-                    <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-                        <div className="rounded-[32px] border border-[var(--line)] bg-white/80 p-6 shadow-[0_18px_45px_rgba(18,50,57,0.08)]">
-                            <SectionHeading
-                                eyebrow="Alerts & Escalations"
-                                title="Critical items that leadership should not miss"
-                                copy="Incoming flags from register completion, chronic absenteeism, and financial variance rules."
-                            />
+                    <section className={styles.lowerGrid}>
+                        <div className={styles.panel}>
+                            <div className={styles.panelHeader}>
+                                <div>
+                                    <p className={styles.panelEyebrow}>Alerts & Escalations</p>
+                                    <h2 className={styles.panelTitle}>Critical follow-up</h2>
+                                </div>
+                            </div>
 
-                            <div className="mt-6 space-y-4">
+                            <div className={styles.alertList}>
                                 {alertFeed.map(alert => (
-                                    <div
-                                        key={alert.title}
-                                        className="rounded-[28px] border border-[var(--line)] bg-[var(--panel-strong)] p-5">
-                                        <div className="flex items-start justify-between gap-4">
-                                            <div>
-                                                <p className="text-base font-semibold text-[var(--ink)]">
-                                                    {alert.title}
-                                                </p>
-                                                <p className="mt-2 text-sm text-[var(--muted)]">
-                                                    {alert.detail}
-                                                </p>
-                                            </div>
-                                            <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent-strong)]">
-                                                {alert.severity}
-                                            </span>
+                                    <div key={alert.title} className={styles.alertCard}>
+                                        <div>
+                                            <strong>{alert.title}</strong>
+                                            <p>{alert.detail}</p>
                                         </div>
+                                        <span className={styles.alertTag}>{alert.severity}</span>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        <div id="timetable" className="rounded-[32px] border border-[var(--line)] bg-white/80 p-6 shadow-[0_18px_45px_rgba(18,50,57,0.08)]">
-                            <SectionHeading
-                                eyebrow="Timetable Management Center"
-                                title="Create, edit, and review class allocations"
-                                copy="A scheduling surface ready for CRUD-backed forms that define sections, subjects, staff, and time slots."
-                            />
+                        <div id="timetable" className={styles.panel}>
+                            <div className={styles.panelHeader}>
+                                <div>
+                                    <p className={styles.panelEyebrow}>Timetable Management</p>
+                                    <h2 className={styles.panelTitle}>Class allocations</h2>
+                                </div>
+                            </div>
 
-                            <div className="mt-6 grid gap-4">
+                            <div className={styles.timetableCards}>
                                 {activeSnapshot.timetable.map(slot => (
-                                    <div
-                                        key={slot.join('-')}
-                                        className="grid gap-3 rounded-[28px] border border-[var(--line)] bg-[var(--canvas)]/75 p-4 md:grid-cols-[110px_1fr_140px] md:items-center">
-                                        <p className="text-sm font-semibold text-[var(--ink)]">
-                                            {slot[0]}
-                                        </p>
+                                    <div key={slot.join('-')} className={styles.timetableCard}>
                                         <div>
-                                            <p className="text-sm font-semibold text-[var(--ink)]">
-                                                {slot[1]}
-                                            </p>
-                                            <p className="text-xs text-[var(--muted)]">
-                                                {slot[2]}
-                                            </p>
+                                            <strong>{slot[1]}</strong>
+                                            <small>{slot[2]}</small>
                                         </div>
-                                        <div className="flex gap-2 md:justify-end">
-                                            <button className="rounded-full border border-[var(--line)] px-3 py-2 text-xs font-semibold text-[var(--ink)]">
-                                                Edit
-                                            </button>
-                                            <button className="rounded-full border border-[var(--line)] px-3 py-2 text-xs font-semibold text-[var(--ink)]">
-                                                Delete
-                                            </button>
-                                        </div>
+                                        <span>{slot[0]}</span>
                                     </div>
                                 ))}
                             </div>
 
-                            <div className="mt-6 flex flex-wrap gap-3">
-                                <button className="rounded-full bg-[var(--ink)] px-5 py-3 text-sm font-semibold text-white">
-                                    Create slot
-                                </button>
-                                <button className="rounded-full border border-[var(--line)] bg-white px-5 py-3 text-sm font-semibold text-[var(--ink)]">
-                                    Publish revision
-                                </button>
+                            <div className={styles.inlineActions}>
+                                <button className={styles.primaryAction}>Create slot</button>
+                                <button className={styles.secondaryAction}>Publish revision</button>
                             </div>
                         </div>
                     </section>
 
-                    <section id="finance" className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-                        <div className="rounded-[32px] border border-[var(--line)] bg-white/80 p-6 shadow-[0_18px_45px_rgba(18,50,57,0.08)]">
-                            <SectionHeading
-                                eyebrow="School Financial Ledger"
-                                title="Searchable account picture by student"
-                                copy="Fee visibility aligned to student records so leadership can combine attendance, welfare, and finance follow-up from one workspace."
-                            />
+                    <section id="finance" className={styles.lowerGrid}>
+                        <div className={styles.panel}>
+                            <div className={styles.panelHeader}>
+                                <div>
+                                    <p className={styles.panelEyebrow}>Financial Ledger</p>
+                                    <h2 className={styles.panelTitle}>Student accounts</h2>
+                                </div>
+                            </div>
 
-                            <div className="mt-6 overflow-x-auto">
-                                <table className="min-w-full text-left text-sm">
-                                    <thead className="text-xs uppercase tracking-[0.24em] text-[var(--muted)]">
+                            <div className={styles.tableWrap}>
+                                <table className={styles.compactTable}>
+                                    <thead>
                                         <tr>
-                                            <th className="pb-4 pr-4">Student</th>
-                                            <th className="pb-4 pr-4">Class</th>
-                                            <th className="pb-4 pr-4">Invoiced</th>
-                                            <th className="pb-4 pr-4">Paid</th>
-                                            <th className="pb-4">Balance</th>
+                                            <th>Student</th>
+                                            <th>Class</th>
+                                            <th>Invoiced</th>
+                                            <th>Paid</th>
+                                            <th>Balance</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-[var(--line)]">
+                                    <tbody>
                                         {ledgerRows.map(row => (
                                             <tr key={row.student}>
-                                                <td className="py-4 pr-4 font-semibold text-[var(--ink)]">
-                                                    {row.student}
-                                                </td>
-                                                <td className="py-4 pr-4 text-[var(--muted)]">
-                                                    {row.className}
-                                                </td>
-                                                <td className="py-4 pr-4 text-[var(--muted)]">
-                                                    {row.invoiced}
-                                                </td>
-                                                <td className="py-4 pr-4 text-[var(--muted)]">
-                                                    {row.paid}
-                                                </td>
-                                                <td className="py-4 font-semibold text-[var(--danger)]">
-                                                    {row.balance}
-                                                </td>
+                                                <td>{row.student}</td>
+                                                <td>{row.className}</td>
+                                                <td>{row.invoiced}</td>
+                                                <td>{row.paid}</td>
+                                                <td className={styles.balanceCell}>{row.balance}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -757,18 +982,17 @@ const Dashboard = () => {
                             </div>
                         </div>
 
-                        <div className="rounded-[32px] border border-[var(--line)] bg-white/80 p-6 shadow-[0_18px_45px_rgba(18,50,57,0.08)]">
-                            <SectionHeading
-                                eyebrow="Payment Capture"
-                                title="Record a payment against a student"
-                                copy="Mock state mirrors the success and error transitions you will later wire to secured payment endpoints."
-                            />
-
-                            <form onSubmit={submitPayment} className="mt-6 space-y-4">
+                        <div className={styles.panel}>
+                            <div className={styles.panelHeader}>
                                 <div>
-                                    <label className="mb-2 block text-sm font-semibold text-[var(--ink)]">
-                                        Student
-                                    </label>
+                                    <p className={styles.panelEyebrow}>Payment Capture</p>
+                                    <h2 className={styles.panelTitle}>Record a payment</h2>
+                                </div>
+                            </div>
+
+                            <form onSubmit={submitPayment} className={styles.formGrid}>
+                                <label className={styles.fieldLabel}>
+                                    <span>Student</span>
                                     <select
                                         value={paymentEntry.student}
                                         onChange={event =>
@@ -777,17 +1001,15 @@ const Dashboard = () => {
                                                 student: event.target.value,
                                             }))
                                         }
-                                        className="w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]">
+                                        className={styles.selectField}>
                                         {ledgerRows.map(row => (
                                             <option key={row.student}>{row.student}</option>
                                         ))}
                                     </select>
-                                </div>
+                                </label>
 
-                                <div>
-                                    <label className="mb-2 block text-sm font-semibold text-[var(--ink)]">
-                                        Amount received
-                                    </label>
+                                <label className={styles.fieldLabel}>
+                                    <span>Amount received</span>
                                     <input
                                         value={paymentEntry.amount}
                                         onChange={event =>
@@ -796,14 +1018,12 @@ const Dashboard = () => {
                                                 amount: event.target.value,
                                             }))
                                         }
-                                        className="w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]"
+                                        className={styles.textField}
                                     />
-                                </div>
+                                </label>
 
-                                <div>
-                                    <label className="mb-2 block text-sm font-semibold text-[var(--ink)]">
-                                        Method
-                                    </label>
+                                <label className={styles.fieldLabel}>
+                                    <span>Method</span>
                                     <select
                                         value={paymentEntry.method}
                                         onChange={event =>
@@ -812,23 +1032,19 @@ const Dashboard = () => {
                                                 method: event.target.value,
                                             }))
                                         }
-                                        className="w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]">
+                                        className={styles.selectField}>
                                         <option>Bank transfer</option>
                                         <option>Cash office</option>
                                         <option>Mobile money</option>
                                     </select>
-                                </div>
+                                </label>
 
-                                <button
-                                    type="submit"
-                                    className="rounded-full bg-[var(--signal)] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#c46d05]">
+                                <button type="submit" className={styles.primaryAction}>
                                     Record payment
                                 </button>
                             </form>
 
-                            <p className="mt-4 text-sm text-[var(--muted)]">
-                                {paymentStatus}
-                            </p>
+                            <p className={styles.helperMessage}>{paymentStatus}</p>
                         </div>
                     </section>
                 </div>

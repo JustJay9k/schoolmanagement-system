@@ -5,22 +5,175 @@ import Link from 'next/link'
 import { useAuth } from '@/hooks/auth'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import styles from './navigation.module.css'
+
+const icons = {
+    dashboard: (
+        <path
+            d="M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1h-4.5v-6h-5v6H5a1 1 0 01-1-1v-9.5z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    ),
+    register: (
+        <>
+            <rect
+                x="4.5"
+                y="5"
+                width="15"
+                height="15"
+                rx="2.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+            />
+            <path
+                d="M8 3.8v3M16 3.8v3M7.5 11.2h9M8.6 15h2.1M13.3 15h2.1"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
+        </>
+    ),
+    classes: (
+        <>
+            <path
+                d="M4.5 8.5L12 5l7.5 3.5L12 12 4.5 8.5z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M7 10.7v4.1c0 1.4 2.2 2.7 5 2.7s5-1.3 5-2.7v-4.1"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
+        </>
+    ),
+    students: (
+        <>
+            <circle
+                cx="12"
+                cy="8"
+                r="3.2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+            />
+            <path
+                d="M5.5 18.5c1.3-2.6 3.7-4 6.5-4s5.2 1.4 6.5 4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
+        </>
+    ),
+    reports: (
+        <>
+            <path
+                d="M6 18.5v-6M12 18.5v-11M18 18.5v-8"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
+            <path
+                d="M4.5 20h15"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
+        </>
+    ),
+    timetable: (
+        <>
+            <rect
+                x="4.5"
+                y="5"
+                width="15"
+                height="15"
+                rx="2.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+            />
+            <path
+                d="M8 3.8v3M16 3.8v3M8 11h8M8 15h5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
+        </>
+    ),
+    behaviour: (
+        <>
+            <path
+                d="M12 4.5l6.5 2.4v5.6c0 4.2-2.5 6.9-6.5 8.8-4-1.9-6.5-4.6-6.5-8.8V6.9L12 4.5z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M9.2 12.2l1.8 1.8 3.8-4.1"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </>
+    ),
+    settings: (
+        <>
+            <circle
+                cx="12"
+                cy="12"
+                r="2.7"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+            />
+            <path
+                d="M12 4.8v1.6M12 17.6v1.6M19.2 12h-1.6M6.4 12H4.8M17.1 6.9l-1.1 1.1M8 16l-1.1 1.1M17.1 17.1L16 16M8 8 6.9 6.9"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
+        </>
+    ),
+}
 
 const navItems = [
-    { label: 'Overview', href: '/dashboard' },
-    { label: 'Register', href: '/dashboard#register-center' },
-    { label: 'Students', href: '/dashboard#students' },
-    { label: 'Discipline', href: '/dashboard#discipline' },
-    { label: 'Timetable', href: '/dashboard#timetable' },
-    { label: 'Finance', href: '/dashboard#finance' },
+    { label: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
+    { label: 'Registers', href: '/dashboard#register-center', icon: 'register' },
+    { label: 'Classes', href: '/dashboard#timetable', icon: 'classes' },
+    { label: 'Students', href: '/dashboard#students', icon: 'students' },
+    { label: 'Attendance Reports', href: '/dashboard#analytics', icon: 'reports' },
+    { label: 'Timetables', href: '/dashboard#timetable', icon: 'timetable' },
+    { label: 'Behaviour', href: '/dashboard#discipline', icon: 'behaviour' },
+    { label: 'Settings', href: '/dashboard#finance', icon: 'settings' },
 ]
 
-const linkClassName = active =>
-    `flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-        active
-            ? 'bg-[var(--ink)] text-white shadow-[0_18px_40px_rgba(18,50,57,0.18)]'
-            : 'text-[var(--ink)] hover:bg-white/80'
-    }`
+const NavIcon = ({ name }) => (
+    <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        className={styles.navIcon}>
+        {icons[name]}
+    </svg>
+)
 
 const Navigation = ({ user }) => {
     const { logout } = useAuth()
@@ -28,101 +181,81 @@ const Navigation = ({ user }) => {
     const [open, setOpen] = useState(false)
 
     const Sidebar = (
-        <aside className="flex h-full flex-col gap-8 rounded-[32px] border border-white/70 bg-[rgba(255,252,246,0.84)] p-5 shadow-[0_22px_60px_rgba(18,50,57,0.12)] backdrop-blur">
-            <div className="flex items-center gap-3">
-                <div className="rounded-3xl bg-[var(--ink)] p-3 text-white">
-                    <ApplicationLogo className="h-9 w-9 fill-current" />
+        <aside className={styles.sidebar}>
+            <div className={styles.brand}>
+                <div className={styles.brandMark}>
+                    <ApplicationLogo className="h-8 w-8 fill-current" />
                 </div>
                 <div>
-                    <p className="text-xs uppercase tracking-[0.24em] text-[var(--muted)]">
-                        Beacon School OS
-                    </p>
-                    <p className="font-[var(--font-display)] text-xl text-[var(--ink)]">
-                        Operations Hub
-                    </p>
+                    <p className={styles.schoolName}>Beacon School</p>
+                    <p className={styles.schoolMeta}>Operations workspace</p>
                 </div>
             </div>
 
-            <div className="rounded-[28px] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(18,50,57,0.98),rgba(11,93,87,0.94))] p-5 text-white">
-                <p className="text-xs uppercase tracking-[0.26em] text-white/68">
-                    Signed in
-                </p>
-                <p className="mt-3 text-lg font-semibold">{user?.name}</p>
-                <p className="text-sm text-white/72">{user?.email}</p>
-            </div>
+            <nav className={styles.navList}>
+                {navItems.map(item => {
+                    const active = item.href === '/dashboard' && pathname === '/dashboard'
 
-            <nav className="space-y-2">
-                {navItems.map(item => (
-                    <a
-                        key={item.label}
-                        href={item.href}
-                        onClick={() => setOpen(false)}
-                        className={linkClassName(
-                            item.href === '/dashboard' &&
-                                pathname === '/dashboard',
-                        )}>
-                        <span>{item.label}</span>
-                        <span className="text-xs opacity-60">01</span>
-                    </a>
-                ))}
+                    return (
+                        <a
+                            key={item.label}
+                            href={item.href}
+                            onClick={() => setOpen(false)}
+                            className={`${styles.navLink} ${active ? styles.navLinkActive : ''}`}>
+                            <NavIcon name={item.icon} />
+                            <span>{item.label}</span>
+                        </a>
+                    )
+                })}
             </nav>
 
-            <div className="mt-auto space-y-4">
-                <div className="rounded-[28px] border border-[var(--line)] bg-white/72 p-4">
-                    <p className="text-xs uppercase tracking-[0.24em] text-[var(--muted)]">
-                        Today
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-[var(--ink)]">
-                        2 classes complete, 4 period submissions pending.
-                    </p>
+            <div className={styles.profileCard}>
+                <div className={styles.avatar}>
+                    {(user?.name ?? 'U')
+                        .split(' ')
+                        .slice(0, 2)
+                        .map(part => part[0])
+                        .join('')}
                 </div>
-
-                <button
-                    onClick={logout}
-                    className="w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]">
-                    Logout
-                </button>
+                <div className={styles.profileCopy}>
+                    <p className={styles.profileName}>{user?.name}</p>
+                    <p className={styles.profileRole}>School staff account</p>
+                </div>
             </div>
+
+            <button onClick={logout} className={styles.logoutButton}>
+                Logout
+            </button>
         </aside>
     )
 
     return (
         <>
-            <div className="sticky top-0 z-30 border-b border-white/60 bg-[rgba(255,252,246,0.78)] px-4 py-4 backdrop-blur lg:hidden">
-                <div className="mx-auto flex max-w-7xl items-center justify-between">
-                    <Link href="/dashboard" className="flex items-center gap-3">
-                        <div className="rounded-2xl bg-[var(--ink)] p-2.5 text-white">
-                            <ApplicationLogo className="h-8 w-8 fill-current" />
-                        </div>
-                        <div>
-                            <p className="text-xs uppercase tracking-[0.24em] text-[var(--muted)]">
-                                Beacon School OS
-                            </p>
-                            <p className="font-[var(--font-display)] text-lg text-[var(--ink)]">
-                                Workspace
-                            </p>
-                        </div>
-                    </Link>
+            <div className={styles.mobileBar}>
+                <Link href="/dashboard" className={styles.mobileBrand}>
+                    <div className={styles.mobileBrandMark}>
+                        <ApplicationLogo className="h-7 w-7 fill-current" />
+                    </div>
+                    <div>
+                        <p className={styles.schoolName}>Beacon School</p>
+                        <p className={styles.schoolMeta}>Dashboard</p>
+                    </div>
+                </Link>
 
-                    <button
-                        onClick={() => setOpen(true)}
-                        className="rounded-2xl border border-[var(--line)] bg-white px-4 py-2 text-sm font-semibold text-[var(--ink)]">
-                        Menu
-                    </button>
-                </div>
+                <button onClick={() => setOpen(true)} className={styles.mobileButton}>
+                    Menu
+                </button>
             </div>
 
-            <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:block lg:w-[19rem] lg:p-4">
-                {Sidebar}
-            </div>
+            <div className={styles.desktopSidebar}>{Sidebar}</div>
 
             {open && (
-                <div className="fixed inset-0 z-40 bg-[rgba(18,50,57,0.42)] p-4 backdrop-blur-sm lg:hidden">
-                    <div className="ml-auto h-full max-w-sm">
-                        <div className="mb-3 flex justify-end">
+                <div className={styles.mobileOverlay}>
+                    <div className={styles.mobileOverlayInner}>
+                        <div className={styles.mobileOverlayActions}>
                             <button
                                 onClick={() => setOpen(false)}
-                                className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-[var(--ink)]">
+                                className={styles.mobileButton}>
                                 Close
                             </button>
                         </div>

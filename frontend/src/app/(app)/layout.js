@@ -12,10 +12,10 @@ const AppLayout = ({ children }) => {
     }
 
     return (
-        <div className="min-h-screen text-[var(--ink)]">
+        <div className="min-h-screen bg-[#f4f7fb] text-slate-900">
             <Navigation user={user} />
 
-            <main className="pb-12 lg:pl-[19rem]">{children}</main>
+            <main className="pb-12 lg:pl-[17.25rem]">{children}</main>
         </div>
     )
 }
