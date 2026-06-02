@@ -1,0 +1,15 @@
+# Root ignore rules
+.DS_Store
+Thumbs.db
+
+# Backend ignores
+backend/vendor/
+backend/.env
+backend/bootstrap/cache/
+backend/storage/*.key
+
+# Frontend ignores
+frontend/node_modules/
+frontend/.env*.local
+frontend/.next/
+frontend/out/

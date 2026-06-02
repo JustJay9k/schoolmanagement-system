@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --canvas: #f4f1ea;
+    --canvas-deep: #e6dfd2;
+    --panel: rgba(255, 252, 246, 0.84);
+    --panel-strong: #fffdf8;
+    --line: rgba(16, 64, 71, 0.14);
+    --ink: #123239;
+    --muted: #5f7777;
+    --accent: #0f766e;
+    --accent-soft: #d6f0eb;
+    --accent-strong: #0b5d57;
+    --signal: #d97706;
+    --danger: #b45309;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at top left, rgba(14, 116, 110, 0.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(217, 119, 6, 0.12), transparent 22%),
+        linear-gradient(180deg, #fbf8f2 0%, #f4f1ea 48%, #ede6da 100%);
+    color: var(--ink);
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(18, 50, 57, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(18, 50, 57, 0.04) 1px, transparent 1px);
+    background-size: 96px 96px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.48), transparent 90%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+::selection {
+    background: rgba(15, 118, 110, 0.18);
+    color: var(--ink);
+}
+
+@layer base {
+    h1,
+    h2,
+    h3,
+    h4 {
+        @apply font-semibold tracking-tight;
+    }
+
+    p {
+        @apply leading-relaxed;
+    }
+}
+
+@layer utilities {
+    .text-balance {
+        text-wrap: balance;
+    }
+}
