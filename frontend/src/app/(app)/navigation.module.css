@@ -7,9 +7,14 @@
     height: 100%;
     flex-direction: column;
     gap: 1.5rem;
-    border-right: 1px solid #e7edf6;
-    background: #ffffff;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-right: 1px solid var(--line);
+    background: rgba(255, 252, 246, 0.92);
+    backdrop-filter: blur(20px);
     padding: 1.5rem 1rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(15, 118, 110, 0.3) transparent;
 }
 
 .brand {
@@ -24,9 +29,9 @@
     display: grid;
     place-items: center;
     border-radius: 1rem;
-    background: linear-gradient(180deg, #3f73ff 0%, #2b5fe7 100%);
+    background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
     color: #ffffff;
-    box-shadow: 0 14px 30px rgba(43, 95, 231, 0.22);
+    box-shadow: 0 14px 30px rgba(15, 118, 110, 0.2);
 }
 
 .brandMark {
@@ -38,13 +43,13 @@
     margin: 0;
     font-size: 1rem;
     font-weight: 800;
-    color: #17233b;
+    color: var(--ink);
 }
 
 .schoolMeta {
     margin: 0.2rem 0 0;
     font-size: 0.8rem;
-    color: #8190aa;
+    color: var(--muted);
 }
 
 .navList {
@@ -60,7 +65,7 @@
     padding: 0.9rem 1rem;
     font-size: 0.94rem;
     font-weight: 700;
-    color: #394965;
+    color: var(--ink);
     text-decoration: none;
     transition:
         background-color 140ms ease,
@@ -70,15 +75,15 @@
 }
 
 .navLink:hover {
-    background: #f3f7ff;
-    color: #2457de;
+    background: rgba(214, 240, 235, 0.48);
+    color: var(--accent-strong);
     transform: translateX(2px);
 }
 
 .navLinkActive {
-    background: linear-gradient(180deg, #3f73ff 0%, #285fe8 100%);
+    background: linear-gradient(180deg, var(--ink) 0%, var(--accent-strong) 100%);
     color: #ffffff;
-    box-shadow: 0 16px 32px rgba(50, 102, 235, 0.22);
+    box-shadow: 0 16px 32px rgba(18, 50, 57, 0.16);
 }
 
 .navIcon {
@@ -92,9 +97,9 @@
     align-items: center;
     gap: 0.85rem;
     margin-top: auto;
-    border: 1px solid #e9eef8;
+    border: 1px solid var(--line);
     border-radius: 1.15rem;
-    background: #f7faff;
+    background: rgba(214, 240, 235, 0.22);
     padding: 0.95rem;
 }
 
@@ -104,8 +109,8 @@
     height: 2.7rem;
     width: 2.7rem;
     border-radius: 999px;
-    background: #dce8ff;
-    color: #2b5fe7;
+    background: rgba(15, 118, 110, 0.16);
+    color: var(--accent-strong);
     font-size: 0.85rem;
     font-weight: 800;
 }
@@ -118,24 +123,24 @@
     margin: 0;
     font-size: 0.94rem;
     font-weight: 700;
-    color: #17233b;
+    color: var(--ink);
 }
 
 .profileRole {
     margin: 0.12rem 0 0;
     font-size: 0.76rem;
-    color: #7d8eaa;
+    color: var(--muted);
 }
 
 .logoutButton,
 .mobileButton {
-    border: 1px solid #dfe7f3;
+    border: 1px solid var(--line);
     border-radius: 1rem;
-    background: #ffffff;
+    background: rgba(255, 253, 248, 0.94);
     padding: 0.85rem 1rem;
     font-size: 0.92rem;
     font-weight: 700;
-    color: #263651;
+    color: var(--ink);
     transition:
         border-color 140ms ease,
         color 140ms ease,
@@ -144,9 +149,9 @@
 
 .logoutButton:hover,
 .mobileButton:hover {
-    border-color: #3f73ff;
-    color: #2457de;
-    box-shadow: 0 12px 24px rgba(63, 115, 255, 0.12);
+    border-color: var(--accent);
+    color: var(--accent-strong);
+    box-shadow: 0 12px 24px rgba(15, 118, 110, 0.1);
 }
 
 .mobileBar {
@@ -156,8 +161,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid #e8edf6;
-    background: rgba(255, 255, 255, 0.92);
+    border-bottom: 1px solid var(--line);
+    background: rgba(255, 252, 246, 0.86);
     padding: 1rem;
     backdrop-filter: blur(18px);
 }
@@ -178,7 +183,7 @@
     position: fixed;
     inset: 0;
     z-index: 40;
-    background: rgba(17, 27, 47, 0.34);
+    background: rgba(18, 50, 57, 0.34);
     padding: 1rem;
     backdrop-filter: blur(6px);
 }
@@ -187,6 +192,7 @@
     margin-left: auto;
     max-width: 22rem;
     height: 100%;
+    overflow: hidden;
 }
 
 .mobileOverlayActions {

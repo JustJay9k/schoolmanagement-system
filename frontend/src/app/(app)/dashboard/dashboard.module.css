@@ -10,9 +10,10 @@
 .panel,
 .managementCard,
 .statusNotice {
-    border: 1px solid #e6edf7;
-    background: #ffffff;
-    box-shadow: 0 18px 40px rgba(27, 48, 94, 0.06);
+    border: 1px solid var(--line);
+    background: rgba(255, 252, 246, 0.9);
+    box-shadow: 0 18px 40px rgba(18, 50, 57, 0.08);
+    backdrop-filter: blur(18px);
 }
 
 .topBar {
@@ -47,7 +48,7 @@
     width: 1.25rem;
     height: 2px;
     border-radius: 999px;
-    background: #22324d;
+    background: var(--ink);
 }
 
 .pageEyebrow {
@@ -56,14 +57,14 @@
     font-weight: 800;
     letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: #8091ac;
+    color: var(--muted);
 }
 
 .pageTitle {
     margin: 0.2rem 0 0;
     font-size: 2rem;
     font-weight: 800;
-    color: #18253d;
+    color: var(--ink);
 }
 
 .topBarRight {
@@ -75,16 +76,16 @@
     align-items: center;
     gap: 0.55rem;
     min-width: min(100%, 22rem);
-    border: 1px solid #e3eaf6;
+    border: 1px solid var(--line);
     border-radius: 999px;
-    background: #fbfcff;
+    background: rgba(255, 253, 248, 0.92);
     padding: 0.85rem 1rem;
 }
 
 .searchIcon {
     width: 1.1rem;
     height: 1.1rem;
-    color: #7f8ca7;
+    color: var(--muted);
     flex: 0 0 auto;
 }
 
@@ -93,7 +94,7 @@
     border: 0;
     outline: 0;
     background: transparent;
-    color: #2b3a56;
+    color: var(--ink);
     font-size: 0.95rem;
 }
 
@@ -103,9 +104,9 @@
     place-items: center;
     height: 2.9rem;
     width: 2.9rem;
-    border: 1px solid #e3eaf6;
+    border: 1px solid var(--line);
     border-radius: 999px;
-    background: #ffffff;
+    background: rgba(255, 253, 248, 0.94);
 }
 
 .bellDot {
@@ -117,7 +118,7 @@
     min-width: 1.2rem;
     height: 1.2rem;
     border-radius: 999px;
-    background: #ff4d64;
+    background: var(--signal);
     color: #ffffff;
     font-size: 0.65rem;
     font-weight: 800;
@@ -125,9 +126,9 @@
 
 .userBadge {
     gap: 0.75rem;
-    border: 1px solid #e3eaf6;
+    border: 1px solid var(--line);
     border-radius: 999px;
-    background: #ffffff;
+    background: rgba(255, 253, 248, 0.94);
     padding: 0.35rem 0.85rem 0.35rem 0.35rem;
 }
 
@@ -137,7 +138,7 @@
     height: 2.6rem;
     width: 2.6rem;
     border-radius: 999px;
-    background: linear-gradient(180deg, #64b9ff 0%, #4b8dff 100%);
+    background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
     color: #ffffff;
     font-size: 0.88rem;
     font-weight: 800;
@@ -152,13 +153,13 @@
     margin: 0;
     font-size: 0.93rem;
     font-weight: 800;
-    color: #17243d;
+    color: var(--ink);
 }
 
 .userRole {
     margin: 0;
     font-size: 0.78rem;
-    color: #7f8da8;
+    color: var(--muted);
 }
 
 .toolbar {
@@ -184,12 +185,12 @@
     display: grid;
     gap: 0.18rem;
     min-width: 12rem;
-    border: 1px solid #e4ebf7;
+    border: 1px solid var(--line);
     border-radius: 1rem;
-    background: #fbfcff;
+    background: rgba(255, 253, 248, 0.92);
     padding: 0.9rem 1rem;
     text-align: left;
-    color: #1f2d47;
+    color: var(--ink);
     font-size: 0.94rem;
     font-weight: 700;
 }
@@ -201,7 +202,7 @@
 .columnHeading small,
 .fieldLabel span,
 .footerMeta {
-    color: #8190ab;
+    color: var(--muted);
 }
 
 .filterLabel,
@@ -214,9 +215,9 @@
 }
 
 .segmentedControl {
-    border: 1px solid #e4ebf7;
+    border: 1px solid var(--line);
     border-radius: 999px;
-    background: #f6f9ff;
+    background: rgba(230, 223, 210, 0.5);
     padding: 0.3rem;
 }
 
@@ -225,14 +226,14 @@
     border-radius: 999px;
     background: transparent;
     padding: 0.72rem 1rem;
-    color: #6f7f9d;
+    color: var(--muted);
     font-size: 0.87rem;
     font-weight: 800;
 }
 
 .segmentActive,
 .primaryAction {
-    background: linear-gradient(180deg, #3f73ff 0%, #275fe9 100%);
+    background: linear-gradient(180deg, var(--ink) 0%, var(--accent-strong) 100%);
     color: #ffffff;
 }
 
@@ -258,14 +259,14 @@
 }
 
 .primaryAction {
-    box-shadow: 0 14px 26px rgba(49, 104, 235, 0.2);
+    box-shadow: 0 14px 26px rgba(18, 50, 57, 0.16);
 }
 
 .secondaryAction,
 .primaryGhost {
-    border-color: #dfe7f3;
-    background: #ffffff;
-    color: #20304d;
+    border-color: var(--line);
+    background: rgba(255, 253, 248, 0.94);
+    color: var(--ink);
 }
 
 .metricsRow {
@@ -285,24 +286,24 @@
 }
 
 .metricCard {
-    border: 1px solid #ecf1f8;
+    border: 1px solid var(--line);
 }
 
 .presentSoft {
-    background: linear-gradient(180deg, #eefcf2 0%, #f8fffb 100%);
+    background: linear-gradient(180deg, rgba(214, 240, 235, 0.52) 0%, rgba(255, 253, 248, 0.95) 100%);
 }
 
 .lateSoft {
-    background: linear-gradient(180deg, #fff7e4 0%, #fffdfa 100%);
+    background: linear-gradient(180deg, rgba(255, 239, 198, 0.62) 0%, rgba(255, 253, 248, 0.95) 100%);
 }
 
 .absentSoft,
 .sickSoft {
-    background: linear-gradient(180deg, #fff0f1 0%, #fffafb 100%);
+    background: linear-gradient(180deg, rgba(255, 225, 228, 0.62) 0%, rgba(255, 250, 251, 0.96) 100%);
 }
 
 .excusedSoft {
-    background: linear-gradient(180deg, #f3efff 0%, #fbfaff 100%);
+    background: linear-gradient(180deg, rgba(236, 227, 255, 0.74) 0%, rgba(255, 250, 255, 0.96) 100%);
 }
 
 .metricIconWrap {
@@ -316,7 +317,7 @@
     margin: 0.2rem 0 0;
     font-size: 2rem;
     font-weight: 800;
-    color: #1b2942;
+    color: var(--ink);
 }
 
 .metricLabel {
@@ -331,8 +332,8 @@
 }
 
 .overallCard {
-    border: 1px solid #ecf1f8;
-    background: #ffffff;
+    border: 1px solid var(--line);
+    background: rgba(255, 253, 248, 0.94);
 }
 
 .donut {
@@ -358,22 +359,22 @@
 }
 
 .statusIdle {
-    color: #61738f;
+    color: var(--muted);
 }
 
 .statusLoading {
-    color: #2f63ea;
-    background: #f5f9ff;
+    color: var(--accent-strong);
+    background: rgba(214, 240, 235, 0.34);
 }
 
 .statusSuccess {
-    color: #1f8a4d;
-    background: #f2fcf5;
+    color: var(--accent-strong);
+    background: rgba(214, 240, 235, 0.42);
 }
 
 .statusError {
-    color: #d64156;
-    background: #fff4f5;
+    color: var(--danger);
+    background: rgba(255, 225, 228, 0.46);
 }
 
 .tableCard,
@@ -394,27 +395,27 @@
 
 .table thead th,
 .compactTable thead th {
-    border-bottom: 1px solid #eef2f8;
+    border-bottom: 1px solid var(--line);
     padding: 1rem 0.85rem;
     font-size: 0.76rem;
     font-weight: 800;
     text-align: left;
-    color: #7e8ea8;
+    color: var(--muted);
     white-space: nowrap;
 }
 
 .table tbody td,
 .compactTable tbody td {
-    border-bottom: 1px solid #f1f4fa;
+    border-bottom: 1px solid rgba(16, 64, 71, 0.08);
     padding: 0.95rem 0.85rem;
     font-size: 0.9rem;
-    color: #20304b;
+    color: var(--ink);
     vertical-align: middle;
     white-space: nowrap;
 }
 
 .selectedRow {
-    background: #fbfdff;
+    background: rgba(214, 240, 235, 0.18);
 }
 
 .columnHeading {
@@ -443,22 +444,22 @@
     height: 2.2rem;
     width: 2.2rem;
     border-radius: 999px;
-    background: #edf3ff;
-    color: #2c60e8;
+    background: rgba(15, 118, 110, 0.12);
+    color: var(--accent-strong);
     font-size: 0.75rem;
     font-weight: 800;
 }
 
 .studentButton strong {
     display: block;
-    color: #1a2740;
+    color: var(--ink);
     font-size: 0.92rem;
 }
 
 .studentButton small {
     display: block;
     margin-top: 0.16rem;
-    color: #7f8faa;
+    color: var(--muted);
     font-size: 0.73rem;
 }
 
@@ -470,10 +471,10 @@
 .quickStatusButton {
     width: 2rem;
     height: 2rem;
-    border: 1px solid #dfe6f2;
+    border: 1px solid var(--line);
     border-radius: 999px;
-    background: #ffffff;
-    color: #7284a0;
+    background: rgba(255, 253, 248, 0.94);
+    color: var(--muted);
     font-size: 0.78rem;
     font-weight: 800;
 }
@@ -489,28 +490,28 @@
 }
 
 .present {
-    background: #dcf8e6;
-    color: #24a44d;
+    background: rgba(214, 240, 235, 0.88);
+    color: var(--accent-strong);
 }
 
 .late {
-    background: #ffefc6;
-    color: #dd9a09;
+    background: rgba(255, 239, 198, 0.94);
+    color: var(--signal);
 }
 
 .sick {
-    background: #ffe1e4;
-    color: #d14861;
+    background: rgba(255, 225, 228, 0.94);
+    color: var(--danger);
 }
 
 .absent {
-    background: #ffdfe3;
-    color: #e14057;
+    background: rgba(255, 225, 228, 0.94);
+    color: var(--danger);
 }
 
 .excused {
-    background: #ece3ff;
-    color: #7f64df;
+    background: rgba(236, 227, 255, 0.94);
+    color: #7255cb;
 }
 
 .noteInput,
@@ -519,11 +520,11 @@
 .textArea,
 .staticField {
     width: 100%;
-    border: 1px solid #dfe7f4;
+    border: 1px solid var(--line);
     border-radius: 0.95rem;
-    background: #fbfcff;
+    background: rgba(255, 253, 248, 0.92);
     padding: 0.82rem 0.92rem;
-    color: #22314c;
+    color: var(--ink);
     font-size: 0.9rem;
     outline: none;
 }
@@ -532,8 +533,8 @@
 .textField:focus,
 .selectField:focus,
 .textArea:focus {
-    border-color: #4b7dff;
-    box-shadow: 0 0 0 4px rgba(75, 125, 255, 0.12);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
 }
 
 .tableFooter {
@@ -541,7 +542,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    border-top: 1px solid #eef2f8;
+    border-top: 1px solid var(--line);
     padding: 1rem 1.1rem;
 }
 
@@ -557,7 +558,7 @@
     align-items: center;
     gap: 0.45rem;
     font-size: 0.84rem;
-    color: #52657f;
+    color: var(--ink);
 }
 
 .footerMeta,
@@ -592,14 +593,14 @@
     margin: 0.24rem 0 0;
     font-size: 1.35rem;
     font-weight: 800;
-    color: #1b2942;
+    color: var(--ink);
 }
 
 .groupBadge,
 .alertTag {
     border-radius: 999px;
-    background: #edf3ff;
-    color: #2d5fe7;
+    background: rgba(214, 240, 235, 0.42);
+    color: var(--accent-strong);
     font-size: 0.76rem;
     font-weight: 800;
     padding: 0.45rem 0.75rem;
@@ -613,9 +614,9 @@
 }
 
 .profileStat {
-    border: 1px solid #edf1f8;
+    border: 1px solid var(--line);
     border-radius: 1.15rem;
-    background: #fbfcff;
+    background: rgba(255, 253, 248, 0.92);
     padding: 1rem;
 }
 
@@ -625,14 +626,14 @@
     font-weight: 800;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: #7f90aa;
+    color: var(--muted);
 }
 
 .profileStat strong {
     display: block;
     margin-top: 0.45rem;
     font-size: 1.45rem;
-    color: #1b2942;
+    color: var(--ink);
 }
 
 .scheduleList,
@@ -650,9 +651,9 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    border: 1px solid #edf1f8;
+    border: 1px solid var(--line);
     border-radius: 1.1rem;
-    background: #fbfcff;
+    background: rgba(255, 253, 248, 0.92);
     padding: 0.95rem 1rem;
 }
 
@@ -660,7 +661,7 @@
 .timetableCard span {
     font-size: 0.86rem;
     font-weight: 800;
-    color: #7a8ca8;
+    color: var(--muted);
 }
 
 .scheduleItem strong,
@@ -668,14 +669,14 @@
 .alertCard strong {
     display: block;
     font-size: 0.93rem;
-    color: #1d2c45;
+    color: var(--ink);
 }
 
 .scheduleItem small,
 .timetableCard small {
     display: block;
     margin-top: 0.16rem;
-    color: #7f8faa;
+    color: var(--muted);
     font-size: 0.78rem;
 }
 
@@ -720,7 +721,7 @@
 .alertCard p {
     margin: 0.35rem 0 0;
     font-size: 0.86rem;
-    color: #6f819c;
+    color: var(--muted);
 }
 
 .compactTable tbody tr:last-child td,
@@ -730,7 +731,7 @@
 
 .balanceCell {
     font-weight: 800;
-    color: #d14558;
+    color: var(--danger);
 }
 
 @media (max-width: 1279px) {

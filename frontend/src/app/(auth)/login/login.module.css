@@ -1,6 +1,6 @@
 .page {
     display: grid;
-    gap: 1.5rem;
+    gap: 1.35rem;
 }
 
 .loadingState {
@@ -51,7 +51,7 @@
     border: 1px solid rgba(15, 118, 110, 0.14);
     background: linear-gradient(180deg, rgba(214, 240, 235, 0.82), rgba(255, 255, 255, 0.84));
     border-radius: 1.35rem;
-    padding: 0.95rem 1rem;
+    padding: 0.9rem 1rem;
     font-size: 0.92rem;
     font-weight: 600;
     color: var(--ink);
@@ -139,6 +139,12 @@
 }
 
 @media (min-width: 640px) {
+    .signalGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1180px) {
     .signalGrid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }

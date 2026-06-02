@@ -1,0 +1,26 @@
+
+> breeze-next@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 3s
+ ○ Compiling /dashboard ...
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ Compiled /dashboard in 19.6s (631 modules)
+ GET /dashboard 200 in 19592ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /dashboard 200 in 73ms
+ GET /_next/static/webpack/9cd979b79e45589e.webpack.hot-update.json 404 in 20028ms
+ GET /dashboard 200 in 89ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 1191ms (647 modules)
+ GET /login 200 in 73ms
+ GET /login 200 in 95ms
+ ✓ Compiled / in 468ms (631 modules)
+ GET / 200 in 657ms
