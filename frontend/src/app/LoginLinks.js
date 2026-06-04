@@ -21,11 +21,7 @@ const LoginLinks = () => {
                         Login
                     </Link>
 
-                    <Link
-                        href="/register"
-                        className={`${linkClassName} bg-[var(--ink)] text-white hover:bg-[var(--accent-strong)] hover:text-white`}>
-                        Start trial
-                    </Link>
+                    {/* Register link removed per request */}
                 </>
             )}
         </div>

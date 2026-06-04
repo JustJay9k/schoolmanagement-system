@@ -17,6 +17,18 @@ const trustSignals = [
     'Fast recovery path for password reset and account support',
 ]
 
+const EyeIcon = () => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={styles.eyeIcon}>
+        <path d="M12 5c-5.5 0-9.6 4.4-11 7 1.4 2.6 5.5 7 11 7s9.6-4.4 11-7c-1.4-2.6-5.5-7-11-7Zm0 11c-2.2 0-4-1.8-4-4s1.8-4 4-4 4 1.8 4 4-1.8 4-4 4Zm0-6.5A2.5 2.5 0 1 0 12 15a2.5 2.5 0 0 0 0-5Z" />
+    </svg>
+)
+
+const EyeOffIcon = () => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={styles.eyeIcon}>
+        <path d="m2.1 4.7 1.4-1.4L20.7 20.5l-1.4 1.4-3-3c-1.3.6-2.8 1-4.3 1-5.5 0-9.6-4.4-11-7 .8-1.4 2.2-3.2 4.1-4.8l-3-3.4Zm5.6 5.6A4.9 4.9 0 0 0 7 12c1.4 2.6 3.8 5 5 5 .9 0 1.8-.2 2.7-.5l-1.7-1.7A4 4 0 0 1 10.2 10L7.7 7.6Zm2.7-2.7A8.6 8.6 0 0 1 12 9.5a2.5 2.5 0 0 1 2.5 2.5 2.6 2.6 0 0 1-.4 1.3l2 2c1.8-1.3 3-3 3.7-4.3-1.4-2.6-5.5-7-11-7a10 10 0 0 0-2.4.3Z" />
+    </svg>
+)
+
 const LoginContent = () => {
     const searchParams = useSearchParams()
 
@@ -27,6 +39,7 @@ const LoginContent = () => {
 
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
     const [shouldRemember, setShouldRemember] = useState(false)
     const [errors, setErrors] = useState([])
     const [status, setStatus] = useState(null)
@@ -103,16 +116,29 @@ const LoginContent = () => {
                         </Link>
                     </div>
 
-                    <Input
-                        id="password"
-                        type="password"
-                        value={password}
-                        className={styles.input}
-                        onChange={event => setPassword(event.target.value)}
-                        placeholder="Enter your password"
-                        required
-                        autoComplete="current-password"
-                    />
+                    <div className={styles.passwordField}>
+                        <Input
+                            id="password"
+                            type={showPassword ? 'text' : 'password'}
+                            value={password}
+                            className={styles.passwordInput}
+                            onChange={event => setPassword(event.target.value)}
+                            placeholder="Enter your password"
+                            required
+                            autoComplete="current-password"
+                        />
+
+                        <button
+                            type="button"
+                            className={styles.passwordToggle}
+                            aria-pressed={showPassword}
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            title={showPassword ? 'Hide password' : 'Show password'}
+                            onClick={() => setShowPassword(current => !current)}
+                        >
+                            {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                        </button>
+                    </div>
 
                     <InputError messages={errors.password} className="mt-2" />
                 </div>

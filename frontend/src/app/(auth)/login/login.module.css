@@ -78,6 +78,50 @@
     margin-top: 0.45rem;
 }
 
+.passwordField {
+    position: relative;
+}
+
+.passwordInput {
+    margin-top: 0.45rem;
+    padding-right: 3.2rem;
+}
+
+.eyeIcon {
+    width: 1.1rem;
+    height: 1.1rem;
+    fill: currentColor;
+}
+
+.passwordToggle {
+    position: absolute;
+    right: 0.9rem;
+    top: calc(50% + 0.225rem);
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--signal);
+    cursor: pointer;
+    transition: color 150ms ease, background-color 150ms ease;
+}
+
+.passwordToggle:hover {
+    color: var(--ink);
+    background: rgba(15, 118, 110, 0.08);
+}
+
+.passwordToggle:focus-visible {
+    outline: 2px solid rgba(15, 118, 110, 0.35);
+    outline-offset: 2px;
+    background: rgba(15, 118, 110, 0.08);
+}
+
 .passwordHeading {
     display: flex;
     align-items: center;

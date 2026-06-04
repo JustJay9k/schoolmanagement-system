@@ -40,19 +40,21 @@ const Home = () => {
         <div className="relative overflow-hidden">
             <LoginLinks />
 
-            <div className="mx-auto max-w-7xl px-4 pb-16 pt-24 sm:px-6 lg:px-8 lg:pt-28">
+            <div className="relative bg-cover bg-center" style={{ backgroundImage: "url('/images/classroom.jpg')" }}>
+                <div className="absolute inset-0 bg-black/50" />
+                <div className="mx-auto max-w-7xl px-4 pb-16 pt-24 sm:px-6 lg:px-8 lg:pt-28 relative z-10 text-white">
                 <section className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
                     <div className="space-y-8">
-                        <div className="inline-flex rounded-full border border-[var(--line)] bg-white/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-[var(--muted)] shadow-sm backdrop-blur">
+                        <div className="inline-flex rounded-full border border-white/30 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-white shadow-sm backdrop-blur">
                             K-12 digital registering and school operations
                         </div>
 
                         <div className="space-y-5">
-                            <h1 className="max-w-4xl font-[var(--font-display)] text-5xl leading-[0.94] text-balance text-[var(--ink)] sm:text-6xl lg:text-7xl">
+                            <h1 className="max-w-4xl font-[var(--font-display)] text-5xl leading-[0.94] sm:text-6xl lg:text-7xl text-white">
                                 Attendance first. Leadership visibility built
                                 in.
                             </h1>
-                            <p className="max-w-2xl text-lg text-[var(--muted)] sm:text-xl">
+                            <p className="max-w-2xl text-lg text-white/90 sm:text-xl">
                                 Beacon School OS unifies primary and secondary
                                 attendance flows, student insight, discipline,
                                 timetable control, and fee tracking in one fast
@@ -68,7 +70,7 @@ const Home = () => {
                             </Link>
                             <Link
                                 href="/dashboard"
-                                className="inline-flex items-center justify-center rounded-full border border-[var(--line)] bg-white/70 px-6 py-3 text-sm font-semibold text-[var(--ink)] backdrop-blur transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]">
+                                className="inline-flex items-center justify-center rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]">
                                 Preview workspace
                             </Link>
                         </div>
@@ -102,7 +104,8 @@ const Home = () => {
                                 ].map(item => (
                                     <div
                                         key={item.label}
-                                        className="rounded-3xl border border-[var(--line)] bg-white/78 p-5">
+                                        tabIndex={0}
+                                        className="rounded-3xl border border-[var(--line)] bg-white/78 p-5 transition-transform duration-200 ease-out transform-gpu hover:-translate-y-1 hover:scale-105 cursor-pointer focus:outline-none focus:ring-4 focus:ring-[rgba(18,50,57,0.06)]">
                                         <p className="text-xs uppercase tracking-[0.24em] text-[var(--muted)]">
                                             {item.label}
                                         </p>
@@ -118,12 +121,16 @@ const Home = () => {
                         </div>
                     </div>
                 </section>
+                </div>
+            </div>
 
+            <div className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 lg:px-8">
                 <section className="mt-16 grid gap-6 lg:grid-cols-2">
                     {roleCards.map(card => (
                         <div
                             key={card.role}
-                            className="rounded-[32px] border border-[var(--line)] bg-[rgba(255,252,246,0.72)] p-7 shadow-[0_18px_45px_rgba(18,50,57,0.08)] backdrop-blur">
+                            tabIndex={0}
+                            className="rounded-[32px] border border-[var(--line)] bg-[rgba(255,252,246,0.72)] p-7 shadow-[0_18px_45px_rgba(18,50,57,0.08)] backdrop-blur transition-transform duration-200 ease-out transform-gpu hover:-translate-y-1 hover:scale-105 hover:shadow-[0_30px_80px_rgba(18,50,57,0.14)] hover:border-[var(--accent)] cursor-pointer focus:outline-none focus:ring-4 focus:ring-[rgba(18,50,57,0.06)]">
                             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--signal)]">
                                 {card.role}
                             </p>
@@ -151,7 +158,8 @@ const Home = () => {
                             {workflowSteps.map((step, index) => (
                                 <div
                                     key={step}
-                                    className="flex gap-4 rounded-3xl border border-white/12 bg-white/8 p-4">
+                                    tabIndex={0}
+                                    className="flex gap-4 rounded-3xl border border-white/12 bg-white/8 p-4 transition-transform duration-200 ease-out transform-gpu hover:-translate-y-0.5 hover:scale-105 cursor-pointer focus:outline-none focus:ring-4 focus:ring-[rgba(255,255,255,0.06)]">
                                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/14 text-sm font-semibold">
                                         0{index + 1}
                                     </div>
@@ -167,7 +175,8 @@ const Home = () => {
                         {tracks.map(track => (
                             <div
                                 key={track.title}
-                                className="rounded-[32px] border border-[var(--line)] bg-white/76 p-7 shadow-[0_18px_45px_rgba(18,50,57,0.08)]">
+                                tabIndex={0}
+                                className="rounded-[32px] border border-[var(--line)] bg-white/76 p-7 shadow-[0_18px_45px_rgba(18,50,57,0.08)] transition-transform duration-200 ease-out transform-gpu hover:-translate-y-1 hover:scale-105 hover:shadow-[0_30px_80px_rgba(18,50,57,0.12)] hover:border-[var(--accent)] cursor-pointer focus:outline-none focus:ring-4 focus:ring-[rgba(18,50,57,0.06)]">
                                 <p className="text-xs uppercase tracking-[0.24em] text-[var(--muted)]">
                                     Structural split
                                 </p>
