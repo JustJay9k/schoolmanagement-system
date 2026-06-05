@@ -177,12 +177,15 @@ const Navigation = ({ user, sidebarCollapsed, setSidebarCollapsed }) => {
                 <div className={styles.brandMark}>
                     <ApplicationLogo className="h-8 w-8 fill-current" />
                 </div>
-                {!sidebarCollapsed ? (
+                <div
+                    className={`${styles.brandCopy} ${
+                        sidebarCollapsed ? styles.brandCopyCollapsed : ''
+                    }`}>
                     <div>
                         <p className={styles.schoolName}>Beacon School</p>
                         <p className={styles.schoolMeta}>Operations workspace</p>
                     </div>
-                ) : null}
+                </div>
             </div>
 
             <nav className={styles.navList}>
@@ -198,7 +201,12 @@ const Navigation = ({ user, sidebarCollapsed, setSidebarCollapsed }) => {
                                 sidebarCollapsed ? styles.navLinkCollapsed : ''
                             }`}>
                             <NavIcon name={item.icon} />
-                            {!sidebarCollapsed ? <span>{item.label}</span> : null}
+                            <span
+                                className={`${styles.navLabel} ${
+                                    sidebarCollapsed ? styles.navLabelCollapsed : ''
+                                }`}>
+                                {item.label}
+                            </span>
                         </Link>
                     )
                 })}
@@ -212,16 +220,21 @@ const Navigation = ({ user, sidebarCollapsed, setSidebarCollapsed }) => {
                         .map(part => part[0])
                         .join('')}
                 </div>
-                {!sidebarCollapsed ? (
-                    <div className={styles.profileCopy}>
+                <div
+                    className={`${styles.profileCopy} ${
+                        sidebarCollapsed ? styles.profileCopyCollapsed : ''
+                    }`}>
+                    <div>
                         <p className={styles.profileName}>{user?.name}</p>
                         <p className={styles.profileRole}>School staff account</p>
                     </div>
-                ) : null}
+                </div>
             </div>
 
             <button onClick={logout} className={styles.logoutButton}>
-                <span className={styles.logoutLabel}>Logout</span>
+                <span className={`${styles.logoutLabel} ${sidebarCollapsed ? styles.logoutLabelCollapsed : ''}`}>
+                    Logout
+                </span>
             </button>
         </aside>
     )
