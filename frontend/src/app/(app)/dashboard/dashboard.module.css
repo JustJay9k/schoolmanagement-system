@@ -71,6 +71,12 @@
     gap: 0.8rem;
 }
 
+.userMenu {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
 .searchBox {
     display: flex;
     align-items: center;
@@ -124,29 +130,73 @@
     font-weight: 800;
 }
 
-.userBadge {
-    gap: 0.75rem;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    background: var(--surface-field-strong);
-    padding: 0.35rem 0.85rem 0.35rem 0.35rem;
-}
-
 .userAvatar {
     display: grid;
     place-items: center;
     height: 2.6rem;
     width: 2.6rem;
     border-radius: 999px;
-    background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
-    color: var(--accent-contrast);
-    font-size: 0.88rem;
-    font-weight: 800;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
 }
 
-.userCopy {
+.userTrigger {
     display: grid;
-    gap: 0.1rem;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-field-strong);
+    color: var(--ink);
+    box-shadow: 0 10px 20px var(--shadow-soft);
+    transition:
+        transform 140ms ease,
+        border-color 140ms ease,
+        box-shadow 140ms ease,
+        color 140ms ease;
+}
+
+.userTrigger:hover,
+.userTrigger:focus-visible,
+.userMenu:hover .userTrigger {
+    transform: translateY(-1px);
+    border-color: var(--accent);
+    color: var(--accent-strong);
+    box-shadow: 0 14px 28px var(--shadow-strong);
+}
+
+.userIcon {
+    width: 1.35rem;
+    height: 1.35rem;
+    flex: 0 0 auto;
+}
+
+.userPopover {
+    position: absolute;
+    top: calc(100% + 0.75rem);
+    right: 0;
+    z-index: 40;
+    width: 13rem;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--surface-card-strong);
+    padding: 0.95rem 1rem;
+    box-shadow: 0 18px 40px var(--shadow-strong);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-0.35rem);
+    transition:
+        opacity 140ms ease,
+        transform 140ms ease,
+        visibility 140ms ease;
+}
+
+.userMenu:hover .userPopover,
+.userMenu:focus-within .userPopover {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
 }
 
 .userName {
@@ -157,8 +207,14 @@
 }
 
 .userRole {
-    margin: 0;
+    margin: 0.2rem 0 0;
     font-size: 0.78rem;
+    color: var(--muted);
+}
+
+.userMeta {
+    margin: 0.2rem 0 0;
+    font-size: 0.76rem;
     color: var(--muted);
 }
 
@@ -789,6 +845,11 @@
     .userBadge {
         width: 100%;
         justify-content: flex-start;
+    }
+
+    .userPopover {
+        width: 12.5rem;
+        right: 0;
     }
 
     .searchBox {

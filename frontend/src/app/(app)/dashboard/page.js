@@ -308,6 +308,19 @@ const StatusCell = ({ status }) => {
     return <span className={`${styles.statusBadge} ${meta.chipClass}`}>{meta.short}</span>
 }
 
+const UserIcon = () => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={styles.userIcon}>
+        <path
+            d="M20 19.5c-1.7-3-4.6-4.5-8-4.5s-6.3 1.5-8 4.5M12 12.5a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+)
+
 const Dashboard = () => {
     const { user } = useAuth({ middleware: 'auth' })
 
@@ -545,13 +558,23 @@ const Dashboard = () => {
                         <span className={styles.bellDot}>3</span>
                     </button>
 
-                    <div className={styles.userBadge}>
-                        <div className={styles.userAvatar}>{initials(user?.name ?? 'MS')}</div>
-                        <div className={styles.userCopy}>
+                    <div className={styles.userMenu} tabIndex={-1}>
+                        <button
+                            type="button"
+                            className={styles.userTrigger}
+                            aria-label="User account details"
+                            aria-describedby="user-account-popover">
+                            <span className={styles.userAvatar}>
+                                <UserIcon />
+                            </span>
+                        </button>
+
+                        <div id="user-account-popover" className={styles.userPopover} role="tooltip">
                             <p className={styles.userName}>{user?.name ?? 'Miss Smith'}</p>
                             <p className={styles.userRole}>
                                 {activeTrack === 'secondary' ? 'English Teacher' : 'Class Teacher'}
                             </p>
+                            <p className={styles.userMeta}>School staff account</p>
                         </div>
                     </div>
                 </div>
