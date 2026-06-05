@@ -13,3 +13,9 @@ frontend/node_modules/
 frontend/.env*.local
 frontend/.next/
 frontend/out/
+
+# Hallmark & Claude Code runtime artifacts
+.claude/
+.hallmark/
+hallmark.json
+hallmark-audit-report.json
