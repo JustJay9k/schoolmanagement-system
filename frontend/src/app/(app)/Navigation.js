@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/auth'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import styles from './navigation.module.css'
+import { navItems } from './navigation.config'
 
 const icons = {
     dashboard: (
@@ -155,17 +156,6 @@ const icons = {
     ),
 }
 
-const navItems = [
-    { label: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
-    { label: 'Registers', href: '/dashboard#register-center', icon: 'register' },
-    { label: 'Classes', href: '/dashboard#timetable', icon: 'classes' },
-    { label: 'Students', href: '/dashboard#students', icon: 'students' },
-    { label: 'Attendance Reports', href: '/dashboard#analytics', icon: 'reports' },
-    { label: 'Timetables', href: '/dashboard#timetable', icon: 'timetable' },
-    { label: 'Behaviour', href: '/dashboard#discipline', icon: 'behaviour' },
-    { label: 'Settings', href: '/dashboard#finance', icon: 'settings' },
-]
-
 const NavIcon = ({ name }) => (
     <svg
         viewBox="0 0 24 24"
@@ -179,6 +169,7 @@ const Navigation = ({ user }) => {
     const { logout } = useAuth()
     const pathname = usePathname()
     const [open, setOpen] = useState(false)
+    const activeItem = navItems.find(item => item.href === pathname)
 
     const Sidebar = (
         <aside className={styles.sidebar}>
@@ -194,17 +185,17 @@ const Navigation = ({ user }) => {
 
             <nav className={styles.navList}>
                 {navItems.map(item => {
-                    const active = item.href === '/dashboard' && pathname === '/dashboard'
+                    const active = pathname === item.href
 
                     return (
-                        <a
+                        <Link
                             key={item.label}
                             href={item.href}
                             onClick={() => setOpen(false)}
                             className={`${styles.navLink} ${active ? styles.navLinkActive : ''}`}>
                             <NavIcon name={item.icon} />
                             <span>{item.label}</span>
-                        </a>
+                        </Link>
                     )
                 })}
             </nav>
@@ -238,7 +229,7 @@ const Navigation = ({ user }) => {
                     </div>
                     <div>
                         <p className={styles.schoolName}>Beacon School</p>
-                        <p className={styles.schoolMeta}>Dashboard</p>
+                        <p className={styles.schoolMeta}>{activeItem?.label ?? 'Workspace'}</p>
                     </div>
                 </Link>
 
