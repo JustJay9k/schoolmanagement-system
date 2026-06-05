@@ -21,6 +21,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    position: relative;
+    z-index: 30;
     gap: 1.25rem;
     min-width: 0;
     border-radius: 1.6rem;
@@ -79,6 +81,7 @@
 
 .userMenu {
     position: relative;
+    z-index: 40;
     display: inline-flex;
     align-items: center;
     flex: 0 0 auto;
