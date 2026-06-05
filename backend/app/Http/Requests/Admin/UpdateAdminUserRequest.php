@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
+use App\Support\SchoolContextOptions;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -22,8 +23,47 @@ class UpdateAdminUserRequest extends FormRequest
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->route('user'))],
             'role' => ['required', Rule::in(UserRole::values())],
             'status' => ['required', Rule::in(UserStatus::values())],
+            'school_track' => ['nullable', Rule::in(SchoolContextOptions::trackValues())],
+            'assigned_class_name' => ['nullable', 'string', Rule::in(SchoolContextOptions::allClasses())],
             'email_verified' => ['nullable', 'boolean'],
             'password' => ['nullable', 'confirmed', Password::defaults()],
+        ];
+    }
+
+    public function after(): array
+    {
+        return [
+            function ($validator): void {
+                $role = $this->string('role')->toString();
+                $track = $this->string('school_track')->toString();
+                $className = $this->string('assigned_class_name')->toString();
+
+                if ($role !== UserRole::Teacher->value) {
+                    return;
+                }
+
+                if ($track === '') {
+                    $validator->errors()->add('school_track', 'Choose whether this teacher belongs to primary or secondary.');
+                }
+
+                if ($className === '') {
+                    $validator->errors()->add('assigned_class_name', 'Choose the single class this teacher will manage.');
+                    return;
+                }
+
+                if ($track !== '' && ! SchoolContextOptions::isValidClassForTrack($track, $className)) {
+                    $validator->errors()->add('assigned_class_name', 'The selected class does not belong to the chosen track.');
+                    return;
+                }
+
+                if (
+                    $track !== '' &&
+                    $className !== '' &&
+                    ! SchoolContextOptions::isTeacherClassAvailable($track, $className, $this->route('user'))
+                ) {
+                    $validator->errors()->add('assigned_class_name', 'That class is already assigned to another teacher.');
+                }
+            },
         ];
     }
 }

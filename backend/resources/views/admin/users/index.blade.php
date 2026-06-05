@@ -70,6 +70,7 @@
                     <tr>
                         <th>User</th>
                         <th>Role</th>
+                        <th>Assignment</th>
                         <th>Status</th>
                         <th>Verified</th>
                         <th>Created</th>
@@ -85,6 +86,14 @@
                                 <span>{{ $user->email }}</span>
                             </td>
                             <td>{{ $user->role->label() }}</td>
+                            <td>
+                                @if ($user->school_track && $user->assigned_class_name)
+                                    <strong>{{ ucfirst($user->school_track) }}</strong>
+                                    <span>{{ $user->assigned_class_name }}</span>
+                                @else
+                                    <span>All-school access</span>
+                                @endif
+                            </td>
                             <td><span class="badge badge-{{ $user->status->value }}">{{ $user->status->label() }}</span></td>
                             <td>{{ $user->email_verified_at ? 'Verified' : 'Pending' }}</td>
                             <td>{{ $user->created_at?->format('M d, Y') }}</td>
@@ -102,7 +111,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="empty-state">No users matched the current filters.</td>
+                            <td colspan="8" class="empty-state">No users matched the current filters.</td>
                         </tr>
                     @endforelse
                 </tbody>

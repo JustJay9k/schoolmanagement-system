@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreAdminUserRequest;
 use App\Http\Requests\Admin\UpdateAdminUserRequest;
 use App\Models\User;
+use App\Support\SchoolContextOptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -56,6 +57,9 @@ class AdminUserController extends Controller
         return view('admin.users.create', [
             'roles' => UserRole::cases(),
             'statuses' => UserStatus::cases(),
+            'schoolTracks' => SchoolContextOptions::tracks(),
+            'classesByTrack' => SchoolContextOptions::classesByTrack(),
+            'takenClassesByTrack' => SchoolContextOptions::takenClassesByTrack(),
         ]);
     }
 
@@ -74,6 +78,9 @@ class AdminUserController extends Controller
             'userModel' => $user,
             'roles' => UserRole::cases(),
             'statuses' => UserStatus::cases(),
+            'schoolTracks' => SchoolContextOptions::tracks(),
+            'classesByTrack' => SchoolContextOptions::classesByTrack(),
+            'takenClassesByTrack' => SchoolContextOptions::takenClassesByTrack($user),
         ]);
     }
 
@@ -143,11 +150,18 @@ class AdminUserController extends Controller
     {
         $validated = $request->validated();
 
+        $role = UserRole::from($validated['role']);
         $payload = [
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'role' => UserRole::from($validated['role']),
+            'role' => $role,
             'status' => UserStatus::from($validated['status']),
+            'school_track' => $role === UserRole::Teacher
+                ? ($validated['school_track'] ?? null)
+                : null,
+            'assigned_class_name' => $role === UserRole::Teacher
+                ? ($validated['assigned_class_name'] ?? null)
+                : null,
             'email_verified_at' => $request->boolean('email_verified')
                 ? ($user?->email_verified_at ?? now())
                 : null,

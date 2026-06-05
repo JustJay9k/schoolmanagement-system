@@ -21,6 +21,8 @@ class UserManagementTest extends TestCase
             'email' => 'grace@example.com',
             'role' => UserRole::Teacher->value,
             'status' => UserStatus::Active->value,
+            'school_track' => 'secondary',
+            'assigned_class_name' => 'Year 10 - English (10A)',
             'email_verified' => '1',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
@@ -31,7 +33,26 @@ class UserManagementTest extends TestCase
             'email' => 'grace@example.com',
             'role' => UserRole::Teacher->value,
             'status' => UserStatus::Active->value,
+            'school_track' => 'secondary',
+            'assigned_class_name' => 'Year 10 - English (10A)',
         ]);
+    }
+
+    public function test_teacher_assignments_are_required_when_admin_creates_a_teacher(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->actingAs($admin)->post('/admin/users', [
+            'name' => 'Unassigned Teacher',
+            'email' => 'teacher@example.com',
+            'role' => UserRole::Teacher->value,
+            'status' => UserStatus::Active->value,
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+        ]);
+
+        $response
+            ->assertSessionHasErrors(['school_track', 'assigned_class_name']);
     }
 
     public function test_admin_can_update_a_user(): void
@@ -54,6 +75,56 @@ class UserManagementTest extends TestCase
             'name' => 'Updated User',
             'role' => UserRole::Accountant->value,
             'status' => UserStatus::Suspended->value,
+        ]);
+    }
+
+    public function test_admin_cannot_assign_the_same_class_to_two_teachers(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        User::factory()->teacher()->create([
+            'school_track' => 'secondary',
+            'assigned_class_name' => 'Year 10 - English (10A)',
+        ]);
+
+        $response = $this->actingAs($admin)->post('/admin/users', [
+            'name' => 'Second Teacher',
+            'email' => 'second-teacher@example.com',
+            'role' => UserRole::Teacher->value,
+            'status' => UserStatus::Active->value,
+            'school_track' => 'secondary',
+            'assigned_class_name' => 'Year 10 - English (10A)',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+        ]);
+
+        $response->assertSessionHasErrors(['assigned_class_name']);
+    }
+
+    public function test_teacher_can_keep_their_existing_class_when_updating_their_account(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $teacher = User::factory()->teacher()->create([
+            'school_track' => 'secondary',
+            'assigned_class_name' => 'Year 10 - English (10A)',
+        ]);
+
+        $response = $this->actingAs($admin)->put("/admin/users/{$teacher->id}", [
+            'name' => 'Updated Teacher',
+            'email' => $teacher->email,
+            'role' => UserRole::Teacher->value,
+            'status' => UserStatus::Active->value,
+            'school_track' => 'secondary',
+            'assigned_class_name' => 'Year 10 - English (10A)',
+            'password' => '',
+            'password_confirmation' => '',
+        ]);
+
+        $response->assertRedirect('/admin/users');
+        $this->assertDatabaseHas('users', [
+            'id' => $teacher->id,
+            'name' => 'Updated Teacher',
+            'assigned_class_name' => 'Year 10 - English (10A)',
         ]);
     }
 

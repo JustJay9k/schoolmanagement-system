@@ -32,7 +32,7 @@ class DatabaseSeeder extends Seeder
         ], [
             'name' => 'Test User',
             'password' => 'password',
-            'role' => UserRole::Staff,
+            'role' => UserRole::Management,
             'status' => UserStatus::Active,
             'email_verified_at' => now(),
         ]);
