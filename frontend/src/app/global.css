@@ -175,6 +175,20 @@ body::before {
     z-index: -1;
 }
 
+.appShellMain {
+    padding-left: 0;
+}
+
+@media (min-width: 1024px) {
+    body[data-sidebar-collapsed='false'] .appShellMain {
+        padding-left: 17.25rem;
+    }
+
+    body[data-sidebar-collapsed='true'] .appShellMain {
+        padding-left: 5.75rem;
+    }
+}
+
 ::selection {
     background: rgba(var(--accent-rgb), 0.18);
     color: var(--ink);

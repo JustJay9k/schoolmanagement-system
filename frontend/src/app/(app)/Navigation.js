@@ -165,22 +165,24 @@ const NavIcon = ({ name }) => (
     </svg>
 )
 
-const Navigation = ({ user }) => {
+const Navigation = ({ user, sidebarCollapsed, setSidebarCollapsed }) => {
     const { logout } = useAuth()
     const pathname = usePathname()
     const [open, setOpen] = useState(false)
     const activeItem = navItems.find(item => item.href === pathname)
 
     const Sidebar = (
-        <aside className={styles.sidebar}>
+        <aside className={`${styles.sidebar} ${sidebarCollapsed ? styles.sidebarCollapsed : ''}`}>
             <div className={styles.brand}>
                 <div className={styles.brandMark}>
                     <ApplicationLogo className="h-8 w-8 fill-current" />
                 </div>
-                <div>
-                    <p className={styles.schoolName}>Beacon School</p>
-                    <p className={styles.schoolMeta}>Operations workspace</p>
-                </div>
+                {!sidebarCollapsed ? (
+                    <div>
+                        <p className={styles.schoolName}>Beacon School</p>
+                        <p className={styles.schoolMeta}>Operations workspace</p>
+                    </div>
+                ) : null}
             </div>
 
             <nav className={styles.navList}>
@@ -192,15 +194,17 @@ const Navigation = ({ user }) => {
                             key={item.label}
                             href={item.href}
                             onClick={() => setOpen(false)}
-                            className={`${styles.navLink} ${active ? styles.navLinkActive : ''}`}>
+                            className={`${styles.navLink} ${active ? styles.navLinkActive : ''} ${
+                                sidebarCollapsed ? styles.navLinkCollapsed : ''
+                            }`}>
                             <NavIcon name={item.icon} />
-                            <span>{item.label}</span>
+                            {!sidebarCollapsed ? <span>{item.label}</span> : null}
                         </Link>
                     )
                 })}
             </nav>
 
-            <div className={styles.profileCard}>
+            <div className={`${styles.profileCard} ${sidebarCollapsed ? styles.profileCardCollapsed : ''}`}>
                 <div className={styles.avatar}>
                     {(user?.name ?? 'U')
                         .split(' ')
@@ -208,14 +212,16 @@ const Navigation = ({ user }) => {
                         .map(part => part[0])
                         .join('')}
                 </div>
-                <div className={styles.profileCopy}>
-                    <p className={styles.profileName}>{user?.name}</p>
-                    <p className={styles.profileRole}>School staff account</p>
-                </div>
+                {!sidebarCollapsed ? (
+                    <div className={styles.profileCopy}>
+                        <p className={styles.profileName}>{user?.name}</p>
+                        <p className={styles.profileRole}>School staff account</p>
+                    </div>
+                ) : null}
             </div>
 
             <button onClick={logout} className={styles.logoutButton}>
-                Logout
+                <span className={styles.logoutLabel}>Logout</span>
             </button>
         </aside>
     )
@@ -238,7 +244,12 @@ const Navigation = ({ user }) => {
                 </button>
             </div>
 
-            <div className={styles.desktopSidebar}>{Sidebar}</div>
+            <div
+                className={`${styles.desktopSidebar} ${
+                    sidebarCollapsed ? styles.desktopSidebarCollapsed : ''
+                }`}>
+                {Sidebar}
+            </div>
 
             {open && (
                 <div className={styles.mobileOverlay}>

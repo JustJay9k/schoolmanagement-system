@@ -308,6 +308,10 @@ const StatusCell = ({ status }) => {
     return <span className={`${styles.statusBadge} ${meta.chipClass}`}>{meta.short}</span>
 }
 
+const toggleSidebar = () => {
+    window.dispatchEvent(new Event('beacon-toggle-sidebar'))
+}
+
 const UserIcon = () => (
     <svg viewBox="0 0 24 24" aria-hidden="true" className={styles.userIcon}>
         <path
@@ -512,7 +516,11 @@ const Dashboard = () => {
         <div className={styles.page}>
             <header className={styles.topBar}>
                 <div className={styles.titleGroup}>
-                    <button className={styles.menuGlyph} aria-hidden="true">
+                    <button
+                        type="button"
+                        className={styles.menuGlyph}
+                        onClick={toggleSidebar}
+                        aria-label="Toggle sidebar">
                         <span />
                         <span />
                         <span />
