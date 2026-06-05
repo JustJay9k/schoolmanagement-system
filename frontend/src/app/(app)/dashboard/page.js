@@ -529,7 +529,7 @@ const UserIcon = () => (
 )
 
 const toggleSidebar = () => {
-    window.dispatchEvent(new Event('beacon-toggle-sidebar'))
+    window.dispatchEvent(new Event('pcms-toggle-sidebar'))
 }
 
 const Dashboard = () => {

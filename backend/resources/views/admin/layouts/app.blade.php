@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ ($pageTitle ?? 'Admin Dashboard') . ' | School Management Admin' }}</title>
+    <title>{{ ($pageTitle ?? 'Admin Dashboard') . ' | Phunziro Class Management System (PCMS)' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
     <div class="admin-shell">
         <aside class="sidebar-card">
             <div class="brand-lockup">
-                <span class="brand-chip">School Ops</span>
+                <span class="brand-chip">PCMS</span>
                 <h1>Administrator control tower</h1>
                 <p>Run user access, monitor account health, and keep the operational layer of the school system stable.</p>
             </div>
@@ -29,8 +29,8 @@
                     <small>Primary and secondary class setup</small>
                 </a>
                 <a href="{{ route('admin.users.index') }}" @class(['is-active' => request()->routeIs('admin.users.*')])>
-                    <span>Users</span>
-                    <small>Roster, status, and account control</small>
+                    <span>User accounts</span>
+                    <small>Roster, roles, classes, and access control</small>
                 </a>
             </nav>
 

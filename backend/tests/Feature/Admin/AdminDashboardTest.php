@@ -50,4 +50,19 @@ class AdminDashboardTest extends TestCase
         $response->assertSessionHasErrors('email');
         $this->assertGuest();
     }
+
+    public function test_admin_can_sign_in_through_admin_portal(): void
+    {
+        $admin = User::factory()->admin()->create([
+            'email' => 'admin@school.test',
+        ]);
+
+        $response = $this->post('/admin/login', [
+            'email' => $admin->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('/dashboard');
+        $this->assertAuthenticatedAs($admin);
+    }
 }

@@ -26,8 +26,8 @@ const RootLayout = ({ children }) => {
                         __html: `(() => {
                             try {
                                 const accentOptions = ['teal', 'blue', 'indigo', 'rose', 'amber', 'emerald']
-                                const storedTheme = localStorage.getItem('beacon-theme')
-                                const storedAccent = localStorage.getItem('beacon-accent')
+                                const storedTheme = localStorage.getItem('pcms-theme')
+                                const storedAccent = localStorage.getItem('pcms-accent')
                                 const theme = storedTheme === 'dark' || storedTheme === 'light'
                                     ? storedTheme
                                     : window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -53,9 +53,9 @@ const RootLayout = ({ children }) => {
 }
 
 export const metadata = {
-    title: 'Beacon School OS',
+    title: 'Phunziro Class Management System (PCMS)',
     description:
-        'Operational school management workspace for attendance, discipline, timetables, and finance.',
+        'PCMS workspace for attendance, discipline, timetables, and finance.',
 }
 
 export default RootLayout

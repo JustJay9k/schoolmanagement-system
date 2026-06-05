@@ -128,6 +128,48 @@ class UserManagementTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_disable_and_enable_a_user_account_from_the_list(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $teacher = User::factory()->teacher()->create([
+            'status' => UserStatus::Active,
+        ]);
+
+        $this->actingAs($admin)
+            ->patch("/admin/users/{$teacher->id}/status")
+            ->assertRedirect('/admin/users');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $teacher->id,
+            'status' => UserStatus::Inactive->value,
+        ]);
+
+        $this->actingAs($admin)
+            ->patch("/admin/users/{$teacher->id}/status")
+            ->assertRedirect('/admin/users');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $teacher->id,
+            'status' => UserStatus::Active->value,
+        ]);
+    }
+
+    public function test_last_active_admin_cannot_be_disabled(): void
+    {
+        $admin = User::factory()->admin()->create([
+            'status' => UserStatus::Active,
+        ]);
+
+        $this->actingAs($admin)
+            ->patch("/admin/users/{$admin->id}/status")
+            ->assertSessionHasErrors('status');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $admin->id,
+            'status' => UserStatus::Active->value,
+        ]);
+    }
+
     public function test_last_admin_cannot_be_deleted(): void
     {
         $admin = User::factory()->admin()->create();

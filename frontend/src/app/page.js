@@ -55,7 +55,7 @@ const Home = () => {
                                 in.
                             </h1>
                             <p className="max-w-2xl text-lg text-white/90 sm:text-xl">
-                                Beacon School OS unifies primary and secondary
+                                Phunziro Class Management System (PCMS) unifies primary and secondary
                                 attendance flows, student insight, discipline,
                                 timetable control, and fee tracking in one fast
                                 headless interface.

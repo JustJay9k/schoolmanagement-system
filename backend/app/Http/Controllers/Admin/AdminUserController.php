@@ -102,6 +102,18 @@ class AdminUserController extends Controller
 
         if (
             $user->isAdmin() &&
+            ($payload['status'] ?? $user->status) !== UserStatus::Active &&
+            User::where('role', UserRole::Admin)
+                ->where('status', UserStatus::Active)
+                ->count() <= 1
+        ) {
+            return back()
+                ->withInput()
+                ->withErrors(['status' => 'At least one active administrator must remain in the system.']);
+        }
+
+        if (
+            $user->isAdmin() &&
             ($payload['role'] ?? $user->role) !== UserRole::Admin &&
             User::where('role', UserRole::Admin)->count() <= 1
         ) {
@@ -119,6 +131,45 @@ class AdminUserController extends Controller
         return redirect()
             ->route('admin.users.index')
             ->with('status', 'User account updated successfully.');
+    }
+
+    public function updateStatus(Request $request, User $user): RedirectResponse
+    {
+        $targetStatus = $user->status === UserStatus::Active
+            ? UserStatus::Inactive
+            : UserStatus::Active;
+
+        if ($request->user()->is($user) && $targetStatus !== UserStatus::Active) {
+            return back()->withErrors([
+                'status' => 'You cannot disable the account you are currently using.',
+            ]);
+        }
+
+        if (
+            $user->isAdmin() &&
+            $targetStatus !== UserStatus::Active &&
+            User::where('role', UserRole::Admin)
+                ->where('status', UserStatus::Active)
+                ->count() <= 1
+        ) {
+            return back()->withErrors([
+                'status' => 'At least one active administrator must remain in the system.',
+            ]);
+        }
+
+        $user->update([
+            'status' => $targetStatus,
+        ]);
+
+        if ($targetStatus !== UserStatus::Active) {
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+        }
+
+        return redirect()
+            ->route('admin.users.index')
+            ->with('status', $targetStatus === UserStatus::Active
+                ? 'User account enabled successfully.'
+                : 'User account disabled successfully.');
     }
 
     public function destroy(Request $request, User $user): RedirectResponse

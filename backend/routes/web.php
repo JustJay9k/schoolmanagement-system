@@ -39,6 +39,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::resource('/admin/users', AdminUserController::class)
         ->except('show')
         ->names('admin.users');
+    Route::patch('/admin/users/{user}/status', [AdminUserController::class, 'updateStatus'])
+        ->name('admin.users.status');
 });
 
 require __DIR__.'/auth.php';

@@ -10,6 +10,16 @@
 @endsection
 
 @section('content')
+    <section class="panel-card">
+        <div class="panel-heading">
+            <div>
+                <p class="eyebrow">Account roster</p>
+                <h3>All system users, roles, email addresses, and class responsibility.</h3>
+            </div>
+            <p class="meta-copy">Administrators can create accounts, assign primary or secondary classes to teachers, and quickly disable or re-enable access from this screen.</p>
+        </div>
+    </section>
+
     <section class="metric-grid compact-grid">
         <article class="metric-card">
             <p>Total users</p>
@@ -101,6 +111,13 @@
                             <td>
                                 <div class="row-actions">
                                     <a href="{{ route('admin.users.edit', $user) }}" class="text-link">Edit</a>
+                                    <form method="POST" action="{{ route('admin.users.status', $user) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="text-button">
+                                            {{ $user->status->value === \App\Enums\UserStatus::Active->value ? 'Disable' : 'Enable' }}
+                                        </button>
+                                    </form>
                                     <form method="POST" action="{{ route('admin.users.destroy', $user) }}" onsubmit="return confirm('Delete this user account?');">
                                         @csrf
                                         @method('DELETE')

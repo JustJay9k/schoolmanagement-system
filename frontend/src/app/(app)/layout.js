@@ -10,7 +10,7 @@ const AppLayout = ({ children }) => {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
     useEffect(() => {
-        const storedValue = localStorage.getItem('beacon-sidebar-collapsed')
+        const storedValue = localStorage.getItem('pcms-sidebar-collapsed')
 
         setSidebarCollapsed(storedValue === 'true')
     }, [])
@@ -20,16 +20,16 @@ const AppLayout = ({ children }) => {
             setSidebarCollapsed(current => !current)
         }
 
-        window.addEventListener('beacon-toggle-sidebar', handleToggleSidebar)
+        window.addEventListener('pcms-toggle-sidebar', handleToggleSidebar)
 
         return () => {
-            window.removeEventListener('beacon-toggle-sidebar', handleToggleSidebar)
+            window.removeEventListener('pcms-toggle-sidebar', handleToggleSidebar)
         }
     }, [])
 
     useEffect(() => {
         document.body.dataset.sidebarCollapsed = sidebarCollapsed ? 'true' : 'false'
-        localStorage.setItem('beacon-sidebar-collapsed', String(sidebarCollapsed))
+        localStorage.setItem('pcms-sidebar-collapsed', String(sidebarCollapsed))
     }, [sidebarCollapsed])
 
     if (!user) {

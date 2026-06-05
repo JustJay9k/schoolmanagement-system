@@ -10,7 +10,7 @@ const AuthCard = ({ logo, children }) => (
                     </div>
                     <div>
                         <p className="text-xs uppercase tracking-[0.28em] text-[var(--muted)]">
-                            Beacon School OS
+                            Phunziro Class Management System (PCMS)
                         </p>
                         <h1 className="font-[var(--font-display)] text-2xl text-[var(--ink)]">
                             Secure staff access

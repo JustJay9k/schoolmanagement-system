@@ -3,8 +3,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
 const ThemeContext = createContext(null)
-const themeStorageKey = 'beacon-theme'
-const accentStorageKey = 'beacon-accent'
+const themeStorageKey = 'pcms-theme'
+const accentStorageKey = 'pcms-accent'
 const defaultAccent = 'teal'
 
 export const accentThemes = [

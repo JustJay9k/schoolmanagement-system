@@ -82,7 +82,7 @@ const LoginContent = () => {
             <div className={styles.header}>
                 <div>
                     <p className={styles.eyebrow}>Staff Login</p>
-                    <h2 className={styles.title}>Welcome back to Beacon School OS</h2>
+                    <h2 className={styles.title}>Welcome back to Phunziro Class Management System</h2>
                 </div>
                 <p className={styles.copy}>
                     Sign in to manage daily registers, review alerts, and keep
@@ -110,7 +110,7 @@ const LoginContent = () => {
                         value={email}
                         className={styles.input}
                         onChange={event => setEmail(event.target.value)}
-                        placeholder="teacher@beaconacademy.edu"
+                        placeholder="teacher@pcms.school"
                         required
                         autoFocus
                     />

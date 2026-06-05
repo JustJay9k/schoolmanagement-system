@@ -182,8 +182,8 @@ const Navigation = ({ user, sidebarCollapsed }) => {
                         sidebarCollapsed ? styles.brandCopyCollapsed : ''
                     }`}>
                     <div>
-                        <p className={styles.schoolName}>Beacon School</p>
-                        <p className={styles.schoolMeta}>Operations workspace</p>
+                        <p className={styles.schoolName}>PCMS</p>
+                        <p className={styles.schoolMeta}>Phunziro Class Management System</p>
                     </div>
                 </div>
             </div>
@@ -247,7 +247,7 @@ const Navigation = ({ user, sidebarCollapsed }) => {
                         <ApplicationLogo className="h-7 w-7 fill-current" />
                     </div>
                     <div>
-                        <p className={styles.schoolName}>Beacon School</p>
+                        <p className={styles.schoolName}>PCMS</p>
                         <p className={styles.schoolMeta}>{activeItem?.label ?? 'Workspace'}</p>
                     </div>
                 </Link>

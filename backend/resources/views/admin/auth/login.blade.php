@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin Login | School Management</title>
+    <title>Admin Login | Phunziro Class Management System (PCMS)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
 <body class="login-page">
     <main class="login-shell">
         <section class="login-hero">
-            <p class="eyebrow">School Management System</p>
+            <p class="eyebrow">Phunziro Class Management System (PCMS)</p>
             <h1>Admin operations without the clutter.</h1>
             <p class="hero-copy">This portal is reserved for active administrator accounts. From here you can oversee users, access posture, and the operational health of the platform.</p>
 
@@ -76,6 +76,7 @@
                     <code>{{ env('ADMIN_EMAIL', 'admin@school.test') }}</code>
                     with password
                     <code>{{ env('ADMIN_PASSWORD', 'password') }}</code>.
+                    The seeded <code>test@example.com</code> account is a management user, not an administrator, so it cannot sign in here.
                 </p>
             @endif
         </section>
