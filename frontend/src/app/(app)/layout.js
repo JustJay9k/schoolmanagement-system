@@ -41,7 +41,6 @@ const AppLayout = ({ children }) => {
             <Navigation
                 user={user}
                 sidebarCollapsed={sidebarCollapsed}
-                setSidebarCollapsed={setSidebarCollapsed}
             />
 
             <main className="appShellMain pb-12">{children}</main>

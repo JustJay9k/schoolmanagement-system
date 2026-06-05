@@ -176,16 +176,20 @@ body::before {
 }
 
 .appShellMain {
+    width: 100%;
+    min-width: 0;
     padding-left: 0;
 }
 
 @media (min-width: 1024px) {
     body[data-sidebar-collapsed='false'] .appShellMain {
-        padding-left: 17.25rem;
+        width: calc(100% - 17.25rem);
+        margin-left: 17.25rem;
     }
 
     body[data-sidebar-collapsed='true'] .appShellMain {
-        padding-left: 5.75rem;
+        width: calc(100% - 5.75rem);
+        margin-left: 5.75rem;
     }
 }
 

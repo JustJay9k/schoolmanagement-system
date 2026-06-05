@@ -165,7 +165,7 @@ const NavIcon = ({ name }) => (
     </svg>
 )
 
-const Navigation = ({ user, sidebarCollapsed, setSidebarCollapsed }) => {
+const Navigation = ({ user, sidebarCollapsed }) => {
     const { logout } = useAuth()
     const pathname = usePathname()
     const [open, setOpen] = useState(false)
