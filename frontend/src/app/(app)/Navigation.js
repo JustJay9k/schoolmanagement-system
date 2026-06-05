@@ -6,7 +6,8 @@ import { useAuth } from '@/hooks/auth'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import styles from './navigation.module.css'
-import { navItems } from './navigation.config'
+import { getNavItems } from './navigation.config'
+import { formatRoleLabel } from '@/lib/userAccess'
 
 const icons = {
     dashboard: (
@@ -154,6 +155,58 @@ const icons = {
             />
         </>
     ),
+    users: (
+        <>
+            <circle
+                cx="9"
+                cy="9"
+                r="2.7"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+            />
+            <circle
+                cx="16.5"
+                cy="10"
+                r="2.2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+            />
+            <path
+                d="M4.8 18.5c1.1-2.5 3.3-3.9 5.9-3.9s4.7 1.4 5.8 3.9"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
+            <path
+                d="M14.7 18.2c.7-1.7 2.1-2.7 3.8-2.7.7 0 1.4.2 2 .5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
+        </>
+    ),
+    schoolStructure: (
+        <>
+            <path
+                d="M5 18.5V8.2l7-3.2 7 3.2v10.3"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M9 18.5v-4h6v4M8 10.5h8"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
+        </>
+    ),
 }
 
 const NavIcon = ({ name }) => (
@@ -169,7 +222,10 @@ const Navigation = ({ user, sidebarCollapsed }) => {
     const { logout } = useAuth()
     const pathname = usePathname()
     const [open, setOpen] = useState(false)
-    const activeItem = navItems.find(item => item.href === pathname)
+    const navItems = getNavItems(user)
+    const isItemActive = href =>
+        pathname === href || pathname.startsWith(`${href}/`)
+    const activeItem = navItems.find(item => isItemActive(item.href))
 
     const Sidebar = (
         <aside className={`${styles.sidebar} ${sidebarCollapsed ? styles.sidebarCollapsed : ''}`}>
@@ -190,7 +246,7 @@ const Navigation = ({ user, sidebarCollapsed }) => {
 
             <nav className={styles.navList}>
                 {navItems.map(item => {
-                    const active = pathname === item.href
+                    const active = isItemActive(item.href)
 
                     return (
                         <Link
@@ -226,7 +282,7 @@ const Navigation = ({ user, sidebarCollapsed }) => {
                     }`}>
                     <div>
                         <p className={styles.profileName}>{user?.name}</p>
-                        <p className={styles.profileRole}>School staff account</p>
+                        <p className={styles.profileRole}>{formatRoleLabel(user?.role)}</p>
                     </div>
                 </div>
             </div>
