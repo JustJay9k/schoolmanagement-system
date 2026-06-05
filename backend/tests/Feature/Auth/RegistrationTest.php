@@ -17,7 +17,7 @@ class RegistrationTest extends TestCase
             'name' => 'Test User',
             'email' => 'test@example.com',
             'school_track' => 'secondary',
-            'assigned_class_name' => 'Year 10 - English (10A)',
+            'assigned_class_name' => 'Form 1',
             'password' => 'password',
             'password_confirmation' => 'password',
         ]);
@@ -28,7 +28,7 @@ class RegistrationTest extends TestCase
             'email' => 'test@example.com',
             'role' => UserRole::Teacher->value,
             'school_track' => 'secondary',
-            'assigned_class_name' => 'Year 10 - English (10A)',
+            'assigned_class_name' => 'Form 1',
         ]);
     }
 
@@ -36,14 +36,14 @@ class RegistrationTest extends TestCase
     {
         User::factory()->teacher()->create([
             'school_track' => 'secondary',
-            'assigned_class_name' => 'Year 10 - English (10A)',
+            'assigned_class_name' => 'Form 1',
         ]);
 
         $response = $this->postJson('/register', [
             'name' => 'Second Teacher',
             'email' => 'second@example.com',
             'school_track' => 'secondary',
-            'assigned_class_name' => 'Year 10 - English (10A)',
+            'assigned_class_name' => 'Form 1',
             'password' => 'password',
             'password_confirmation' => 'password',
         ]);

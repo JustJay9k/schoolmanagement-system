@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminAuthenticatedSessionController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminSchoolStructureController;
 use App\Http\Controllers\Admin\AdminUserController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,6 +30,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     Route::post('/admin/logout', [AdminAuthenticatedSessionController::class, 'destroy'])
         ->name('admin.logout');
+
+    Route::get('/admin/school-structure', [AdminSchoolStructureController::class, 'edit'])
+        ->name('admin.school-structure.edit');
+    Route::put('/admin/school-structure', [AdminSchoolStructureController::class, 'update'])
+        ->name('admin.school-structure.update');
 
     Route::resource('/admin/users', AdminUserController::class)
         ->except('show')

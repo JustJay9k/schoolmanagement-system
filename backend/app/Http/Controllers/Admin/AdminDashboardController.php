@@ -54,6 +54,13 @@ class AdminDashboardController extends Controller
                 'action_url' => route('admin.users.index'),
             ],
             [
+                'title' => 'School structure',
+                'metric' => '2 tracks',
+                'detail' => 'Set the default class names for primary and secondary so teacher onboarding matches your school.',
+                'action_label' => 'Edit classes',
+                'action_url' => route('admin.school-structure.edit'),
+            ],
+            [
                 'title' => 'Access control',
                 'metric' => number_format($adminUsers),
                 'detail' => 'Track privileged accounts and keep ownership of critical workflows with the admin team.',

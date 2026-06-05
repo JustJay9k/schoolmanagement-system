@@ -24,6 +24,10 @@
                     <span>Overview</span>
                     <small>Metrics and system posture</small>
                 </a>
+                <a href="{{ route('admin.school-structure.edit') }}" @class(['is-active' => request()->routeIs('admin.school-structure.*')])>
+                    <span>School structure</span>
+                    <small>Primary and secondary class setup</small>
+                </a>
                 <a href="{{ route('admin.users.index') }}" @class(['is-active' => request()->routeIs('admin.users.*')])>
                     <span>Users</span>
                     <small>Roster, status, and account control</small>

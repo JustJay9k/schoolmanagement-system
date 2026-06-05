@@ -2,10 +2,10 @@ import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import styles from '@/app/(app)/workspace-page.module.css'
 
 const classRows = [
-    ['Standard 5 East', '31 learners', 'Mrs Banda', 'Room P-03'],
-    ['Standard 7 West', '28 learners', 'Mr Tembo', 'Room P-07'],
-    ['Form 2 North', '34 learners', 'Ms Mbewe', 'Room S-11'],
-    ['Form 4 Science', '26 learners', 'Mr Phiri', 'Lab 2'],
+    ['Standard 5', '31 learners', 'Mrs Banda', 'Room P-03'],
+    ['Standard 7', '28 learners', 'Mr Tembo', 'Room P-07'],
+    ['Form 2', '34 learners', 'Ms Mbewe', 'Room S-11'],
+    ['Form 4', '26 learners', 'Mr Phiri', 'Lab 2'],
 ]
 
 const capacityNotes = [

@@ -3,10 +3,14 @@
 namespace App\Support;
 
 use App\Enums\UserRole;
+use App\Models\SchoolSetting;
 use App\Models\User;
+use Illuminate\Support\Facades\Schema;
 
 final class SchoolContextOptions
 {
+    public const STRUCTURE_KEY = 'school_structure';
+
     /**
      * @return array<string, string>
      */
@@ -23,15 +27,50 @@ final class SchoolContextOptions
      */
     public static function classesByTrack(): array
     {
+        if (! Schema::hasTable('school_settings')) {
+            return self::defaultClassesByTrack();
+        }
+
+        $storedValue = SchoolSetting::query()
+            ->where('key', self::STRUCTURE_KEY)
+            ->value('value');
+
+        return self::normalizeClassesByTrack(
+            is_array($storedValue) ? $storedValue : null,
+            fallbackToDefaults: true,
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $classesByTrack
+     */
+    public static function saveClassesByTrack(?array $classesByTrack): void
+    {
+        SchoolSetting::query()->updateOrCreate(
+            ['key' => self::STRUCTURE_KEY],
+            [
+                'value' => self::normalizeClassesByTrack(
+                    $classesByTrack,
+                    fallbackToDefaults: false,
+                ),
+            ],
+        );
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
+    public static function defaultClassesByTrack(): array
+    {
         return [
-            'primary' => [
-                'Standard 5 - East',
-                'Standard 7 - West',
-            ],
-            'secondary' => [
-                'Year 10 - English (10A)',
-                'Form 2 North',
-            ],
+            'primary' => array_map(
+                static fn (int $standard): string => "Standard {$standard}",
+                range(1, 8),
+            ),
+            'secondary' => array_map(
+                static fn (int $form): string => "Form {$form}",
+                range(1, 4),
+            ),
         ];
     }
 
@@ -48,9 +87,10 @@ final class SchoolContextOptions
      */
     public static function allClasses(): array
     {
-        return array_values(
-            array_merge(...array_values(self::classesByTrack())),
-        );
+        return collect(self::classesByTrack())
+            ->flatten()
+            ->values()
+            ->all();
     }
 
     public static function isValidClassForTrack(?string $track, ?string $className): bool
@@ -113,6 +153,35 @@ final class SchoolContextOptions
         }
 
         return ! in_array($className, self::takenClassesByTrack($ignoreUser)[$track] ?? [], true);
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $classesByTrack
+     * @return array<string, list<string>>
+     */
+    public static function normalizeClassesByTrack(?array $classesByTrack, bool $fallbackToDefaults): array
+    {
+        $defaults = self::defaultClassesByTrack();
+        $normalized = [];
+
+        foreach (self::trackValues() as $track) {
+            $candidate = $classesByTrack[$track] ?? null;
+            $classes = is_array($candidate) ? $candidate : [];
+
+            $cleanedClasses = collect($classes)
+                ->filter(fn ($value) => is_string($value))
+                ->map(fn (string $className): string => trim($className))
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+
+            $normalized[$track] = $fallbackToDefaults && $cleanedClasses === []
+                ? $defaults[$track]
+                : $cleanedClasses;
+        }
+
+        return $normalized;
     }
 
     /**

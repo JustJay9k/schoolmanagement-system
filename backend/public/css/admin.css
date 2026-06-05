@@ -27,7 +27,8 @@ a {
 
 button,
 input,
-select {
+select,
+textarea {
     font: inherit;
 }
 
@@ -493,7 +494,8 @@ select:focus-visible {
 }
 
 .field input,
-.field select {
+.field select,
+.field textarea {
     width: 100%;
     min-width: 0;
     padding: 0.95rem 1rem;
@@ -508,9 +510,16 @@ select:focus-visible {
 
 .field input:hover,
 .field select:hover,
+.field textarea:hover,
 .field input.is-hover,
-.field select.is-hover {
+.field select.is-hover,
+.field textarea.is-hover {
     border-color: color-mix(in oklch, var(--color-accent) 30%, white 70%);
+}
+
+.field textarea {
+    resize: vertical;
+    min-height: 10rem;
 }
 
 .checkbox-row {
@@ -559,6 +568,11 @@ select:focus-visible {
 .track-choice small,
 .helper-copy {
     color: var(--color-ink-soft);
+}
+
+.field-error {
+    color: color-mix(in oklch, var(--color-danger) 78%, black 22%);
+    font-size: var(--text-sm);
 }
 
 .pagination-wrap nav {

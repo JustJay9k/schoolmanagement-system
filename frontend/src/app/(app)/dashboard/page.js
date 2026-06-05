@@ -64,7 +64,7 @@ const classFixtures = {
     primary: [
         {
             id: 'standard-5-east',
-            className: 'Standard 5 - East',
+            className: 'Standard 5',
             tutorGroup: '5E',
             teacherLabel: 'Mrs Banda',
             submissionLabel: 'AM register complete: 1/2 sessions',
@@ -122,7 +122,7 @@ const classFixtures = {
         },
         {
             id: 'standard-7-west',
-            className: 'Standard 7 - West',
+            className: 'Standard 7',
             tutorGroup: '7W',
             teacherLabel: 'Mr Tembo',
             submissionLabel: 'AM register complete: 2/2 sessions',
@@ -181,9 +181,9 @@ const classFixtures = {
     ],
     secondary: [
         {
-            id: 'year-10-english-10a',
-            className: 'Year 10 - English (10A)',
-            tutorGroup: '10A',
+            id: 'form-1',
+            className: 'Form 1',
+            tutorGroup: 'F1',
             teacherLabel: 'R. Mbewe',
             submissionLabel: 'Register submissions complete: 2/6 periods',
             upcomingLabel: 'Period 3 Chemistry starts at 10:40',
@@ -193,7 +193,7 @@ const classFixtures = {
                 ['10:40', 'Period 3 Chemistry', 'T. Mkandawire'],
                 ['14:00', 'Period 5 Geography', 'S. Zulu'],
             ],
-            students: createStudents('10A', [
+            students: createStudents('F1', [
                 {
                     id: 201,
                     name: 'Prince Lungu',
@@ -253,9 +253,9 @@ const classFixtures = {
             ]),
         },
         {
-            id: 'form-2-north',
-            className: 'Form 2 North',
-            tutorGroup: '2N',
+            id: 'form-2',
+            className: 'Form 2',
+            tutorGroup: 'F2',
             teacherLabel: 'C. Phiri',
             submissionLabel: 'Register submissions complete: 5/6 periods',
             upcomingLabel: 'Period 4 History starts at 13:15',
@@ -265,7 +265,7 @@ const classFixtures = {
                 ['11:15', 'Period 3 ICT', 'A. Phoso'],
                 ['13:15', 'Period 4 History', 'L. Banda'],
             ],
-            students: createStudents('2N', [
+            students: createStudents('F2', [
                 {
                     id: 301,
                     name: 'Mary Nthenda',
@@ -335,7 +335,7 @@ const sessionColumns = {
 const managementAlerts = {
     primary: [
         {
-            title: 'Standard 7 West flagged two persistent late arrivals',
+            title: 'Standard 7 flagged two persistent late arrivals',
             detail: 'Pastoral follow-up is needed before Friday assembly and parent call slots.',
             severity: 'Welfare',
         },
@@ -352,7 +352,7 @@ const managementAlerts = {
     ],
     secondary: [
         {
-            title: 'Form 2 North missed Period 4 register yesterday',
+            title: 'Form 2 missed Period 4 register yesterday',
             detail: 'No submission posted between 13:00 and 13:25. Escalate to HOD Science.',
             severity: 'Action now',
         },
@@ -373,21 +373,21 @@ const ledgerRows = {
     primary: [
         {
             student: 'Mwai K.',
-            className: 'Standard 7 - West',
+            className: 'Standard 7',
             invoiced: 'MWK 280,000',
             paid: 'MWK 280,000',
             balance: 'MWK 0',
         },
         {
             student: 'Martha Kalua',
-            className: 'Standard 5 - East',
+            className: 'Standard 5',
             invoiced: 'MWK 260,000',
             paid: 'MWK 200,000',
             balance: 'MWK 60,000',
         },
         {
             student: 'Yusuf Ali',
-            className: 'Standard 7 - West',
+            className: 'Standard 7',
             invoiced: 'MWK 280,000',
             paid: 'MWK 180,000',
             balance: 'MWK 100,000',
@@ -410,7 +410,7 @@ const ledgerRows = {
         },
         {
             student: 'Tadala Soko',
-            className: 'Year 10 - English (10A)',
+            className: 'Form 1',
             invoiced: 'MWK 420,000',
             paid: 'MWK 210,000',
             balance: 'MWK 210,000',

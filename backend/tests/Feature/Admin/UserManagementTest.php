@@ -22,7 +22,7 @@ class UserManagementTest extends TestCase
             'role' => UserRole::Teacher->value,
             'status' => UserStatus::Active->value,
             'school_track' => 'secondary',
-            'assigned_class_name' => 'Year 10 - English (10A)',
+            'assigned_class_name' => 'Form 1',
             'email_verified' => '1',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
@@ -34,7 +34,7 @@ class UserManagementTest extends TestCase
             'role' => UserRole::Teacher->value,
             'status' => UserStatus::Active->value,
             'school_track' => 'secondary',
-            'assigned_class_name' => 'Year 10 - English (10A)',
+            'assigned_class_name' => 'Form 1',
         ]);
     }
 
@@ -84,7 +84,7 @@ class UserManagementTest extends TestCase
 
         User::factory()->teacher()->create([
             'school_track' => 'secondary',
-            'assigned_class_name' => 'Year 10 - English (10A)',
+            'assigned_class_name' => 'Form 1',
         ]);
 
         $response = $this->actingAs($admin)->post('/admin/users', [
@@ -93,7 +93,7 @@ class UserManagementTest extends TestCase
             'role' => UserRole::Teacher->value,
             'status' => UserStatus::Active->value,
             'school_track' => 'secondary',
-            'assigned_class_name' => 'Year 10 - English (10A)',
+            'assigned_class_name' => 'Form 1',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
         ]);
@@ -106,7 +106,7 @@ class UserManagementTest extends TestCase
         $admin = User::factory()->admin()->create();
         $teacher = User::factory()->teacher()->create([
             'school_track' => 'secondary',
-            'assigned_class_name' => 'Year 10 - English (10A)',
+            'assigned_class_name' => 'Form 1',
         ]);
 
         $response = $this->actingAs($admin)->put("/admin/users/{$teacher->id}", [
@@ -115,7 +115,7 @@ class UserManagementTest extends TestCase
             'role' => UserRole::Teacher->value,
             'status' => UserStatus::Active->value,
             'school_track' => 'secondary',
-            'assigned_class_name' => 'Year 10 - English (10A)',
+            'assigned_class_name' => 'Form 1',
             'password' => '',
             'password_confirmation' => '',
         ]);
@@ -124,7 +124,7 @@ class UserManagementTest extends TestCase
         $this->assertDatabaseHas('users', [
             'id' => $teacher->id,
             'name' => 'Updated Teacher',
-            'assigned_class_name' => 'Year 10 - English (10A)',
+            'assigned_class_name' => 'Form 1',
         ]);
     }
 

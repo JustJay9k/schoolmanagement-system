@@ -46,6 +46,16 @@ const LoginContent = () => {
 
     useEffect(() => {
         const resetStatus = searchParams.get('reset')
+        const verified = searchParams.get('verified')
+
+        if (verified === '1' && errors.length === 0) {
+            setStatus({
+                type: 'success',
+                message:
+                    'Your email has been verified. Sign in to continue to your staff workspace.',
+            })
+            return
+        }
 
         if (resetStatus && errors.length === 0) {
             setStatus(atob(resetStatus))
