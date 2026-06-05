@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useAuth } from '@/hooks/auth'
 
 const linkClassName =
-    'rounded-full border border-white/50 bg-white/70 px-4 py-2 text-sm font-semibold text-[var(--ink)] backdrop-blur transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]'
+    'rounded-full border border-[var(--line)] bg-[var(--surface-card-soft)] px-4 py-2 text-sm font-semibold text-[var(--ink)] backdrop-blur transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]'
 
 const LoginLinks = () => {
     const { user } = useAuth({ middleware: 'guest' })

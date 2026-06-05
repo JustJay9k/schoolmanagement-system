@@ -48,13 +48,14 @@ const settingsNotes = [
 ]
 
 export default function SettingsPage() {
-    const { theme, setTheme } = useTheme()
+    const { theme, setTheme, accent, setAccent, accentThemes } = useTheme()
+    const activeAccent = accentThemes.find(option => option.id === accent)
 
     return (
         <WorkspacePageShell
             eyebrow="Workspace Settings"
             title="Preferences and system controls"
-            description="The theme selector has been moved into a real settings page so appearance controls live where users expect them, not in the sidebar for decoration."
+            description="Appearance controls now live in settings, with corrected dark mode surfaces and a selectable accent palette for buttons, highlights, and other interactive elements."
         >
             <section className={styles.panelGrid}>
                 <article className={styles.panel}>
@@ -90,6 +91,40 @@ export default function SettingsPage() {
                             <MoonIcon />
                             <span>Dark</span>
                         </button>
+                    </div>
+                </article>
+
+                <article className={styles.panel}>
+                    <div className={styles.panelHeader}>
+                        <div>
+                            <p className={styles.panelEyebrow}>Theme color</p>
+                            <h2 className={styles.panelTitle}>Accent palette</h2>
+                        </div>
+                        <span className={styles.badge}>{activeAccent?.label ?? 'Teal'} selected</span>
+                    </div>
+
+                    <div className={styles.paletteGrid} role="group" aria-label="Accent palette selector">
+                        {accentThemes.map(option => (
+                            <button
+                                key={option.id}
+                                type="button"
+                                onClick={() => setAccent(option.id)}
+                                aria-pressed={accent === option.id}
+                                className={`${styles.paletteButton} ${
+                                    accent === option.id ? styles.paletteButtonActive : ''
+                                }`}>
+                                <div
+                                    className={styles.paletteSwatch}
+                                    style={{
+                                        background: `linear-gradient(135deg, ${option.accent} 0%, ${option.accentStrong} 100%)`,
+                                    }}
+                                />
+                                <div className={styles.paletteMeta}>
+                                    <strong>{option.label}</strong>
+                                    <span>Applies to buttons, highlights, and active states.</span>
+                                </div>
+                            </button>
+                        ))}
                     </div>
                 </article>
 

@@ -65,7 +65,7 @@ const Home = () => {
                         <div className="flex flex-col gap-4 sm:flex-row">
                             <Link
                                 href="/register"
-                                className="inline-flex items-center justify-center rounded-full bg-[var(--ink)] px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_45px_rgba(18,50,57,0.18)] transition hover:-translate-y-0.5 hover:bg-[var(--accent-strong)]">
+                                className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(180deg,var(--accent),var(--accent-strong))] px-6 py-3 text-sm font-semibold text-[var(--accent-contrast)] shadow-[0_18px_45px_var(--shadow-strong)] transition hover:-translate-y-0.5 hover:brightness-105">
                                 Create staff account
                             </Link>
                             <Link
@@ -77,8 +77,8 @@ const Home = () => {
                     </div>
 
                     <div className="relative">
-                        <div className="absolute inset-x-10 top-8 h-56 rounded-full bg-[rgba(15,118,110,0.14)] blur-3xl" />
-                        <div className="relative overflow-hidden rounded-[36px] border border-white/60 bg-[rgba(255,252,246,0.82)] p-6 shadow-[0_30px_80px_rgba(18,50,57,0.14)] backdrop-blur sm:p-8">
+                        <div className="absolute inset-x-10 top-8 h-56 rounded-full bg-[rgba(var(--accent-rgb),0.14)] blur-3xl" />
+                        <div className="relative overflow-hidden rounded-[36px] border border-[var(--line)] bg-[var(--surface-card)] p-6 shadow-[0_30px_80px_var(--shadow-strong)] backdrop-blur sm:p-8">
                             <div className="grid gap-4 sm:grid-cols-2">
                                 {[
                                     {
@@ -105,7 +105,7 @@ const Home = () => {
                                     <div
                                         key={item.label}
                                         tabIndex={0}
-                                        className="rounded-3xl border border-[var(--line)] bg-white/78 p-5 transition-transform duration-200 ease-out transform-gpu hover:-translate-y-1 hover:scale-105 cursor-pointer focus:outline-none focus:ring-4 focus:ring-[rgba(18,50,57,0.06)]">
+                                        className="rounded-3xl border border-[var(--line)] bg-[var(--surface-raised)] p-5 transition-transform duration-200 ease-out transform-gpu hover:-translate-y-1 hover:scale-105 cursor-pointer focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)]">
                                         <p className="text-xs uppercase tracking-[0.24em] text-[var(--muted)]">
                                             {item.label}
                                         </p>
@@ -130,7 +130,7 @@ const Home = () => {
                         <div
                             key={card.role}
                             tabIndex={0}
-                            className="rounded-[32px] border border-[var(--line)] bg-[rgba(255,252,246,0.72)] p-7 shadow-[0_18px_45px_rgba(18,50,57,0.08)] backdrop-blur transition-transform duration-200 ease-out transform-gpu hover:-translate-y-1 hover:scale-105 hover:shadow-[0_30px_80px_rgba(18,50,57,0.14)] hover:border-[var(--accent)] cursor-pointer focus:outline-none focus:ring-4 focus:ring-[rgba(18,50,57,0.06)]">
+                            className="rounded-[32px] border border-[var(--line)] bg-[var(--surface-card)] p-7 shadow-[0_18px_45px_var(--shadow-soft)] backdrop-blur transition-transform duration-200 ease-out transform-gpu hover:-translate-y-1 hover:scale-105 hover:shadow-[0_30px_80px_var(--shadow-strong)] hover:border-[var(--accent)] cursor-pointer focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)]">
                             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--signal)]">
                                 {card.role}
                             </p>
@@ -145,7 +145,7 @@ const Home = () => {
                 </section>
 
                 <section className="mt-16 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-                    <div className="rounded-[32px] border border-[var(--line)] bg-[linear-gradient(180deg,rgba(18,50,57,0.98),rgba(11,93,87,0.94))] p-8 text-white shadow-[0_28px_65px_rgba(18,50,57,0.16)]">
+                    <div className="rounded-[32px] border border-[var(--line)] bg-[linear-gradient(180deg,var(--accent),var(--accent-strong))] p-8 text-[var(--accent-contrast)] shadow-[0_28px_65px_var(--shadow-strong)]">
                         <p className="text-xs uppercase tracking-[0.28em] text-white/68">
                             Submission workflow
                         </p>
@@ -159,7 +159,7 @@ const Home = () => {
                                 <div
                                     key={step}
                                     tabIndex={0}
-                                    className="flex gap-4 rounded-3xl border border-white/12 bg-white/8 p-4 transition-transform duration-200 ease-out transform-gpu hover:-translate-y-0.5 hover:scale-105 cursor-pointer focus:outline-none focus:ring-4 focus:ring-[rgba(255,255,255,0.06)]">
+                                    className="flex gap-4 rounded-3xl border border-white/12 bg-white/8 p-4 transition-transform duration-200 ease-out transform-gpu hover:-translate-y-0.5 hover:scale-105 cursor-pointer focus:outline-none focus:ring-4 focus:ring-white/10">
                                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/14 text-sm font-semibold">
                                         0{index + 1}
                                     </div>
@@ -176,7 +176,7 @@ const Home = () => {
                             <div
                                 key={track.title}
                                 tabIndex={0}
-                                className="rounded-[32px] border border-[var(--line)] bg-white/76 p-7 shadow-[0_18px_45px_rgba(18,50,57,0.08)] transition-transform duration-200 ease-out transform-gpu hover:-translate-y-1 hover:scale-105 hover:shadow-[0_30px_80px_rgba(18,50,57,0.12)] hover:border-[var(--accent)] cursor-pointer focus:outline-none focus:ring-4 focus:ring-[rgba(18,50,57,0.06)]">
+                                className="rounded-[32px] border border-[var(--line)] bg-[var(--surface-raised)] p-7 shadow-[0_18px_45px_var(--shadow-soft)] transition-transform duration-200 ease-out transform-gpu hover:-translate-y-1 hover:scale-105 hover:shadow-[0_30px_80px_var(--shadow-strong)] hover:border-[var(--accent)] cursor-pointer focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)]">
                                 <p className="text-xs uppercase tracking-[0.24em] text-[var(--muted)]">
                                     Structural split
                                 </p>

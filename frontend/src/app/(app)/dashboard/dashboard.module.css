@@ -11,8 +11,8 @@
 .managementCard,
 .statusNotice {
     border: 1px solid var(--line);
-    background: rgba(255, 252, 246, 0.9);
-    box-shadow: 0 18px 40px rgba(18, 50, 57, 0.08);
+    background: var(--surface-card);
+    box-shadow: 0 18px 40px var(--shadow-soft);
     backdrop-filter: blur(18px);
 }
 
@@ -78,7 +78,7 @@
     min-width: min(100%, 22rem);
     border: 1px solid var(--line);
     border-radius: 999px;
-    background: rgba(255, 253, 248, 0.92);
+    background: var(--surface-field);
     padding: 0.85rem 1rem;
 }
 
@@ -106,7 +106,7 @@
     width: 2.9rem;
     border: 1px solid var(--line);
     border-radius: 999px;
-    background: rgba(255, 253, 248, 0.94);
+    background: var(--surface-field-strong);
 }
 
 .bellDot {
@@ -119,7 +119,7 @@
     height: 1.2rem;
     border-radius: 999px;
     background: var(--signal);
-    color: #ffffff;
+    color: var(--accent-contrast);
     font-size: 0.65rem;
     font-weight: 800;
 }
@@ -128,7 +128,7 @@
     gap: 0.75rem;
     border: 1px solid var(--line);
     border-radius: 999px;
-    background: rgba(255, 253, 248, 0.94);
+    background: var(--surface-field-strong);
     padding: 0.35rem 0.85rem 0.35rem 0.35rem;
 }
 
@@ -139,7 +139,7 @@
     width: 2.6rem;
     border-radius: 999px;
     background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
-    color: #ffffff;
+    color: var(--accent-contrast);
     font-size: 0.88rem;
     font-weight: 800;
 }
@@ -187,7 +187,7 @@
     min-width: 12rem;
     border: 1px solid var(--line);
     border-radius: 1rem;
-    background: rgba(255, 253, 248, 0.92);
+    background: var(--surface-field);
     padding: 0.9rem 1rem;
     text-align: left;
     color: var(--ink);
@@ -217,7 +217,7 @@
 .segmentedControl {
     border: 1px solid var(--line);
     border-radius: 999px;
-    background: rgba(230, 223, 210, 0.5);
+    background: var(--surface-tint);
     padding: 0.3rem;
 }
 
@@ -233,8 +233,8 @@
 
 .segmentActive,
 .primaryAction {
-    background: linear-gradient(180deg, var(--ink) 0%, var(--accent-strong) 100%);
-    color: #ffffff;
+    background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+    color: var(--accent-contrast);
 }
 
 .primaryAction,
@@ -259,13 +259,13 @@
 }
 
 .primaryAction {
-    box-shadow: 0 14px 26px rgba(18, 50, 57, 0.16);
+    box-shadow: 0 14px 26px var(--shadow-strong);
 }
 
 .secondaryAction,
 .primaryGhost {
     border-color: var(--line);
-    background: rgba(255, 253, 248, 0.94);
+    background: var(--surface-card-strong);
     color: var(--ink);
 }
 
@@ -290,20 +290,20 @@
 }
 
 .presentSoft {
-    background: linear-gradient(180deg, rgba(214, 240, 235, 0.52) 0%, rgba(255, 253, 248, 0.95) 100%);
+    background: linear-gradient(180deg, var(--success-grad-start) 0%, var(--success-grad-end) 100%);
 }
 
 .lateSoft {
-    background: linear-gradient(180deg, rgba(255, 239, 198, 0.62) 0%, rgba(255, 253, 248, 0.95) 100%);
+    background: linear-gradient(180deg, var(--warning-grad-start) 0%, var(--warning-grad-end) 100%);
 }
 
 .absentSoft,
 .sickSoft {
-    background: linear-gradient(180deg, rgba(255, 225, 228, 0.62) 0%, rgba(255, 250, 251, 0.96) 100%);
+    background: linear-gradient(180deg, var(--danger-grad-start) 0%, var(--danger-grad-end) 100%);
 }
 
 .excusedSoft {
-    background: linear-gradient(180deg, rgba(236, 227, 255, 0.74) 0%, rgba(255, 250, 255, 0.96) 100%);
+    background: linear-gradient(180deg, var(--info-grad-start) 0%, var(--info-grad-end) 100%);
 }
 
 .metricIconWrap {
@@ -333,7 +333,7 @@
 
 .overallCard {
     border: 1px solid var(--line);
-    background: rgba(255, 253, 248, 0.94);
+    background: var(--surface-card-strong);
 }
 
 .donut {
@@ -348,7 +348,7 @@
     height: 2.65rem;
     width: 2.65rem;
     border-radius: 999px;
-    background: #ffffff;
+    background: var(--surface-inverse);
 }
 
 .statusNotice {
@@ -364,17 +364,17 @@
 
 .statusLoading {
     color: var(--accent-strong);
-    background: rgba(214, 240, 235, 0.34);
+    background: var(--success-soft-strong);
 }
 
 .statusSuccess {
     color: var(--accent-strong);
-    background: rgba(214, 240, 235, 0.42);
+    background: var(--success-soft-strong);
 }
 
 .statusError {
     color: var(--danger);
-    background: rgba(255, 225, 228, 0.46);
+    background: var(--danger-soft-strong);
 }
 
 .tableCard,
@@ -406,7 +406,7 @@
 
 .table tbody td,
 .compactTable tbody td {
-    border-bottom: 1px solid rgba(16, 64, 71, 0.08);
+    border-bottom: 1px solid var(--table-row-border);
     padding: 0.95rem 0.85rem;
     font-size: 0.9rem;
     color: var(--ink);
@@ -415,7 +415,7 @@
 }
 
 .selectedRow {
-    background: rgba(214, 240, 235, 0.18);
+    background: var(--surface-tint);
 }
 
 .columnHeading {
@@ -444,7 +444,7 @@
     height: 2.2rem;
     width: 2.2rem;
     border-radius: 999px;
-    background: rgba(15, 118, 110, 0.12);
+    background: var(--accent-soft);
     color: var(--accent-strong);
     font-size: 0.75rem;
     font-weight: 800;
@@ -473,7 +473,7 @@
     height: 2rem;
     border: 1px solid var(--line);
     border-radius: 999px;
-    background: rgba(255, 253, 248, 0.94);
+    background: var(--surface-field-strong);
     color: var(--muted);
     font-size: 0.78rem;
     font-weight: 800;
@@ -490,28 +490,28 @@
 }
 
 .present {
-    background: rgba(214, 240, 235, 0.88);
+    background: var(--success-soft);
     color: var(--accent-strong);
 }
 
 .late {
-    background: rgba(255, 239, 198, 0.94);
+    background: var(--warning-soft);
     color: var(--signal);
 }
 
 .sick {
-    background: rgba(255, 225, 228, 0.94);
+    background: var(--danger-soft);
     color: var(--danger);
 }
 
 .absent {
-    background: rgba(255, 225, 228, 0.94);
+    background: var(--danger-soft);
     color: var(--danger);
 }
 
 .excused {
-    background: rgba(236, 227, 255, 0.94);
-    color: #7255cb;
+    background: var(--info-soft);
+    color: var(--info);
 }
 
 .noteInput,
@@ -522,7 +522,7 @@
     width: 100%;
     border: 1px solid var(--line);
     border-radius: 0.95rem;
-    background: rgba(255, 253, 248, 0.92);
+    background: var(--surface-field);
     padding: 0.82rem 0.92rem;
     color: var(--ink);
     font-size: 0.9rem;
@@ -534,7 +534,7 @@
 .selectField:focus,
 .textArea:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+    box-shadow: 0 0 0 4px var(--focus-ring);
 }
 
 .tableFooter {
@@ -599,7 +599,7 @@
 .groupBadge,
 .alertTag {
     border-radius: 999px;
-    background: rgba(214, 240, 235, 0.42);
+    background: var(--accent-soft);
     color: var(--accent-strong);
     font-size: 0.76rem;
     font-weight: 800;
@@ -616,7 +616,7 @@
 .profileStat {
     border: 1px solid var(--line);
     border-radius: 1.15rem;
-    background: rgba(255, 253, 248, 0.92);
+    background: var(--surface-field);
     padding: 1rem;
 }
 
@@ -653,7 +653,7 @@
     gap: 1rem;
     border: 1px solid var(--line);
     border-radius: 1.1rem;
-    background: rgba(255, 253, 248, 0.92);
+    background: var(--surface-field);
     padding: 0.95rem 1rem;
 }
 

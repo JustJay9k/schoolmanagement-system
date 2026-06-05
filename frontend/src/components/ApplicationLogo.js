@@ -13,16 +13,16 @@ const ApplicationLogo = props => (
         />
         <path
             d="M23 24.5c0-2.5 2-4.5 4.5-4.5h16.3c2.4 0 4.4 2 4.4 4.5v15.9c0 1.3-.6 2.5-1.8 3.3l-7.8 5.2a4.9 4.9 0 01-5.3 0l-8-5.2a4 4 0 01-1.8-3.3V24.5z"
-            fill="#fffaf2"
+            fill="var(--surface-inverse)"
             opacity="0.96"
         />
         <path
             d="M28 28.5h16M28 34.5h16M36 28v14"
-            stroke="#0f766e"
+            stroke="var(--accent-strong)"
             strokeWidth="3"
             strokeLinecap="round"
         />
-        <circle cx="36" cy="47" r="3.5" fill="#d97706" />
+        <circle cx="36" cy="47" r="3.5" fill="var(--signal)" />
     </svg>
 )
 

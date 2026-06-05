@@ -10,11 +10,11 @@
     overflow-y: auto;
     overscroll-behavior: contain;
     border-right: 1px solid var(--line);
-    background: rgba(255, 252, 246, 0.92);
+    background: var(--surface-sidebar);
     backdrop-filter: blur(20px);
     padding: 1.5rem 1rem;
     scrollbar-width: thin;
-    scrollbar-color: rgba(15, 118, 110, 0.3) transparent;
+    scrollbar-color: rgba(var(--accent-rgb), 0.3) transparent;
 }
 
 .brand {
@@ -30,8 +30,8 @@
     place-items: center;
     border-radius: 1rem;
     background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
-    color: #ffffff;
-    box-shadow: 0 14px 30px rgba(15, 118, 110, 0.2);
+    color: var(--accent-contrast);
+    box-shadow: 0 14px 30px var(--shadow-soft);
 }
 
 .brandMark {
@@ -75,15 +75,15 @@
 }
 
 .navLink:hover {
-    background: rgba(214, 240, 235, 0.48);
+    background: var(--surface-tint);
     color: var(--accent-strong);
     transform: translateX(2px);
 }
 
 .navLinkActive {
-    background: linear-gradient(180deg, var(--ink) 0%, var(--accent-strong) 100%);
-    color: #ffffff;
-    box-shadow: 0 16px 32px rgba(18, 50, 57, 0.16);
+    background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+    color: var(--accent-contrast);
+    box-shadow: 0 16px 32px var(--shadow-strong);
 }
 
 .navIcon {
@@ -99,7 +99,7 @@
     margin-top: auto;
     border: 1px solid var(--line);
     border-radius: 1.15rem;
-    background: rgba(214, 240, 235, 0.22);
+    background: var(--surface-tint);
     padding: 0.95rem;
 }
 
@@ -109,7 +109,7 @@
     height: 2.7rem;
     width: 2.7rem;
     border-radius: 999px;
-    background: rgba(15, 118, 110, 0.16);
+    background: var(--accent-soft);
     color: var(--accent-strong);
     font-size: 0.85rem;
     font-weight: 800;
@@ -136,7 +136,7 @@
 .mobileButton {
     border: 1px solid var(--line);
     border-radius: 1rem;
-    background: rgba(255, 253, 248, 0.94);
+    background: var(--surface-card-strong);
     padding: 0.85rem 1rem;
     font-size: 0.92rem;
     font-weight: 700;
@@ -151,7 +151,7 @@
 .mobileButton:hover {
     border-color: var(--accent);
     color: var(--accent-strong);
-    box-shadow: 0 12px 24px rgba(15, 118, 110, 0.1);
+    box-shadow: 0 12px 24px var(--shadow-soft);
 }
 
 .mobileBar {
@@ -162,7 +162,7 @@
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid var(--line);
-    background: rgba(255, 252, 246, 0.86);
+    background: var(--surface-sidebar);
     padding: 1rem;
     backdrop-filter: blur(18px);
 }
@@ -183,7 +183,7 @@
     position: fixed;
     inset: 0;
     z-index: 40;
-    background: rgba(18, 50, 57, 0.34);
+    background: rgba(5, 10, 18, 0.52);
     padding: 1rem;
     backdrop-filter: blur(6px);
 }
