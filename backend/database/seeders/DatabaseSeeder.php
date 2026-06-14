@@ -50,6 +50,16 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now(),
         ]);
 
+        User::query()->updateOrCreate([
+            'email' => 'finance@example.com',
+        ], [
+            'name' => 'Finance Demo',
+            'password' => 'password',
+            'role' => UserRole::Accountant,
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+
         SchoolSubject::query()->updateOrCreate([
             'school_track' => 'primary',
             'name' => 'Mathematics',

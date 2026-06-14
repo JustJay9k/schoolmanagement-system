@@ -523,6 +523,16 @@ const formatBirthDate = value => {
     }).format(birthDate)
 }
 
+const parseCurrencyAmount = value =>
+    Number(String(value ?? '').replace(/[^0-9.]/g, '')) || 0
+
+const formatCurrency = value =>
+    new Intl.NumberFormat('en-MW', {
+        style: 'currency',
+        currency: 'MWK',
+        maximumFractionDigits: 0,
+    }).format(value)
+
 const getAgeFromBirthDate = value => {
     if (!value) {
         return 'Not recorded'
@@ -631,6 +641,7 @@ const Dashboard = () => {
     const teacherOnlyView = userRole === 'teacher'
     const adminOnlyView = userRole === 'admin'
     const managementView = userRole === 'management'
+    const financeView = userRole === 'accountant'
 
     const [activeTrack, setActiveTrack] = useState(userTrack ?? 'secondary')
     const [registerState, setRegisterState] = useState(() =>
@@ -807,16 +818,55 @@ const Dashboard = () => {
         },
     ]
 
+    const financeOutstandingTotal = useMemo(
+        () =>
+            ledgerRows[activeTrack].reduce(
+                (total, row) => total + parseCurrencyAmount(row.balance),
+                0,
+            ),
+        [activeTrack],
+    )
+    const financeMetrics = [
+        {
+            label: 'Students in view',
+            value: String(managementStudents.length).padStart(2, '0'),
+            note: 'Learner records visible to the finance desk in the selected school track.',
+        },
+        {
+            label: 'Outstanding balances',
+            value: formatCurrency(financeOutstandingTotal),
+            note: 'Combined unpaid student balances currently visible in the dashboard snapshot.',
+        },
+        {
+            label: 'Accounts flagged',
+            value: String(
+                ledgerRows[activeTrack].filter(
+                    row => parseCurrencyAmount(row.balance) > 0,
+                ).length,
+            ).padStart(2, '0'),
+            note: 'Students who still need fee follow-up in this track snapshot.',
+        },
+        {
+            label: 'Track scope',
+            value: trackLabels[activeTrack],
+            note: 'Switch between primary and secondary to monitor student finance separately.',
+        },
+    ]
+
     const pageEyebrow = teacherOnlyView
         ? 'Assigned Class Register'
         : adminOnlyView
           ? 'System Administration'
-          : 'Management Dashboard'
+          : financeView
+            ? 'Student Finance Desk'
+            : 'Management Dashboard'
     const pageTitle = teacherOnlyView
         ? assignedFixture?.className ?? 'Class assignment required'
         : adminOnlyView
           ? 'System Control Center'
-          : `${trackLabels[activeTrack]} School Overview`
+          : financeView
+            ? `${trackLabels[activeTrack]} Student Accounts`
+            : `${trackLabels[activeTrack]} School Overview`
     const pageRoleLabel = formatRoleLabel(userRole)
     const pageMeta = teacherOnlyView
         ? assignedFixture
@@ -824,7 +874,9 @@ const Dashboard = () => {
             : 'Teacher account needs a class assignment.'
         : adminOnlyView
           ? 'Administrator workspace for access control, school structure, and system-level oversight.'
-          : `${trackLabels[activeTrack]} overview across all assigned classes`
+          : financeView
+            ? `${trackLabels[activeTrack]} student balances, books, uniform, and learner basics.`
+            : `${trackLabels[activeTrack]} overview across all assigned classes`
 
     const updateAttendance = (studentId, status) => {
         if (!assignedFixture) {
@@ -1515,6 +1567,87 @@ const Dashboard = () => {
         </div>
     )
 
+    const renderFinanceView = () => (
+        <div className={styles.managementStack}>
+            <section className={styles.managementCards}>
+                {financeMetrics.map(metric => (
+                    <div key={metric.label} className={styles.managementCard}>
+                        <p className={styles.metricLabel}>{metric.label}</p>
+                        <p className={styles.managementValue}>{metric.value}</p>
+                        <p className={styles.metricMeta}>{metric.note}</p>
+                    </div>
+                ))}
+            </section>
+
+            <section className={styles.lowerGrid}>
+                <div className={styles.panel}>
+                    <div className={styles.panelHeader}>
+                        <div>
+                            <p className={styles.panelEyebrow}>Finance Workspace</p>
+                            <h2 className={styles.panelTitle}>Student account controls</h2>
+                        </div>
+                    </div>
+
+                    <div className={styles.alertList}>
+                        <a href="/finance" className={styles.alertCard}>
+                            <div>
+                                <strong>Open finance desk</strong>
+                                <p>
+                                    Update student fee balances, book payments, uniform
+                                    payments, and learner basics from the dedicated
+                                    accountant workspace.
+                                </p>
+                            </div>
+                            <span className={styles.alertTag}>Finance</span>
+                        </a>
+
+                        <div className={styles.alertCard}>
+                            <div>
+                                <strong>Restricted scope</strong>
+                                <p>
+                                    This role does not manage system users or school
+                                    structure. Those controls remain in the administrator
+                                    workspace.
+                                </p>
+                            </div>
+                            <span className={styles.alertTag}>Read only</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className={styles.panel}>
+                    <div className={styles.panelHeader}>
+                        <div>
+                            <p className={styles.panelEyebrow}>Balance Snapshot</p>
+                            <h2 className={styles.panelTitle}>Students needing follow-up</h2>
+                        </div>
+                    </div>
+
+                    <div className={styles.tableWrap}>
+                        <table className={styles.compactTable}>
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Class</th>
+                                    <th>Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {ledgerRows[activeTrack].map(row => (
+                                    <tr key={row.student}>
+                                        <td>{row.student}</td>
+                                        <td>{row.className}</td>
+                                        <td className={styles.balanceCell}>{row.balance}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    )
+
     const renderUnsupportedView = () => (
         <div className={`${styles.statusNotice} ${styles.statusError}`}>
             This account does not have a staff dashboard assigned. Ask an administrator to set the correct role for this user.
@@ -1556,6 +1689,8 @@ const Dashboard = () => {
                             placeholder={
                                 teacherOnlyView
                                     ? 'Search students in your class...'
+                                    : financeView
+                                      ? 'Search student accounts...'
                                     : 'Search classes or students...'
                             }
                         />
@@ -1609,6 +1744,8 @@ const Dashboard = () => {
                                 ? assignedFixture?.className ?? 'Assignment required'
                                 : adminOnlyView
                                   ? 'System administration'
+                                  : financeView
+                                    ? `All ${trackLabels[activeTrack].toLowerCase()} student accounts`
                                   : `All ${trackLabels[activeTrack].toLowerCase()} classes`}
                         </span>
                     </button>
@@ -1657,9 +1794,11 @@ const Dashboard = () => {
                 ? renderTeacherView()
                 : adminOnlyView
                   ? renderAdminView()
+                  : financeView
+                    ? renderFinanceView()
                   : managementView
-                  ? renderManagementView()
-                  : renderUnsupportedView()}
+                    ? renderManagementView()
+                    : renderUnsupportedView()}
         </div>
     )
 }

@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'finance' => \App\Http\Middleware\EnsureUserCanManageFinance::class,
             'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
             'portal' => \App\Http\Middleware\EnsureUserCanAccessPortal::class,
             'timetable-manager' => \App\Http\Middleware\EnsureUserCanManageTimetables::class,

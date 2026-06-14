@@ -1,0 +1,86 @@
+<?php
+
+namespace Tests\Feature\Admin;
+
+use App\Models\StudentRecord;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class FinanceManagementTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_accountant_can_view_student_finance_records(): void
+    {
+        $accountant = User::factory()->accountant()->create();
+
+        StudentRecord::query()->create([
+            'school_track' => 'primary',
+            'class_name' => 'Standard 4',
+            'full_name' => 'Martha Kalua',
+            'student_code' => 'PRI-004',
+            'guardian_name' => 'Mrs Kalua',
+            'fees_balance' => 45000,
+            'books_paid' => false,
+            'uniform_paid' => true,
+            'created_by' => $accountant->id,
+        ]);
+
+        $this->actingAs($accountant)
+            ->getJson('/api/finance/students')
+            ->assertOk()
+            ->assertJsonPath('students.0.full_name', 'Martha Kalua')
+            ->assertJsonPath('students.0.fees_balance', 45000)
+            ->assertJsonPath('stats.total_students', 1)
+            ->assertJsonPath('stats.books_pending', 1)
+            ->assertJsonPath('stats.uniform_pending', 0);
+    }
+
+    public function test_accountant_can_update_student_finance_record(): void
+    {
+        $accountant = User::factory()->accountant()->create();
+        $student = StudentRecord::query()->create([
+            'school_track' => 'secondary',
+            'class_name' => 'Form 2',
+            'full_name' => 'Brian Chirwa',
+            'student_code' => 'SEC-202',
+            'fees_balance' => 90000,
+            'books_paid' => false,
+            'uniform_paid' => false,
+            'created_by' => $accountant->id,
+        ]);
+
+        $this->actingAs($accountant)
+            ->putJson("/api/finance/students/{$student->id}", [
+                'fees_balance' => 12500,
+                'books_paid' => true,
+                'uniform_paid' => true,
+            ])
+            ->assertOk()
+            ->assertJsonPath('student.fees_balance', 12500)
+            ->assertJsonPath('student.books_paid', true)
+            ->assertJsonPath('student.uniform_paid', true);
+
+        $this->assertDatabaseHas('student_records', [
+            'id' => $student->id,
+            'fees_balance' => 12500,
+            'books_paid' => true,
+            'uniform_paid' => true,
+        ]);
+    }
+
+    public function test_non_finance_users_cannot_access_finance_endpoints(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $headTeacher = User::factory()->management()->create();
+
+        $this->actingAs($admin)
+            ->getJson('/api/finance/students')
+            ->assertForbidden();
+
+        $this->actingAs($headTeacher)
+            ->getJson('/api/finance/students')
+            ->assertForbidden();
+    }
+}

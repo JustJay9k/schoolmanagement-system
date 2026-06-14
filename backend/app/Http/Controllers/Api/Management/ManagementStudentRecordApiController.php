@@ -151,6 +151,9 @@ class ManagementStudentRecordApiController extends Controller
             'guardian_name' => $student->guardian_name,
             'residence' => $student->residence,
             'first_entry_date' => $student->first_entry_date?->format('Y-m-d'),
+            'fees_balance' => (float) $student->fees_balance,
+            'books_paid' => (bool) $student->books_paid,
+            'uniform_paid' => (bool) $student->uniform_paid,
             'creator_name' => $student->creator?->name,
             'created_at' => $student->created_at?->toIso8601String(),
         ];

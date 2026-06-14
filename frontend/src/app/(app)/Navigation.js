@@ -232,6 +232,24 @@ const icons = {
             />
         </>
     ),
+    finance: (
+        <>
+            <path
+                d="M5.5 8.2L12 5l6.5 3.2v8.6L12 20l-6.5-3.2V8.2z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M9.2 10.5h5.6M9.2 13.5h3.8"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
+        </>
+    ),
 }
 
 const NavIcon = ({ name }) => (

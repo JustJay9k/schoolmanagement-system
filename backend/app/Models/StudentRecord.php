@@ -21,6 +21,9 @@ class StudentRecord extends Model
         'guardian_name',
         'residence',
         'first_entry_date',
+        'fees_balance',
+        'books_paid',
+        'uniform_paid',
         'created_by',
     ];
 
@@ -29,6 +32,9 @@ class StudentRecord extends Model
         return [
             'date_of_birth' => 'date',
             'first_entry_date' => 'date',
+            'fees_balance' => 'decimal:2',
+            'books_paid' => 'boolean',
+            'uniform_paid' => 'boolean',
         ];
     }
 

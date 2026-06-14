@@ -29,6 +29,12 @@ const adminNavItems = [
     { label: 'Settings', href: '/settings', icon: 'settings' },
 ]
 
+const financeNavItems = [
+    { label: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
+    { label: 'Finance', href: '/finance', icon: 'finance' },
+    { label: 'Settings', href: '/settings', icon: 'settings' },
+]
+
 export const getNavItems = user => {
     const role = normalizeRole(user?.role)
 
@@ -38,6 +44,10 @@ export const getNavItems = user => {
 
     if (role === 'management') {
         return managementNavItems
+    }
+
+    if (role === 'accountant') {
+        return financeNavItems
     }
 
     return teacherNavItems

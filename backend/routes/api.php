@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Admin\AdminSchoolStructureApiController;
 use App\Http\Controllers\Api\Admin\AdminUserApiController;
+use App\Http\Controllers\Api\Finance\FinanceStudentApiController;
 use App\Http\Controllers\Api\Management\ManagementSchoolSubjectApiController;
 use App\Http\Controllers\Api\Management\ManagementStudentRecordApiController;
 use App\Http\Controllers\Api\Management\ManagementTimetableApiController;
@@ -39,6 +40,11 @@ Route::middleware(['auth:sanctum', 'timetable-manager'])->prefix('management')->
     Route::post('/timetables', [ManagementTimetableApiController::class, 'store']);
     Route::put('/timetables/{timetable}', [ManagementTimetableApiController::class, 'update']);
     Route::delete('/timetables/{timetable}', [ManagementTimetableApiController::class, 'destroy']);
+});
+
+Route::middleware(['auth:sanctum', 'finance'])->prefix('finance')->group(function () {
+    Route::get('/students', [FinanceStudentApiController::class, 'index']);
+    Route::put('/students/{student}', [FinanceStudentApiController::class, 'update']);
 });
 
 Route::middleware(['auth:sanctum', 'portal'])->prefix('teacher')->group(function () {

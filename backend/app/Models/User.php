@@ -51,6 +51,11 @@ class User extends Authenticatable
         return $this->role === UserRole::Teacher;
     }
 
+    public function isAccountant(): bool
+    {
+        return $this->role === UserRole::Accountant;
+    }
+
     public function isHeadTeacher(): bool
     {
         return $this->role === UserRole::Management;
@@ -67,6 +72,7 @@ class User extends Authenticatable
             UserRole::Admin,
             UserRole::Management,
             UserRole::Teacher,
+            UserRole::Accountant,
         ], true);
     }
 
@@ -78,6 +84,11 @@ class User extends Authenticatable
     public function canManageTimetables(): bool
     {
         return $this->isHeadTeacher() && $this->isActive();
+    }
+
+    public function canManageFinance(): bool
+    {
+        return $this->isAccountant() && $this->isActive();
     }
 
     public function canAccessAdminPanel(): bool
