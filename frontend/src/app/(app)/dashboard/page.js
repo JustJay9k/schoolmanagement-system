@@ -347,6 +347,17 @@ const classFixtures = {
     ],
 }
 
+const createAssignedFixtureFallback = (track, className) => ({
+    id: `${track}-${className}`.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    className,
+    tutorGroup: className,
+    teacherLabel: 'Assigned teacher',
+    submissionLabel: 'No register template has been loaded for this class yet.',
+    upcomingLabel: 'Timetable and learner data will appear here when available.',
+    timetable: [],
+    students: [],
+})
+
 const sessionColumns = {
     primary: [
         { label: 'AM' },
@@ -665,7 +676,8 @@ const Dashboard = () => {
         }
 
         return (
-            classFixtures[userTrack].find(fixture => fixture.className === assignedClassName) ?? null
+            classFixtures[userTrack].find(fixture => fixture.className === assignedClassName) ??
+            createAssignedFixtureFallback(userTrack, assignedClassName)
         )
     }, [assignedClassName, teacherOnlyView, userTrack])
 
@@ -809,7 +821,7 @@ const Dashboard = () => {
     const pageMeta = teacherOnlyView
         ? assignedFixture
             ? `${trackLabels[activeTrack]} teacher dashboard for ${assignedFixture.className}`
-            : 'Teacher account needs a class assignment from the admin dashboard.'
+            : 'Teacher account needs a class assignment.'
         : adminOnlyView
           ? 'Administrator workspace for access control, school structure, and system-level oversight.'
           : `${trackLabels[activeTrack]} overview across all assigned classes`
@@ -821,7 +833,7 @@ const Dashboard = () => {
 
         setRegisterState(current => ({
             ...current,
-            [assignedFixture.id]: current[assignedFixture.id].map(student =>
+            [assignedFixture.id]: (current[assignedFixture.id] ?? []).map(student =>
                 student.id === studentId ? { ...student, status } : student,
             ),
         }))
@@ -834,7 +846,7 @@ const Dashboard = () => {
 
         setRegisterState(current => ({
             ...current,
-            [assignedFixture.id]: current[assignedFixture.id].map(student =>
+            [assignedFixture.id]: (current[assignedFixture.id] ?? []).map(student =>
                 student.id === studentId ? { ...student, note } : student,
             ),
         }))
@@ -849,7 +861,15 @@ const Dashboard = () => {
         if (!assignedFixture) {
             setRegisterStatus({
                 tone: 'error',
-                message: 'Your account does not yet have a class assignment. Ask an administrator to assign one.',
+                message: 'Your account does not yet have a class assignment.',
+            })
+            return
+        }
+
+        if (currentTeacherStudents.length === 0) {
+            setRegisterStatus({
+                tone: 'error',
+                message: 'Your class is already assigned, but no learner records are loaded for it yet.',
             })
             return
         }
@@ -887,7 +907,7 @@ const Dashboard = () => {
 
         setRegisterState(current => ({
             ...current,
-            [assignedFixture.id]: current[assignedFixture.id].map(student => ({
+            [assignedFixture.id]: (current[assignedFixture.id] ?? []).map(student => ({
                 ...student,
                 status: 'P',
             })),
@@ -998,7 +1018,9 @@ const Dashboard = () => {
                               : styles.statusIdle
                 }`}>
                 {!assignedFixture
-                    ? 'This teacher account is not yet assigned to a class. Use the admin dashboard to set a track and class for this user.'
+                    ? 'This teacher account is not yet assigned to a class.'
+                    : currentTeacherStudents.length === 0
+                      ? 'Your class assignment is already saved. Learner records for this class have not been loaded into the dashboard yet.'
                     : registerStatus.message}
             </div>
 

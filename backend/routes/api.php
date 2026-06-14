@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Admin\AdminSchoolStructureApiController;
 use App\Http\Controllers\Api\Admin\AdminUserApiController;
 use App\Http\Controllers\Api\Management\ManagementSchoolSubjectApiController;
+use App\Http\Controllers\Api\Management\ManagementStudentRecordApiController;
 use App\Http\Controllers\Api\Management\ManagementTimetableApiController;
 use App\Http\Controllers\Api\Teacher\TeacherTimetableApiController;
 use Illuminate\Http\Request;
@@ -24,6 +25,10 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 });
 
 Route::middleware(['auth:sanctum', 'timetable-manager'])->prefix('management')->group(function () {
+    Route::get('/students', [ManagementStudentRecordApiController::class, 'index']);
+    Route::post('/students', [ManagementStudentRecordApiController::class, 'store']);
+    Route::post('/students/import', [ManagementStudentRecordApiController::class, 'import']);
+
     Route::get('/subjects', [ManagementSchoolSubjectApiController::class, 'index']);
     Route::post('/subjects', [ManagementSchoolSubjectApiController::class, 'store']);
     Route::put('/subjects/{subject}', [ManagementSchoolSubjectApiController::class, 'update']);
