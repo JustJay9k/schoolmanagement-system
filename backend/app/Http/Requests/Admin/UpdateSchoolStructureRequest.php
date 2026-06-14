@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use App\Enums\UserRole;
+use App\Models\Timetable;
 use App\Models\User;
 use App\Support\SchoolContextOptions;
 use Illuminate\Foundation\Http\FormRequest;
@@ -68,16 +69,24 @@ class UpdateSchoolStructureRequest extends FormRequest
                         return ! in_array($className, $classesByTrack[$track] ?? [], true);
                     });
 
-                if ($teachersWithMissingClasses->isEmpty()) {
-                    return;
-                }
-
                 $teachersWithMissingClasses->each(function (User $teacher) use ($validator): void {
                     $validator->errors()->add(
                         'classes_by_track',
                         "{$teacher->name} is still assigned to {$teacher->assigned_class_name} in {$teacher->school_track}. Reassign that teacher before removing or renaming the class.",
                     );
                 });
+
+                Timetable::query()
+                    ->get(['title', 'school_track', 'class_name'])
+                    ->filter(function (Timetable $timetable) use ($classesByTrack): bool {
+                        return ! in_array($timetable->class_name, $classesByTrack[$timetable->school_track] ?? [], true);
+                    })
+                    ->each(function (Timetable $timetable) use ($validator): void {
+                        $validator->errors()->add(
+                            'classes_by_track',
+                            "{$timetable->title} is still attached to {$timetable->class_name} in {$timetable->school_track}. Update or remove that timetable before renaming the class.",
+                        );
+                    });
             },
         ];
     }

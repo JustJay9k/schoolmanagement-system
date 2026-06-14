@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class EnsureUserIsAdmin
+class EnsureUserCanAccessPortal
 {
     /**
      * Handle an incoming request.
@@ -16,9 +16,9 @@ class EnsureUserIsAdmin
     public function handle(Request $request, Closure $next): Response
     {
         abort_unless(
-            $request->user()?->canManageAdministration(),
+            $request->user()?->canAccessPortal(),
             403,
-            'You do not have permission to access the admin dashboard.',
+            'You do not have permission to access this portal.',
         );
 
         return $next($request);

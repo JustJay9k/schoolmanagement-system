@@ -117,6 +117,31 @@ const icons = {
             />
         </>
     ),
+    subjects: (
+        <>
+            <path
+                d="M6 5.5h8.4a2.8 2.8 0 012.8 2.8v10.2H8.8A2.8 2.8 0 016 15.7V5.5z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M17.2 18.5V8.3a2.8 2.8 0 00-2.8-2.8H6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
+            <path
+                d="M9 9.2h5.2M9 12.3h5.2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
+        </>
+    ),
     behaviour: (
         <>
             <path

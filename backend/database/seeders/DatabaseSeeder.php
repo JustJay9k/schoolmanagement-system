@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
+use App\Models\SchoolSubject;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -30,11 +31,37 @@ class DatabaseSeeder extends Seeder
         User::query()->updateOrCreate([
             'email' => 'test@example.com',
         ], [
-            'name' => 'Test User',
+            'name' => 'Head Teacher Demo',
             'password' => 'password',
             'role' => UserRole::Management,
             'status' => UserStatus::Active,
             'email_verified_at' => now(),
+        ]);
+
+        User::query()->updateOrCreate([
+            'email' => 'teacher@example.com',
+        ], [
+            'name' => 'Primary Teacher Demo',
+            'password' => 'password',
+            'role' => UserRole::Teacher,
+            'status' => UserStatus::Active,
+            'school_track' => 'primary',
+            'assigned_class_name' => 'Standard 1',
+            'email_verified_at' => now(),
+        ]);
+
+        SchoolSubject::query()->updateOrCreate([
+            'school_track' => 'primary',
+            'name' => 'Mathematics',
+        ], [
+            'code' => 'MATH',
+        ]);
+
+        SchoolSubject::query()->updateOrCreate([
+            'school_track' => 'secondary',
+            'name' => 'English',
+        ], [
+            'code' => 'ENG',
         ]);
     }
 }

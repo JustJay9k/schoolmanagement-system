@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\SchoolSetting;
+use App\Models\Timetable;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -16,11 +17,10 @@ class SchoolStructureManagementTest extends TestCase
         $admin = User::factory()->admin()->create();
 
         $this->actingAs($admin)
-            ->get('/admin/school-structure')
+            ->getJson('/api/admin/school-structure')
             ->assertOk()
-            ->assertSee('School Structure')
-            ->assertSee('Standard 1')
-            ->assertSee('Form 4');
+            ->assertJsonPath('classesByTrack.primary.0', 'Standard 1')
+            ->assertJsonPath('classesByTrack.secondary.3', 'Form 4');
     }
 
     public function test_admin_can_update_school_structure(): void
@@ -28,11 +28,11 @@ class SchoolStructureManagementTest extends TestCase
         $admin = User::factory()->admin()->create();
 
         $this->actingAs($admin)
-            ->put('/admin/school-structure', [
+            ->putJson('/api/admin/school-structure', [
                 'primary_classes' => "Reception\nStandard 1\nStandard 2",
                 'secondary_classes' => "Form A\nForm B",
             ])
-            ->assertRedirect('/admin/school-structure');
+            ->assertOk();
 
         $this->assertDatabaseHas('school_settings', [
             'key' => 'school_structure',
@@ -54,11 +54,31 @@ class SchoolStructureManagementTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->put('/admin/school-structure', [
+            ->putJson('/api/admin/school-structure', [
                 'primary_classes' => "Standard 1\nStandard 2",
                 'secondary_classes' => "Form 1\nForm 2\nForm 3\nForm 4",
             ])
-            ->assertSessionHasErrors('classes_by_track');
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('classes_by_track');
+    }
+
+    public function test_school_structure_update_cannot_remove_a_class_that_has_a_timetable(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        Timetable::query()->create([
+            'title' => 'Form 2 Timetable',
+            'school_track' => 'secondary',
+            'class_name' => 'Form 2',
+        ]);
+
+        $this->actingAs($admin)
+            ->putJson('/api/admin/school-structure', [
+                'primary_classes' => "Standard 1\nStandard 2\nStandard 3",
+                'secondary_classes' => "Form 1\nForm 3\nForm 4",
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('classes_by_track');
     }
 
     public function test_registration_options_use_configured_school_structure(): void

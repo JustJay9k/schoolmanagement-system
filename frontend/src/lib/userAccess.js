@@ -27,5 +27,9 @@ export const normalizeRole = role => {
 }
 
 export const isAdminUser = user => normalizeRole(user?.role) === 'admin'
+export const isManagementUser = user => normalizeRole(user?.role) === 'management'
+export const isTeacherUser = user => normalizeRole(user?.role) === 'teacher'
+export const canManageSystem = user => isAdminUser(user)
+export const canManageManagementWorkspace = user => isManagementUser(user)
 
 export const formatRoleLabel = role => roleLabels[normalizeRole(role)] ?? 'School staff account'

@@ -302,6 +302,17 @@ select:focus-visible {
     grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.feature-grid,
+.schedule-day-list,
+.schedule-entry-list {
+    display: grid;
+    gap: var(--space-lg);
+}
+
+.feature-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .metric-card {
     padding: var(--space-lg);
     display: grid;
@@ -344,6 +355,16 @@ select:focus-visible {
     padding: var(--space-lg);
     display: grid;
     gap: var(--space-sm);
+}
+
+.feature-card,
+.schedule-day-card,
+.schedule-entry,
+.schedule-builder {
+    padding: var(--space-lg);
+    border-radius: var(--radius-md);
+    border: var(--rule-thin) solid var(--color-line);
+    background: color-mix(in oklch, var(--color-surface-muted) 82%, white 18%);
 }
 
 .module-card h4 {
@@ -540,6 +561,49 @@ select:focus-visible {
     background: linear-gradient(180deg, color-mix(in oklch, var(--color-accent-soft) 72%, white 28%), transparent);
 }
 
+.schedule-builder {
+    display: grid;
+    gap: var(--space-lg);
+}
+
+.schedule-entry-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-md);
+}
+
+.schedule-day-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.schedule-day-card,
+.feature-card {
+    display: grid;
+    gap: var(--space-md);
+}
+
+.schedule-day-card h4,
+.feature-card h4 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+}
+
+.schedule-slot {
+    display: grid;
+    gap: 0.3rem;
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    background: white;
+}
+
+.schedule-slot strong,
+.schedule-slot span,
+.schedule-slot small,
+.feature-card small {
+    display: block;
+}
+
 .track-choice-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -636,7 +700,9 @@ select:focus-visible {
     .metric-grid,
     .compact-grid,
     .module-grid,
-    .hero-grid {
+    .hero-grid,
+    .feature-grid,
+    .schedule-day-list {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -666,9 +732,12 @@ select:focus-visible {
     .compact-grid,
     .module-grid,
     .hero-grid,
+    .feature-grid,
     .form-grid,
     .definition-grid,
-    .filter-grid {
+    .filter-grid,
+    .schedule-day-list,
+    .schedule-entry-grid {
         grid-template-columns: 1fr;
     }
 

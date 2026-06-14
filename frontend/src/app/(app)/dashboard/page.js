@@ -53,12 +53,46 @@ const roleLabels = {
     guardian: 'Guardian',
 }
 
+const studentBioDirectory = {
+    1: { birthDate: '2014-02-18', gender: 'Female' },
+    2: { birthDate: '2013-09-07', gender: 'Male' },
+    3: { birthDate: '2014-05-29', gender: 'Female' },
+    4: { birthDate: '2014-11-13', gender: 'Female' },
+    5: { birthDate: '2013-03-22', gender: 'Female' },
+    6: { birthDate: '2014-07-05', gender: 'Male' },
+    101: { birthDate: '2012-06-14', gender: 'Male' },
+    102: { birthDate: '2012-10-03', gender: 'Female' },
+    103: { birthDate: '2012-01-26', gender: 'Female' },
+    104: { birthDate: '2011-12-19', gender: 'Female' },
+    105: { birthDate: '2012-08-11', gender: 'Male' },
+    106: { birthDate: '2011-04-30', gender: 'Female' },
+    201: { birthDate: '2011-09-09', gender: 'Male' },
+    202: { birthDate: '2011-02-21', gender: 'Female' },
+    203: { birthDate: '2011-06-16', gender: 'Male' },
+    204: { birthDate: '2011-01-08', gender: 'Female' },
+    205: { birthDate: '2010-11-27', gender: 'Female' },
+    206: { birthDate: '2011-05-12', gender: 'Male' },
+    207: { birthDate: '2010-08-04', gender: 'Female' },
+    208: { birthDate: '2011-03-17', gender: 'Male' },
+    301: { birthDate: '2010-10-24', gender: 'Female' },
+    302: { birthDate: '2010-07-15', gender: 'Male' },
+    303: { birthDate: '2010-12-06', gender: 'Female' },
+    304: { birthDate: '2010-04-09', gender: 'Male' },
+    305: { birthDate: '2010-09-28', gender: 'Female' },
+    306: { birthDate: '2010-02-13', gender: 'Male' },
+}
+
 const createStudents = (tutorGroup, rows) =>
-    rows.map((row, index) => ({
-        id: row.id ?? `${tutorGroup}-${index + 1}`,
-        tutorGroup,
-        ...row,
-    }))
+    rows.map((row, index) => {
+        const studentId = row.id ?? `${tutorGroup}-${index + 1}`
+
+        return {
+            id: studentId,
+            tutorGroup,
+            ...(studentBioDirectory[studentId] ?? {}),
+            ...row,
+        }
+    })
 
 const classFixtures = {
     primary: [
@@ -460,6 +494,49 @@ const initials = name =>
 const formatShare = (value, total) =>
     total === 0 ? '0%' : `${Math.round((value / total) * 1000) / 10}%`
 
+const formatBirthDate = value => {
+    if (!value) {
+        return 'Not recorded'
+    }
+
+    const birthDate = new Date(`${value}T00:00:00`)
+
+    if (Number.isNaN(birthDate.getTime())) {
+        return value
+    }
+
+    return new Intl.DateTimeFormat('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+    }).format(birthDate)
+}
+
+const getAgeFromBirthDate = value => {
+    if (!value) {
+        return 'Not recorded'
+    }
+
+    const birthDate = new Date(`${value}T00:00:00`)
+
+    if (Number.isNaN(birthDate.getTime())) {
+        return 'Not recorded'
+    }
+
+    const today = new Date()
+    let age = today.getFullYear() - birthDate.getFullYear()
+    const monthDifference = today.getMonth() - birthDate.getMonth()
+
+    if (
+        monthDifference < 0 ||
+        (monthDifference === 0 && today.getDate() < birthDate.getDate())
+    ) {
+        age -= 1
+    }
+
+    return age >= 0 ? `${age} years` : 'Not recorded'
+}
+
 const buildSessionStates = (student, track) => {
     if (student.status === 'P') return ['P', 'P', 'P', 'P', 'P', 'P']
     if (student.status === 'A') return ['A', 'A', 'A', 'A', 'A', 'A']
@@ -541,7 +618,8 @@ const Dashboard = () => {
             ? user.assigned_class_name.trim()
             : ''
     const teacherOnlyView = userRole === 'teacher'
-    const managementView = ['management', 'admin', 'staff', 'accountant'].includes(userRole)
+    const adminOnlyView = userRole === 'admin'
+    const managementView = userRole === 'management'
 
     const [activeTrack, setActiveTrack] = useState(userTrack ?? 'secondary')
     const [registerState, setRegisterState] = useState(() =>
@@ -608,6 +686,22 @@ const Dashboard = () => {
         () => getCounts(currentTeacherStudents),
         [currentTeacherStudents],
     )
+    const activeStudentBioData = activeStudent
+        ? [
+              {
+                  label: 'Birth date',
+                  value: formatBirthDate(activeStudent.birthDate),
+              },
+              {
+                  label: 'Gender',
+                  value: activeStudent.gender ?? 'Not recorded',
+              },
+              {
+                  label: 'Age',
+                  value: getAgeFromBirthDate(activeStudent.birthDate),
+              },
+          ]
+        : []
 
     const summaryCards = [
         {
@@ -678,16 +772,47 @@ const Dashboard = () => {
         },
     ]
 
-    const pageEyebrow = teacherOnlyView ? 'Assigned Class Register' : 'Management Dashboard'
+    const adminMetrics = [
+        {
+            label: 'Class tracks',
+            value: String(Object.keys(trackLabels).length).padStart(2, '0'),
+            note: 'Primary and secondary structures available in the system configuration.',
+        },
+        {
+            label: 'Teacher slots',
+            value: String(classSummaries.length).padStart(2, '0'),
+            note: 'Class ownership positions that administrators can supervise through account assignments.',
+        },
+        {
+            label: 'Management tools',
+            value: '02',
+            note: 'Subjects and timetables now live inside the management workspace, not the system dashboard.',
+        },
+        {
+            label: 'System controls',
+            value: '02',
+            note: 'User accounts and school structure remain administrator-only controls.',
+        },
+    ]
+
+    const pageEyebrow = teacherOnlyView
+        ? 'Assigned Class Register'
+        : adminOnlyView
+          ? 'System Administration'
+          : 'Management Dashboard'
     const pageTitle = teacherOnlyView
         ? assignedFixture?.className ?? 'Class assignment required'
-        : `${trackLabels[activeTrack]} School Overview`
+        : adminOnlyView
+          ? 'System Control Center'
+          : `${trackLabels[activeTrack]} School Overview`
     const pageRoleLabel = formatRoleLabel(userRole)
     const pageMeta = teacherOnlyView
         ? assignedFixture
             ? `${trackLabels[activeTrack]} teacher dashboard for ${assignedFixture.className}`
             : 'Teacher account needs a class assignment from the admin dashboard.'
-        : `${trackLabels[activeTrack]} overview across all assigned classes`
+        : adminOnlyView
+          ? 'Administrator workspace for access control, school structure, and system-level oversight.'
+          : `${trackLabels[activeTrack]} overview across all assigned classes`
 
     const updateAttendance = (studentId, status) => {
         if (!assignedFixture) {
@@ -1007,16 +1132,19 @@ const Dashboard = () => {
                             </div>
                         </div>
 
-                        <div className={styles.scheduleList}>
-                            {assignedFixture.timetable.map(slot => (
-                                <div key={slot.join('-')} className={styles.scheduleItem}>
-                                    <span>{slot[0]}</span>
-                                    <div>
-                                        <strong>{slot[1]}</strong>
-                                        <small>{slot[2]}</small>
-                                    </div>
+                        <div className={styles.bioDataGrid}>
+                            {activeStudentBioData.map(item => (
+                                <div key={item.label} className={styles.bioDataCard}>
+                                    <span>{item.label}</span>
+                                    <strong>{item.value}</strong>
                                 </div>
                             ))}
+                        </div>
+
+                        <div className={styles.noteCard}>
+                            <span>Student note</span>
+                            <strong>{activeStudent.note?.trim() || 'No support note recorded.'}</strong>
+                            <small>Teachers can use this summary for quick profile context.</small>
                         </div>
                     </div>
 
@@ -1295,6 +1423,76 @@ const Dashboard = () => {
         </div>
     )
 
+    const renderAdminView = () => (
+        <div className={styles.managementStack}>
+            <section className={styles.managementCards}>
+                {adminMetrics.map(metric => (
+                    <div key={metric.label} className={styles.managementCard}>
+                        <p className={styles.metricLabel}>{metric.label}</p>
+                        <p className={styles.managementValue}>{metric.value}</p>
+                        <p className={styles.metricMeta}>{metric.note}</p>
+                    </div>
+                ))}
+            </section>
+
+            <section className={styles.lowerGrid}>
+                <div className={styles.panel}>
+                    <div className={styles.panelHeader}>
+                        <div>
+                            <p className={styles.panelEyebrow}>System Controls</p>
+                            <h2 className={styles.panelTitle}>Administrator-only actions</h2>
+                        </div>
+                    </div>
+
+                    <div className={styles.alertList}>
+                        <a href="/admin/users" className={styles.alertCard}>
+                            <div>
+                                <strong>User Accounts</strong>
+                                <p>Create accounts, assign teachers to classes, and control access.</p>
+                            </div>
+                            <span className={styles.alertTag}>Admin</span>
+                        </a>
+
+                        <a href="/admin/school-structure" className={styles.alertCard}>
+                            <div>
+                                <strong>School Structure</strong>
+                                <p>Set the class lists that feed teacher assignment and school-wide visibility.</p>
+                            </div>
+                            <span className={styles.alertTag}>Admin</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div className={styles.panel}>
+                    <div className={styles.panelHeader}>
+                        <div>
+                            <p className={styles.panelEyebrow}>Delegated Workspaces</p>
+                            <h2 className={styles.panelTitle}>Management-owned tools</h2>
+                        </div>
+                    </div>
+
+                    <div className={styles.alertList}>
+                        <div className={styles.alertCard}>
+                            <div>
+                                <strong>Subjects</strong>
+                                <p>Head teachers maintain the school subject registry from the management workspace.</p>
+                            </div>
+                            <span className={styles.alertTag}>Management</span>
+                        </div>
+
+                        <div className={styles.alertCard}>
+                            <div>
+                                <strong>Timetables</strong>
+                                <p>Head teachers create primary or secondary timetables and assign them to teachers.</p>
+                            </div>
+                            <span className={styles.alertTag}>Management</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    )
+
     const renderUnsupportedView = () => (
         <div className={`${styles.statusNotice} ${styles.statusError}`}>
             This account does not have a staff dashboard assigned. Ask an administrator to set the correct role for this user.
@@ -1387,28 +1585,32 @@ const Dashboard = () => {
                         <span>
                             {teacherOnlyView
                                 ? assignedFixture?.className ?? 'Assignment required'
-                                : `All ${trackLabels[activeTrack].toLowerCase()} classes`}
+                                : adminOnlyView
+                                  ? 'System administration'
+                                  : `All ${trackLabels[activeTrack].toLowerCase()} classes`}
                         </span>
                     </button>
 
-                    <div className={styles.segmentedControl}>
-                        {Object.entries(trackLabels).map(([value, label]) => (
-                            <button
-                                key={value}
-                                type="button"
-                                onClick={() => {
-                                    if (!teacherOnlyView) {
-                                        setActiveTrack(value)
-                                    }
-                                }}
-                                disabled={teacherOnlyView}
-                                className={`${styles.segmentButton} ${
-                                    activeTrack === value ? styles.segmentActive : ''
-                                }`}>
-                                {label}
-                            </button>
-                        ))}
-                    </div>
+                    {adminOnlyView ? null : (
+                        <div className={styles.segmentedControl}>
+                            {Object.entries(trackLabels).map(([value, label]) => (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    onClick={() => {
+                                        if (!teacherOnlyView) {
+                                            setActiveTrack(value)
+                                        }
+                                    }}
+                                    disabled={teacherOnlyView}
+                                    className={`${styles.segmentButton} ${
+                                        activeTrack === value ? styles.segmentActive : ''
+                                    }`}>
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 <div className={styles.actionRow}>
@@ -1431,7 +1633,9 @@ const Dashboard = () => {
 
             {teacherOnlyView
                 ? renderTeacherView()
-                : managementView
+                : adminOnlyView
+                  ? renderAdminView()
+                  : managementView
                   ? renderManagementView()
                   : renderUnsupportedView()}
         </div>

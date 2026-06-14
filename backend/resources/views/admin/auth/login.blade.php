@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin Login | Phunziro Class Management System (PCMS)</title>
+    <title>School Portal Login | Phunziro Class Management System (PCMS)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -14,8 +14,8 @@
     <main class="login-shell">
         <section class="login-hero">
             <p class="eyebrow">Phunziro Class Management System (PCMS)</p>
-            <h1>Admin operations without the clutter.</h1>
-            <p class="hero-copy">This portal is reserved for active administrator accounts. From here you can oversee users, access posture, and the operational health of the platform.</p>
+            <h1>School operations without the clutter.</h1>
+            <p class="hero-copy">This portal is for active administrators, head teachers, and teachers. Use it to manage users, define school subjects, and work with class timetables.</p>
 
             <div class="hero-grid">
                 <article>
@@ -23,12 +23,12 @@
                     <p>Manage staff, teachers, students, and guardians from one roster.</p>
                 </article>
                 <article>
-                    <span class="hero-stat">Security</span>
-                    <p>See verification gaps, inactive accounts, and sign-in activity fast.</p>
+                    <span class="hero-stat">Subjects</span>
+                    <p>Keep separate primary and secondary subject lists ready for scheduling.</p>
                 </article>
                 <article>
-                    <span class="hero-stat">System</span>
-                    <p>Keep an eye on queue, mail, cache, and database posture from the dashboard.</p>
+                    <span class="hero-stat">Timetables</span>
+                    <p>Assign class schedules to teachers so each teacher sees the timetable meant for them.</p>
                 </article>
             </div>
         </section>
@@ -36,7 +36,7 @@
         <section class="panel-card login-card">
             <div class="panel-heading">
                 <p class="eyebrow">Secure access</p>
-                <h2>Administrator sign in</h2>
+                <h2>School portal sign in</h2>
             </div>
 
             @if ($errors->any())
@@ -67,7 +67,7 @@
                     <span>Keep this browser signed in</span>
                 </label>
 
-                <button type="submit" class="button button-primary button-block">Enter admin dashboard</button>
+                <button type="submit" class="button button-primary button-block">Enter school portal</button>
             </form>
 
             @if (app()->isLocal())
@@ -76,7 +76,7 @@
                     <code>{{ env('ADMIN_EMAIL', 'admin@school.test') }}</code>
                     with password
                     <code>{{ env('ADMIN_PASSWORD', 'password') }}</code>.
-                    The seeded <code>test@example.com</code> account is a management user, not an administrator, so it cannot sign in here.
+                    The seeded <code>test@example.com</code> account is a management user and can now sign in here.
                 </p>
             @endif
         </section>

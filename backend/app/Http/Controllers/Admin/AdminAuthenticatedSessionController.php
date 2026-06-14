@@ -28,13 +28,13 @@ class AdminAuthenticatedSessionController extends Controller
 
         $user = $request->user();
 
-        if (! $user?->canAccessAdminPanel()) {
+        if (! $user?->canAccessPortal()) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
             throw ValidationException::withMessages([
-                'email' => 'This portal is restricted to active administrator accounts.',
+                'email' => 'This portal is restricted to active admin, head teacher, and teacher accounts.',
             ]);
         }
 

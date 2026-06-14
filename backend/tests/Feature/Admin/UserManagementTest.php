@@ -16,7 +16,7 @@ class UserManagementTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($admin)->post('/admin/users', [
+        $response = $this->actingAs($admin)->postJson('/api/admin/users', [
             'name' => 'Grace Hopper',
             'email' => 'grace@example.com',
             'role' => UserRole::Teacher->value,
@@ -28,7 +28,7 @@ class UserManagementTest extends TestCase
             'password_confirmation' => 'Password123!',
         ]);
 
-        $response->assertRedirect('/admin/users');
+        $response->assertCreated();
         $this->assertDatabaseHas('users', [
             'email' => 'grace@example.com',
             'role' => UserRole::Teacher->value,
@@ -42,7 +42,7 @@ class UserManagementTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($admin)->post('/admin/users', [
+        $response = $this->actingAs($admin)->postJson('/api/admin/users', [
             'name' => 'Unassigned Teacher',
             'email' => 'teacher@example.com',
             'role' => UserRole::Teacher->value,
@@ -51,8 +51,8 @@ class UserManagementTest extends TestCase
             'password_confirmation' => 'Password123!',
         ]);
 
-        $response
-            ->assertSessionHasErrors(['school_track', 'assigned_class_name']);
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['school_track', 'assigned_class_name']);
     }
 
     public function test_admin_can_update_a_user(): void
@@ -60,7 +60,7 @@ class UserManagementTest extends TestCase
         $admin = User::factory()->admin()->create();
         $user = User::factory()->create();
 
-        $response = $this->actingAs($admin)->put("/admin/users/{$user->id}", [
+        $response = $this->actingAs($admin)->putJson("/api/admin/users/{$user->id}", [
             'name' => 'Updated User',
             'email' => $user->email,
             'role' => UserRole::Accountant->value,
@@ -69,7 +69,7 @@ class UserManagementTest extends TestCase
             'password_confirmation' => '',
         ]);
 
-        $response->assertRedirect('/admin/users');
+        $response->assertOk();
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
             'name' => 'Updated User',
@@ -87,7 +87,7 @@ class UserManagementTest extends TestCase
             'assigned_class_name' => 'Form 1',
         ]);
 
-        $response = $this->actingAs($admin)->post('/admin/users', [
+        $response = $this->actingAs($admin)->postJson('/api/admin/users', [
             'name' => 'Second Teacher',
             'email' => 'second-teacher@example.com',
             'role' => UserRole::Teacher->value,
@@ -98,7 +98,8 @@ class UserManagementTest extends TestCase
             'password_confirmation' => 'Password123!',
         ]);
 
-        $response->assertSessionHasErrors(['assigned_class_name']);
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['assigned_class_name']);
     }
 
     public function test_teacher_can_keep_their_existing_class_when_updating_their_account(): void
@@ -109,7 +110,7 @@ class UserManagementTest extends TestCase
             'assigned_class_name' => 'Form 1',
         ]);
 
-        $response = $this->actingAs($admin)->put("/admin/users/{$teacher->id}", [
+        $response = $this->actingAs($admin)->putJson("/api/admin/users/{$teacher->id}", [
             'name' => 'Updated Teacher',
             'email' => $teacher->email,
             'role' => UserRole::Teacher->value,
@@ -120,7 +121,7 @@ class UserManagementTest extends TestCase
             'password_confirmation' => '',
         ]);
 
-        $response->assertRedirect('/admin/users');
+        $response->assertOk();
         $this->assertDatabaseHas('users', [
             'id' => $teacher->id,
             'name' => 'Updated Teacher',
@@ -136,8 +137,8 @@ class UserManagementTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->patch("/admin/users/{$teacher->id}/status")
-            ->assertRedirect('/admin/users');
+            ->patchJson("/api/admin/users/{$teacher->id}/status")
+            ->assertOk();
 
         $this->assertDatabaseHas('users', [
             'id' => $teacher->id,
@@ -145,8 +146,8 @@ class UserManagementTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->patch("/admin/users/{$teacher->id}/status")
-            ->assertRedirect('/admin/users');
+            ->patchJson("/api/admin/users/{$teacher->id}/status")
+            ->assertOk();
 
         $this->assertDatabaseHas('users', [
             'id' => $teacher->id,
@@ -161,8 +162,9 @@ class UserManagementTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->patch("/admin/users/{$admin->id}/status")
-            ->assertSessionHasErrors('status');
+            ->patchJson("/api/admin/users/{$admin->id}/status")
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('status');
 
         $this->assertDatabaseHas('users', [
             'id' => $admin->id,
@@ -174,9 +176,10 @@ class UserManagementTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($admin)->delete("/admin/users/{$admin->id}");
+        $response = $this->actingAs($admin)->deleteJson("/api/admin/users/{$admin->id}");
 
-        $response->assertSessionHasErrors('delete');
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors('delete');
         $this->assertDatabaseHas('users', [
             'id' => $admin->id,
         ]);

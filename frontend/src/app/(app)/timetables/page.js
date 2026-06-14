@@ -1,103 +1,218 @@
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
 import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
-import styles from '@/app/(app)/workspace-page.module.css'
+import workspaceStyles from '@/app/(app)/workspace-page.module.css'
+import managementStyles from '@/app/(app)/management/management-tools.module.css'
+import axios from '@/lib/axios'
+import { canManageManagementWorkspace, formatRoleLabel, isTeacherUser } from '@/lib/userAccess'
+import { useAuth } from '@/hooks/auth'
 
-const timetableRows = [
-    ['Monday', '23 lessons published', '2 room swaps pending'],
-    ['Tuesday', '24 lessons published', 'No conflicts'],
-    ['Wednesday', '22 lessons published', 'Assembly block affects Period 1'],
-    ['Thursday', '24 lessons published', '1 staff cover request'],
-    ['Friday', '21 lessons published', 'Sports rotation after lunch'],
-]
+const groupEntriesByDay = entries =>
+    entries.reduce((groups, entry) => {
+        if (!groups[entry.day_of_week]) {
+            groups[entry.day_of_week] = []
+        }
 
-const workflowNotes = [
-    {
-        title: 'Cover management',
-        detail: 'Two requests still need approval before Thursday morning release.',
-        meta: '2 pending',
-    },
-    {
-        title: 'Room utilization',
-        detail: 'ICT and science rooms are at peak usage in the secondary timetable.',
-        meta: 'High load',
-    },
-]
+        groups[entry.day_of_week].push(entry)
+        return groups
+    }, {})
 
 export default function TimetablesPage() {
+    const { user } = useAuth({ middleware: 'auth' })
+    const [timetables, setTimetables] = useState([])
+    const [daysOfWeek, setDaysOfWeek] = useState({})
+    const [loading, setLoading] = useState(true)
+    const [status, setStatus] = useState(null)
+
+    const loadAssignedTimetables = async () => {
+        setLoading(true)
+
+        try {
+            const response = await axios.get('/api/teacher/timetables')
+
+            setTimetables(response.data?.timetables ?? [])
+            setDaysOfWeek(response.data?.daysOfWeek ?? {})
+        } catch (error) {
+            setStatus({
+                type: 'error',
+                message:
+                    error?.response?.data?.message ??
+                    'Unable to load assigned timetables.',
+            })
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        if (!user || !isTeacherUser(user)) {
+            return
+        }
+
+        loadAssignedTimetables()
+    }, [user])
+
+    const totalPeriods = useMemo(
+        () =>
+            timetables.reduce(
+                (count, timetable) => count + (timetable.entry_count ?? 0),
+                0,
+            ),
+        [timetables],
+    )
+
+    if (!user) {
+        return null
+    }
+
+    if (canManageManagementWorkspace(user)) {
+        return (
+            <WorkspacePageShell
+                eyebrow="Management"
+                title="Timetables moved to Management"
+                description="Head teacher timetable creation and editing now lives inside the dedicated management workspace.">
+                <article className={workspaceStyles.panel}>
+                    <p className={managementStyles.notice}>
+                        Use the sidebar item at <strong>Management / Timetables</strong>{' '}
+                        to create timetables, choose primary or secondary, and
+                        assign each class timetable to a teacher.
+                    </p>
+                </article>
+            </WorkspacePageShell>
+        )
+    }
+
+    if (!isTeacherUser(user)) {
+        return (
+            <WorkspacePageShell
+                eyebrow="Restricted"
+                title="Teacher timetable view only"
+                description={`This account is signed in as ${formatRoleLabel(user?.role)}. Only teacher accounts can view assigned class timetables here.`}>
+                <article className={workspaceStyles.panel}>
+                    <p className={managementStyles.notice}>
+                        System management stays with administrators, while timetable
+                        publishing stays with management accounts.
+                    </p>
+                </article>
+            </WorkspacePageShell>
+        )
+    }
+
     return (
         <WorkspacePageShell
-            eyebrow="Scheduling"
-            title="Timetables and class coverage"
-            description="The timetables menu now opens a dedicated scheduling workspace for published lessons, room conflicts, and staff cover."
-        >
-            <section className={styles.statGrid}>
-                <article className={styles.statCard}>
-                    <p className={styles.statLabel}>Published lessons</p>
-                    <p className={styles.statValue}>114</p>
-                    <p className={styles.statNote}>All current lessons across this week’s active timetable.</p>
-                </article>
-                <article className={styles.statCard}>
-                    <p className={styles.statLabel}>Room conflicts</p>
-                    <p className={styles.statValue}>01</p>
-                    <p className={styles.statNote}>A single lab clash remains unresolved for Thursday.</p>
-                </article>
-                <article className={styles.statCard}>
-                    <p className={styles.statLabel}>Cover requests</p>
-                    <p className={styles.statValue}>02</p>
-                    <p className={styles.statNote}>Temporary replacements still awaiting confirmation.</p>
-                </article>
+            eyebrow="Teacher workspace"
+            title="My assigned timetables"
+            description="This page shows only the timetables assigned to your teacher account by the head teacher.">
+            {status ? (
+                <section className={workspaceStyles.panel}>
+                    <p
+                        className={`${managementStyles.notice} ${
+                            status.type === 'error' ? managementStyles.dangerText : ''
+                        }`}>
+                        {status.message}
+                    </p>
+                </section>
+            ) : null}
+
+            <section className={managementStyles.statsGrid}>
+                {[
+                    ['Assigned timetables', timetables.length],
+                    ['Total periods', totalPeriods],
+                    ['My class', user?.assigned_class_name ?? 'Unassigned'],
+                ].map(([label, value]) => (
+                    <article key={label} className={workspaceStyles.statCard}>
+                        <p className={workspaceStyles.statLabel}>{label}</p>
+                        <p className={workspaceStyles.statValue}>{value}</p>
+                    </article>
+                ))}
             </section>
 
-            <section className={styles.panelGrid}>
-                <article className={styles.fullPanel}>
-                    <div className={styles.panelHeader}>
-                        <div>
-                            <p className={styles.panelEyebrow}>Week view</p>
-                            <h2 className={styles.panelTitle}>Published schedule overview</h2>
-                        </div>
-                    </div>
+            <section className={workspaceStyles.panelGrid}>
+                {loading ? (
+                    <article className={workspaceStyles.fullPanel}>
+                        <p className={managementStyles.muted}>Loading timetables...</p>
+                    </article>
+                ) : timetables.length ? (
+                    timetables.map(timetable => {
+                        const entriesByDay = groupEntriesByDay(timetable.entries ?? [])
 
-                    <div className={styles.tableWrap}>
-                        <table className={styles.table}>
-                            <thead>
-                                <tr>
-                                    <th>Day</th>
-                                    <th>Publication status</th>
-                                    <th>Notes</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {timetableRows.map(row => (
-                                    <tr key={row[0]}>
-                                        {row.map(cell => (
-                                            <td key={cell}>{cell}</td>
-                                        ))}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </article>
-
-                <article className={styles.panel}>
-                    <div className={styles.panelHeader}>
-                        <div>
-                            <p className={styles.panelEyebrow}>Workflow</p>
-                            <h2 className={styles.panelTitle}>Operational notes</h2>
-                        </div>
-                    </div>
-
-                    <div className={styles.list}>
-                        {workflowNotes.map(item => (
-                            <div key={item.title} className={styles.listItem}>
-                                <div>
-                                    <strong>{item.title}</strong>
-                                    <p>{item.detail}</p>
+                        return (
+                            <article key={timetable.id} className={workspaceStyles.fullPanel}>
+                                <div className={workspaceStyles.panelHeader}>
+                                    <div>
+                                        <p className={workspaceStyles.panelEyebrow}>
+                                            {timetable.school_track_label}
+                                        </p>
+                                        <h2 className={workspaceStyles.panelTitle}>
+                                            {timetable.title}
+                                        </h2>
+                                        <p className={managementStyles.cardMeta}>
+                                            {timetable.class_name} · Published by{' '}
+                                            {timetable.creator_name ?? 'System'}
+                                        </p>
+                                    </div>
+                                    <span className={workspaceStyles.badge}>
+                                        {timetable.entry_count} periods
+                                    </span>
                                 </div>
-                                <span className={styles.badge}>{item.meta}</span>
-                            </div>
-                        ))}
-                    </div>
-                </article>
+
+                                {timetable.notes ? (
+                                    <p className={managementStyles.notice}>
+                                        {timetable.notes}
+                                    </p>
+                                ) : null}
+
+                                <div className={managementStyles.dayGrid}>
+                                    {Object.entries(daysOfWeek).map(([dayValue, dayLabel]) => (
+                                        <div
+                                            key={`${timetable.id}-${dayValue}`}
+                                            className={managementStyles.dayCard}>
+                                            <h3>{dayLabel}</h3>
+                                            {(entriesByDay[dayValue] ?? []).length ? (
+                                                <div className={managementStyles.periodList}>
+                                                    {entriesByDay[dayValue].map(entry => (
+                                                        <div
+                                                            key={entry.id}
+                                                            className={managementStyles.periodItem}>
+                                                            <strong>{entry.period_label}</strong>
+                                                            <p>
+                                                                {entry.subject?.name ??
+                                                                    'Subject missing'}
+                                                            </p>
+                                                            <small>
+                                                                {entry.start_time || '--:--'} -{' '}
+                                                                {entry.end_time || '--:--'}
+                                                                {entry.room
+                                                                    ? ` · ${entry.room}`
+                                                                    : ''}
+                                                            </small>
+                                                            {entry.notes ? (
+                                                                <small>{entry.notes}</small>
+                                                            ) : null}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <p className={managementStyles.muted}>
+                                                    No periods saved.
+                                                </p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </article>
+                        )
+                    })
+                ) : (
+                    <article className={workspaceStyles.fullPanel}>
+                        <p className={managementStyles.notice}>
+                            No timetable has been assigned to your account yet.
+                            Contact the head teacher if your class schedule should
+                            already be available.
+                        </p>
+                    </article>
+                )}
             </section>
         </WorkspacePageShell>
     )

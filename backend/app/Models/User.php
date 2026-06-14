@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -40,18 +41,52 @@ class User extends Authenticatable
         return $this->role === UserRole::Admin;
     }
 
+    public function isActive(): bool
+    {
+        return $this->status === UserStatus::Active;
+    }
+
     public function isTeacher(): bool
     {
         return $this->role === UserRole::Teacher;
     }
 
-    public function isManagement(): bool
+    public function isHeadTeacher(): bool
+    {
+        return $this->role === UserRole::Management;
+    }
+
+    public function isOperationalStaff(): bool
     {
         return in_array($this->role, [UserRole::Management, UserRole::Admin, UserRole::Staff], true);
     }
 
+    public function canAccessPortal(): bool
+    {
+        return $this->isActive() && in_array($this->role, [
+            UserRole::Admin,
+            UserRole::Management,
+            UserRole::Teacher,
+        ], true);
+    }
+
+    public function canManageAdministration(): bool
+    {
+        return $this->isAdmin() && $this->isActive();
+    }
+
+    public function canManageTimetables(): bool
+    {
+        return $this->isHeadTeacher() && $this->isActive();
+    }
+
     public function canAccessAdminPanel(): bool
     {
-        return $this->isAdmin() && $this->status === UserStatus::Active;
+        return $this->canManageAdministration();
+    }
+
+    public function assignedTimetables(): HasMany
+    {
+        return $this->hasMany(Timetable::class, 'assigned_teacher_id');
     }
 }

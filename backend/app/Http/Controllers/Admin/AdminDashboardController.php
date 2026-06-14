@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
+use App\Models\SchoolSubject;
+use App\Models\Timetable;
 use App\Models\User;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -14,11 +16,17 @@ class AdminDashboardController extends Controller
 {
     public function __invoke(): View
     {
+        $user = auth()->user();
         $totalUsers = User::count();
         $activeUsers = User::where('status', UserStatus::Active)->count();
         $adminUsers = User::where('role', UserRole::Admin)->count();
         $unverifiedUsers = User::whereNull('email_verified_at')->count();
         $newUsersThisMonth = User::where('created_at', '>=', now()->startOfMonth())->count();
+        $totalSubjects = SchoolSubject::count();
+        $totalTimetables = Timetable::count();
+        $myTimetables = $user?->isTeacher()
+            ? Timetable::where('assigned_teacher_id', $user->id)->count()
+            : 0;
         $liveSessions = DB::table('sessions')
             ->where('last_activity', '>=', now()->subMinutes(30)->getTimestamp())
             ->count();
@@ -45,42 +53,58 @@ class AdminDashboardController extends Controller
 
         $recentUsers = User::latest()->take(6)->get();
 
-        $modules = [
-            [
+        $modules = [];
+
+        if ($user?->canManageAdministration()) {
+            $modules[] = [
                 'title' => 'User management',
                 'metric' => number_format($totalUsers),
                 'detail' => 'Central control for administrator, teacher, student, and guardian accounts.',
                 'action_label' => 'Open roster',
                 'action_url' => route('admin.users.index'),
-            ],
-            [
+            ];
+            $modules[] = [
                 'title' => 'School structure',
                 'metric' => '2 tracks',
                 'detail' => 'Set the default class names for primary and secondary so teacher onboarding matches your school.',
                 'action_label' => 'Edit classes',
                 'action_url' => route('admin.school-structure.edit'),
-            ],
-            [
-                'title' => 'Access control',
-                'metric' => number_format($adminUsers),
-                'detail' => 'Track privileged accounts and keep ownership of critical workflows with the admin team.',
-                'action_label' => 'Review admins',
-                'action_url' => route('admin.users.index', ['role' => UserRole::Admin->value]),
-            ],
-            [
-                'title' => 'Account health',
-                'metric' => number_format($unverifiedUsers),
-                'detail' => 'Unverified or suspended users are visible before they become a support backlog.',
-                'action_label' => 'Resolve accounts',
-                'action_url' => route('admin.users.index', ['status' => UserStatus::Inactive->value]),
-            ],
-            [
-                'title' => 'Live activity',
-                'metric' => number_format($liveSessions),
-                'detail' => 'Session visibility helps you see whether the portal is active and where to watch for unusual churn.',
-                'action_label' => 'Inspect users',
-                'action_url' => route('admin.users.index'),
-            ],
+            ];
+        }
+
+        if ($user?->canManageTimetables()) {
+            $modules[] = [
+                'title' => 'Subjects',
+                'metric' => number_format($totalSubjects),
+                'detail' => 'Build the primary and secondary subject list your school uses before scheduling classes.',
+                'action_label' => 'Manage subjects',
+                'action_url' => route('admin.subjects.index'),
+            ];
+            $modules[] = [
+                'title' => 'Timetables',
+                'metric' => number_format($totalTimetables),
+                'detail' => 'Create one timetable per class, assign it to a teacher, and keep track-specific schedules organized.',
+                'action_label' => 'Open timetables',
+                'action_url' => route('admin.timetables.index'),
+            ];
+        }
+
+        if ($user?->isTeacher()) {
+            $modules[] = [
+                'title' => 'My timetable',
+                'metric' => number_format($myTimetables),
+                'detail' => 'See the class timetables that have been assigned directly to your teacher account.',
+                'action_label' => 'Open my timetable',
+                'action_url' => route('teacher.timetables.index'),
+            ];
+        }
+
+        $modules[] = [
+            'title' => 'Live activity',
+            'metric' => number_format($liveSessions),
+            'detail' => 'Session visibility helps you see whether the portal is active and where to watch for unusual churn.',
+            'action_label' => $user?->isTeacher() ? 'Refresh workspace' : 'Inspect users',
+            'action_url' => $user?->isTeacher() ? route('teacher.timetables.index') : route('dashboard'),
         ];
 
         $systemStatus = [
@@ -94,16 +118,17 @@ class AdminDashboardController extends Controller
 
         return view('admin.dashboard', [
             'summaryCards' => [
-                ['label' => 'Total accounts', 'value' => $totalUsers, 'hint' => 'All registered people in the platform.'],
-                ['label' => 'Active accounts', 'value' => $activeUsers, 'hint' => 'Users currently allowed into the system.'],
-                ['label' => 'Live sessions', 'value' => $liveSessions, 'hint' => 'Sessions seen in the last 30 minutes.'],
-                ['label' => 'Joined this month', 'value' => $newUsersThisMonth, 'hint' => 'Fresh account growth this month.'],
+                ['label' => $user?->isTeacher() ? 'My timetables' : 'Total accounts', 'value' => $user?->isTeacher() ? $myTimetables : $totalUsers, 'hint' => $user?->isTeacher() ? 'Timetables assigned to your account.' : 'All registered people in the platform.'],
+                ['label' => $user?->isTeacher() ? 'My class' : 'Active accounts', 'value' => $user?->isTeacher() ? ($user->assigned_class_name ?? 'Unassigned') : $activeUsers, 'hint' => $user?->isTeacher() ? 'Your current class allocation.' : 'Users currently allowed into the system.'],
+                ['label' => 'School subjects', 'value' => $totalSubjects, 'hint' => 'Subjects available for timetable planning.'],
+                ['label' => 'Class timetables', 'value' => $totalTimetables, 'hint' => 'Saved schedules across all configured classes.'],
             ],
             'modules' => $modules,
             'recentUsers' => $recentUsers,
             'roleBreakdown' => $roleBreakdown,
             'statusBreakdown' => $statusBreakdown,
             'systemStatus' => $systemStatus,
+            'currentUser' => $user,
         ]);
     }
 }

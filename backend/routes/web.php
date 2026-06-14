@@ -1,46 +1,26 @@
 <?php
 
-use App\Http\Controllers\Admin\AdminAuthenticatedSessionController;
-use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Admin\AdminSchoolStructureController;
-use App\Http\Controllers\Admin\AdminUserController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    if (! auth()->check()) {
-        return redirect()->route('login');
-    }
+$frontendUrl = rtrim((string) env('FRONTEND_URL', 'http://localhost:3000'), '/');
 
-    abort_unless(auth()->user()?->canAccessAdminPanel(), 403);
+$redirectToFrontend = static function (string $path = '') use ($frontendUrl) {
+    $normalizedPath = ltrim($path, '/');
 
-    return redirect()->route('dashboard');
-});
+    return redirect()->away(
+        $normalizedPath === ''
+            ? $frontendUrl
+            : $frontendUrl.'/'.$normalizedPath,
+    );
+};
 
-Route::middleware('guest')->group(function () {
-    Route::get('/login', [AdminAuthenticatedSessionController::class, 'create'])
-        ->name('login');
-
-    Route::post('/admin/login', [AdminAuthenticatedSessionController::class, 'store'])
-        ->name('admin.login.store');
-});
-
-Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('/dashboard', AdminDashboardController::class)
-        ->name('dashboard');
-
-    Route::post('/admin/logout', [AdminAuthenticatedSessionController::class, 'destroy'])
-        ->name('admin.logout');
-
-    Route::get('/admin/school-structure', [AdminSchoolStructureController::class, 'edit'])
-        ->name('admin.school-structure.edit');
-    Route::put('/admin/school-structure', [AdminSchoolStructureController::class, 'update'])
-        ->name('admin.school-structure.update');
-
-    Route::resource('/admin/users', AdminUserController::class)
-        ->except('show')
-        ->names('admin.users');
-    Route::patch('/admin/users/{user}/status', [AdminUserController::class, 'updateStatus'])
-        ->name('admin.users.status');
-});
+Route::get('/', fn () => $redirectToFrontend());
+Route::get('/login', fn () => $redirectToFrontend('login'))->name('login');
+Route::get('/dashboard', fn () => $redirectToFrontend('dashboard'))->name('dashboard');
+Route::get('/admin/users', fn () => $redirectToFrontend('admin/users'));
+Route::get('/admin/school-structure', fn () => $redirectToFrontend('admin/school-structure'));
+Route::get('/management/subjects', fn () => $redirectToFrontend('management/subjects'));
+Route::get('/management/timetables', fn () => $redirectToFrontend('management/timetables'));
+Route::get('/timetables', fn () => $redirectToFrontend('timetables'));
 
 require __DIR__.'/auth.php';
