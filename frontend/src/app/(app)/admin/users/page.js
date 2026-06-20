@@ -467,22 +467,17 @@ export default function AdminUsersPage() {
                                                 return (
                                                     <>
                                             <td>
-                                                <div className={adminStyles.cellMeta}>
-                                                    <strong>{item.name}</strong>
-                                                    <small>{item.email}</small>
-                                                </div>
+                                                <strong>{item.name}</strong>
+                                                <small>{item.email}</small>
                                             </td>
                                             <td>{item.role_label}</td>
                                             <td>
                                                 {assignmentMeta ? (
-                                                    <div
-                                                        className={
-                                                            adminStyles.cellMeta
-                                                        }>
+                                                    <>
                                                         <strong>{assignmentMeta.trackLabel}</strong>
                                                         <small>{assignmentMeta.roleLabel}</small>
                                                         <small>{assignmentMeta.classLabel}</small>
-                                                    </div>
+                                                    </>
                                                 ) : (
                                                     <small>All-school access</small>
                                                 )}

@@ -77,6 +77,19 @@ const LoginContent = () => {
         })
     }
 
+    const handleFormKeyDown = event => {
+        if (event.key !== 'Enter' || event.nativeEvent.isComposing) {
+            return
+        }
+
+        if (event.target.tagName !== 'INPUT' || event.target.type === 'checkbox') {
+            return
+        }
+
+        event.preventDefault()
+        event.currentTarget.requestSubmit()
+    }
+
     return (
         <div className={styles.page}>
             <div className={styles.header}>
@@ -100,7 +113,10 @@ const LoginContent = () => {
 
             <AuthSessionStatus className={styles.status} status={status} />
 
-            <form onSubmit={submitForm} className={styles.form}>
+            <form
+                onSubmit={submitForm}
+                onKeyDown={handleFormKeyDown}
+                className={styles.form}>
                 <div className={styles.field}>
                     <Label htmlFor="email">Work Email</Label>
 
