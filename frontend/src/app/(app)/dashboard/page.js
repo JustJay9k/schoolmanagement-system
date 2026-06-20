@@ -638,6 +638,10 @@ const Dashboard = () => {
         typeof user?.assigned_class_name === 'string'
             ? user.assigned_class_name.trim()
             : ''
+    const teacherAssignmentLabel =
+        userTrack === 'secondary'
+            ? assignedClassName || 'Subject teacher only'
+            : assignedClassName || 'Class assignment required'
     const teacherOnlyView = userRole === 'teacher'
     const adminOnlyView = userRole === 'admin'
     const managementView = userRole === 'management'
@@ -861,7 +865,10 @@ const Dashboard = () => {
             ? 'Student Finance Desk'
             : 'Management Dashboard'
     const pageTitle = teacherOnlyView
-        ? assignedFixture?.className ?? 'Class assignment required'
+        ? assignedFixture?.className ??
+          (userTrack === 'secondary'
+              ? 'Subject Teacher Workspace'
+              : 'Class assignment required')
         : adminOnlyView
           ? 'System Control Center'
           : financeView
@@ -871,7 +878,9 @@ const Dashboard = () => {
     const pageMeta = teacherOnlyView
         ? assignedFixture
             ? `${trackLabels[activeTrack]} teacher dashboard for ${assignedFixture.className}`
-            : 'Teacher account needs a class assignment.'
+            : userTrack === 'secondary'
+              ? 'Secondary subject teacher dashboard with no form class assigned yet.'
+              : 'Teacher account needs a class assignment.'
         : adminOnlyView
           ? 'Administrator workspace for access control, school structure, and system-level oversight.'
           : financeView
@@ -913,7 +922,10 @@ const Dashboard = () => {
         if (!assignedFixture) {
             setRegisterStatus({
                 tone: 'error',
-                message: 'Your account does not yet have a class assignment.',
+                message:
+                    userTrack === 'secondary'
+                        ? 'Your account does not have a form class yet, so there is no class register to submit.'
+                        : 'Your account does not yet have a class assignment.',
             })
             return
         }
@@ -1070,10 +1082,12 @@ const Dashboard = () => {
                               : styles.statusIdle
                 }`}>
                 {!assignedFixture
-                    ? 'This teacher account is not yet assigned to a class.'
+                    ? userTrack === 'secondary'
+                        ? 'This secondary teacher account does not have a form class yet. Subject teaching can continue, and the Head Master can allocate a form class when needed.'
+                        : 'This teacher account is not yet assigned to a class.'
                     : currentTeacherStudents.length === 0
                       ? 'Your class assignment is already saved. Learner records for this class have not been loaded into the dashboard yet.'
-                    : registerStatus.message}
+                      : registerStatus.message}
             </div>
 
             <section id="register-center" className={styles.tableCard}>
@@ -1556,6 +1570,14 @@ const Dashboard = () => {
 
                         <div className={styles.alertCard}>
                             <div>
+                                <strong>Form Teachers</strong>
+                                <p>Head teachers allocate secondary form classes separately from normal subject-teacher responsibilities.</p>
+                            </div>
+                            <span className={styles.alertTag}>Management</span>
+                        </div>
+
+                        <div className={styles.alertCard}>
+                            <div>
                                 <strong>Timetables</strong>
                                 <p>Head teachers create primary or secondary timetables and assign them to teachers.</p>
                             </div>
@@ -1741,7 +1763,8 @@ const Dashboard = () => {
                         <span className={styles.filterLabel}>Class scope</span>
                         <span>
                             {teacherOnlyView
-                                ? assignedFixture?.className ?? 'Assignment required'
+                                ? assignedFixture?.className ??
+                                  teacherAssignmentLabel
                                 : adminOnlyView
                                   ? 'System administration'
                                   : financeView

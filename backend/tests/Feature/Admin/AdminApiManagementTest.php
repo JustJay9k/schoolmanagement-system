@@ -28,6 +28,8 @@ class AdminApiManagementTest extends TestCase
                 'role' => UserRole::Teacher->value,
                 'school_track' => 'secondary',
                 'assigned_class_name' => 'Form 1',
+                'form_class_name' => 'Form 1',
+                'is_form_teacher' => true,
             ]);
     }
 
@@ -74,6 +76,8 @@ class AdminApiManagementTest extends TestCase
             ->assertOk()
             ->assertJsonFragment([
                 'assigned_class_name' => 'Form 2',
+                'form_class_name' => 'Form 2',
+                'is_form_teacher' => true,
             ]);
 
         $this->assertDatabaseHas('users', [

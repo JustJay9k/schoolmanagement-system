@@ -21,6 +21,7 @@ Route::get('/admin/users', fn () => $redirectToFrontend('admin/users'));
 Route::get('/admin/school-structure', fn () => $redirectToFrontend('admin/school-structure'));
 Route::get('/finance', fn () => $redirectToFrontend('finance'));
 Route::get('/management/subjects', fn () => $redirectToFrontend('management/subjects'));
+Route::get('/management/form-teachers', fn () => $redirectToFrontend('management/form-teachers'));
 Route::get('/management/timetables', fn () => $redirectToFrontend('management/timetables'));
 Route::get('/timetables', fn () => $redirectToFrontend('timetables'));
 

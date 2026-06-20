@@ -40,6 +40,30 @@ const groupEntriesByDay = entries =>
         return groups
     }, {})
 
+const formatTeacherRoleSummary = teacher => {
+    const roles = Array.isArray(teacher?.teaching_roles)
+        ? teacher.teaching_roles
+        : []
+
+    if (
+        (roles.includes('class_teacher') || !teacher?.form_class_name) &&
+        teacher?.assigned_class_name &&
+        !roles.includes('form_teacher')
+    ) {
+        return `Class teacher - ${teacher.assigned_class_name}`
+    }
+
+    if (roles.includes('form_teacher') || teacher?.form_class_name) {
+        return `Form teacher - ${teacher.form_class_name}`
+    }
+
+    if (roles.includes('subject_teacher')) {
+        return 'Subject teacher'
+    }
+
+    return 'Teacher'
+}
+
 export default function ManagementTimetablesPage() {
     const { user } = useAuth({ middleware: 'auth' })
     const [timetables, setTimetables] = useState([])
@@ -256,7 +280,9 @@ export default function ManagementTimetablesPage() {
                 <article className={workspaceStyles.panel}>
                     <p className={managementStyles.notice}>
                         Timetable publishing belongs to the management workspace.
-                        Teachers can only see timetables assigned to them.
+                        Teachers can only see timetables assigned to them, while
+                        form-teacher allocation stays in the same management
+                        workspace.
                     </p>
                 </article>
             </WorkspacePageShell>
@@ -267,7 +293,7 @@ export default function ManagementTimetablesPage() {
         <WorkspacePageShell
             eyebrow="Management"
             title="Class timetables"
-            description="Choose whether a timetable belongs to primary or secondary school, assign it to a teacher account, and publish one schedule per class."
+            description="Choose whether a timetable belongs to primary or secondary school, assign it to a teacher account, and publish one schedule per class. Secondary subject teachers and form teachers can be the same person."
             actions={
                 <div className={managementStyles.toolbarGroup}>
                     <button
@@ -462,12 +488,16 @@ export default function ManagementTimetablesPage() {
                                     </option>
                                     {availableTeachers.map(teacher => (
                                         <option key={teacher.id} value={teacher.id}>
-                                            {teacher.assigned_class_name
-                                                ? `${teacher.name} - ${teacher.assigned_class_name}`
-                                                : teacher.name}
+                                            {`${teacher.name} - ${formatTeacherRoleSummary(
+                                                teacher,
+                                            )}`}
                                         </option>
                                     ))}
                                 </select>
+                                <span className={managementStyles.fieldHint}>
+                                    Secondary teachers can remain subject
+                                    teachers only, or also hold one form class.
+                                </span>
                                 <InputError messages={formErrors.assigned_teacher_id} />
                             </label>
 

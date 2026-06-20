@@ -122,6 +122,9 @@ class ManagementTimetableApiController extends Controller
                 'id' => $teacher->id,
                 'name' => $teacher->name,
                 'assigned_class_name' => $teacher->assigned_class_name,
+                'form_class_name' => $teacher->isFormTeacher() ? $teacher->assigned_class_name : null,
+                'is_form_teacher' => $teacher->isFormTeacher(),
+                'teaching_roles' => $teacher->teachingRoles(),
             ])->values()->all())
             ->all();
 
@@ -150,6 +153,11 @@ class ManagementTimetableApiController extends Controller
                 'id' => $timetable->assignedTeacher->id,
                 'name' => $timetable->assignedTeacher->name,
                 'assigned_class_name' => $timetable->assignedTeacher->assigned_class_name,
+                'form_class_name' => $timetable->assignedTeacher->isFormTeacher()
+                    ? $timetable->assignedTeacher->assigned_class_name
+                    : null,
+                'is_form_teacher' => $timetable->assignedTeacher->isFormTeacher(),
+                'teaching_roles' => $timetable->assignedTeacher->teachingRoles(),
             ] : null,
             'creator_name' => $timetable->creator?->name,
             'entry_count' => $timetable->entries->count(),

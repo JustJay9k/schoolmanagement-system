@@ -96,6 +96,35 @@ class User extends Authenticatable
         return $this->canManageAdministration();
     }
 
+    public function isFormTeacher(): bool
+    {
+        return $this->isTeacher()
+            && $this->school_track === 'secondary'
+            && filled($this->assigned_class_name);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function teachingRoles(): array
+    {
+        if (! $this->isTeacher()) {
+            return [];
+        }
+
+        $roles = ['subject_teacher'];
+
+        if ($this->school_track === 'primary' && filled($this->assigned_class_name)) {
+            $roles[] = 'class_teacher';
+        }
+
+        if ($this->isFormTeacher()) {
+            $roles[] = 'form_teacher';
+        }
+
+        return $roles;
+    }
+
     public function assignedTimetables(): HasMany
     {
         return $this->hasMany(Timetable::class, 'assigned_teacher_id');

@@ -70,9 +70,13 @@ class UpdateSchoolStructureRequest extends FormRequest
                     });
 
                 $teachersWithMissingClasses->each(function (User $teacher) use ($validator): void {
+                    $assignmentLabel = $teacher->school_track === 'secondary'
+                        ? 'assigned as form teacher to'
+                        : 'assigned to';
+
                     $validator->errors()->add(
                         'classes_by_track',
-                        "{$teacher->name} is still assigned to {$teacher->assigned_class_name} in {$teacher->school_track}. Reassign that teacher before removing or renaming the class.",
+                        "{$teacher->name} is still {$assignmentLabel} {$teacher->assigned_class_name} in {$teacher->school_track}. Reassign that teacher before removing or renaming the class.",
                     );
                 });
 

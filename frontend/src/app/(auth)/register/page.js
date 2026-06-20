@@ -73,6 +73,7 @@ const Page = () => {
     const availableClasses =
         registrationOptions.availableClassesByTrack?.[schoolTrack] ?? []
     const showClassPicker = schoolTrack !== ''
+    const requiresClassSelection = schoolTrack === 'primary'
 
     const submitForm = event => {
         event.preventDefault()
@@ -97,7 +98,10 @@ const Page = () => {
                 <div className="mb-5 rounded-3xl border border-[var(--line)] bg-[var(--surface-raised)] px-4 py-4 text-sm text-[var(--muted)] shadow-sm">
                     New self-registrations create teacher accounts. Choose
                     whether you belong to the primary or secondary section, then
-                    claim the single class you will manage.
+                    set your class responsibility. Primary teachers must choose
+                    one class. Secondary teachers can register as subject
+                    teachers with no form class, or optionally claim one form
+                    class.
                 </div>
 
                 <div>
@@ -170,7 +174,11 @@ const Page = () => {
 
                 {showClassPicker ? (
                     <div className="mt-4">
-                        <Label htmlFor="assignedClassName">Class</Label>
+                        <Label htmlFor="assignedClassName">
+                            {requiresClassSelection
+                                ? 'Class'
+                                : 'Form Class (Optional)'}
+                        </Label>
 
                         <select
                             id="assignedClassName"
@@ -179,8 +187,12 @@ const Page = () => {
                                 setAssignedClassName(event.target.value)
                             }
                             className="block w-full rounded-2xl border border-[var(--line)] bg-[var(--surface-field)] px-4 py-3 text-sm text-[var(--ink)] shadow-sm outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--focus-ring)]"
-                            required>
-                            <option value="">Select your class</option>
+                            required={requiresClassSelection}>
+                            <option value="">
+                                {requiresClassSelection
+                                    ? 'Select your class'
+                                    : 'Register as a subject teacher only'}
+                            </option>
                             {availableClasses.map(className => (
                                 <option key={className} value={className}>
                                     {className}
@@ -188,11 +200,18 @@ const Page = () => {
                             ))}
                         </select>
 
-                        {availableClasses.length === 0 ? (
+                        {availableClasses.length === 0 && requiresClassSelection ? (
                             <p className="mt-2 text-sm text-[var(--muted)]">
                                 No unassigned classes are available in this
                                 section right now. Ask the administrator to set
                                 up a class for you.
+                            </p>
+                        ) : null}
+
+                        {!requiresClassSelection ? (
+                            <p className="mt-2 text-sm text-[var(--muted)]">
+                                Leave this blank if you only teach subjects and
+                                do not need form-teacher responsibility yet.
                             </p>
                         ) : null}
 
@@ -253,7 +272,7 @@ const Page = () => {
                         disabled={
                             isLoadingOptions ||
                             schoolTrack === '' ||
-                            assignedClassName === ''
+                            (requiresClassSelection && assignedClassName === '')
                         }>
                         Register
                     </Button>

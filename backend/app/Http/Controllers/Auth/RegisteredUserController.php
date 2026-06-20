@@ -40,7 +40,7 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'school_track' => ['required', 'string', 'in:'.implode(',', SchoolContextOptions::trackValues())],
-            'assigned_class_name' => ['required', 'string', 'in:'.implode(',', SchoolContextOptions::allClasses())],
+            'assigned_class_name' => ['nullable', 'string', 'in:'.implode(',', SchoolContextOptions::allClasses())],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -48,13 +48,26 @@ class RegisteredUserController extends Controller
             $track = $request->string('school_track')->toString();
             $className = $request->string('assigned_class_name')->toString();
 
+            if ($track === 'primary' && $className === '') {
+                $validator->errors()->add('assigned_class_name', 'Choose the primary class this teacher will manage.');
+                return;
+            }
+
+            if ($className === '') {
+                return;
+            }
+
             if (! SchoolContextOptions::isValidClassForTrack($track, $className)) {
                 $validator->errors()->add('assigned_class_name', 'The selected class does not belong to the chosen track.');
                 return;
             }
 
             if (! SchoolContextOptions::isTeacherClassAvailable($track, $className)) {
-                $validator->errors()->add('assigned_class_name', 'That class is already assigned to another teacher.');
+                $message = $track === 'secondary'
+                    ? 'That form class already has a form teacher.'
+                    : 'That class is already assigned to another teacher.';
+
+                $validator->errors()->add('assigned_class_name', $message);
             }
         });
 
@@ -66,7 +79,7 @@ class RegisteredUserController extends Controller
             'role' => UserRole::Teacher,
             'status' => UserStatus::Active,
             'school_track' => $validated['school_track'],
-            'assigned_class_name' => $validated['assigned_class_name'],
+            'assigned_class_name' => $validated['assigned_class_name'] ?? null,
             'password' => Hash::make($request->string('password')),
         ]);
 

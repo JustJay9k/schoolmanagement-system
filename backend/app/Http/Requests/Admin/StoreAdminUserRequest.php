@@ -44,20 +44,29 @@ class StoreAdminUserRequest extends FormRequest
 
                 if ($track === '') {
                     $validator->errors()->add('school_track', 'Choose whether this teacher belongs to primary or secondary.');
-                }
-
-                if ($className === '') {
-                    $validator->errors()->add('assigned_class_name', 'Choose the single class this teacher will manage.');
                     return;
                 }
 
-                if ($track !== '' && ! SchoolContextOptions::isValidClassForTrack($track, $className)) {
+                if ($track === 'primary' && $className === '') {
+                    $validator->errors()->add('assigned_class_name', 'Choose the primary class this teacher will manage.');
+                    return;
+                }
+
+                if ($className === '') {
+                    return;
+                }
+
+                if (! SchoolContextOptions::isValidClassForTrack($track, $className)) {
                     $validator->errors()->add('assigned_class_name', 'The selected class does not belong to the chosen track.');
                     return;
                 }
 
-                if ($track !== '' && $className !== '' && ! SchoolContextOptions::isTeacherClassAvailable($track, $className)) {
-                    $validator->errors()->add('assigned_class_name', 'That class is already assigned to another teacher.');
+                if (! SchoolContextOptions::isTeacherClassAvailable($track, $className)) {
+                    $message = $track === 'secondary'
+                        ? 'That form class already has a form teacher.'
+                        : 'That class is already assigned to another teacher.';
+
+                    $validator->errors()->add('assigned_class_name', $message);
                 }
             },
         ];

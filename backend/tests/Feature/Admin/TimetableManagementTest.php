@@ -146,4 +146,61 @@ class TimetableManagementTest extends TestCase
             ->getJson('/api/management/subjects')
             ->assertForbidden();
     }
+
+    public function test_management_user_can_allocate_a_secondary_teacher_as_a_form_teacher(): void
+    {
+        $headTeacher = User::factory()->management()->create();
+        $teacher = User::factory()->teacher()->create([
+            'status' => UserStatus::Active,
+            'school_track' => 'secondary',
+            'assigned_class_name' => null,
+        ]);
+
+        $this->actingAs($headTeacher)
+            ->putJson("/api/management/form-teachers/{$teacher->id}", [
+                'assigned_class_name' => 'Form 2',
+            ])
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => $teacher->id,
+                'assigned_class_name' => 'Form 2',
+                'form_class_name' => 'Form 2',
+                'is_form_teacher' => true,
+            ]);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $teacher->id,
+            'assigned_class_name' => 'Form 2',
+        ]);
+    }
+
+    public function test_management_user_can_list_secondary_form_teacher_allocations(): void
+    {
+        $headTeacher = User::factory()->management()->create();
+        $formTeacher = User::factory()->teacher()->create([
+            'status' => UserStatus::Active,
+            'school_track' => 'secondary',
+            'assigned_class_name' => 'Form 1',
+        ]);
+        $subjectTeacher = User::factory()->teacher()->create([
+            'status' => UserStatus::Active,
+            'school_track' => 'secondary',
+            'assigned_class_name' => null,
+        ]);
+
+        $this->actingAs($headTeacher)
+            ->getJson('/api/management/form-teachers')
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => $formTeacher->id,
+                'form_class_name' => 'Form 1',
+                'is_form_teacher' => true,
+            ])
+            ->assertJsonFragment([
+                'id' => $subjectTeacher->id,
+                'form_class_name' => null,
+                'is_form_teacher' => false,
+            ])
+            ->assertJsonPath('options.secondaryClasses', ['Form 1', 'Form 2', 'Form 3', 'Form 4']);
+    }
 }

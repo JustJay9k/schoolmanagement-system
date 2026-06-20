@@ -38,21 +38,45 @@ class UserManagementTest extends TestCase
         ]);
     }
 
-    public function test_teacher_assignments_are_required_when_admin_creates_a_teacher(): void
+    public function test_admin_can_create_a_secondary_subject_teacher_without_a_form_class(): void
     {
         $admin = User::factory()->admin()->create();
 
         $response = $this->actingAs($admin)->postJson('/api/admin/users', [
-            'name' => 'Unassigned Teacher',
-            'email' => 'teacher@example.com',
+            'name' => 'Subject Teacher',
+            'email' => 'subject-teacher@example.com',
             'role' => UserRole::Teacher->value,
             'status' => UserStatus::Active->value,
+            'school_track' => 'secondary',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+        ]);
+
+        $response->assertCreated();
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'subject-teacher@example.com',
+            'school_track' => 'secondary',
+            'assigned_class_name' => null,
+        ]);
+    }
+
+    public function test_primary_teacher_assignments_are_required_when_admin_creates_a_teacher(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->actingAs($admin)->postJson('/api/admin/users', [
+            'name' => 'Primary Teacher',
+            'email' => 'primary-teacher@example.com',
+            'role' => UserRole::Teacher->value,
+            'status' => UserStatus::Active->value,
+            'school_track' => 'primary',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['school_track', 'assigned_class_name']);
+            ->assertJsonValidationErrors(['assigned_class_name']);
     }
 
     public function test_admin_can_update_a_user(): void

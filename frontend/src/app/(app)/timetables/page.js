@@ -61,6 +61,12 @@ export default function TimetablesPage() {
             ),
         [timetables],
     )
+    const classLabel =
+        user?.school_track === 'secondary' ? 'My form class' : 'My class'
+    const classValue =
+        user?.school_track === 'secondary'
+            ? user?.assigned_class_name ?? 'Subject teacher only'
+            : user?.assigned_class_name ?? 'Unassigned'
 
     if (!user) {
         return null
@@ -119,7 +125,7 @@ export default function TimetablesPage() {
                 {[
                     ['Assigned timetables', timetables.length],
                     ['Total periods', totalPeriods],
-                    ['My class', user?.assigned_class_name ?? 'Unassigned'],
+                    [classLabel, classValue],
                 ].map(([label, value]) => (
                     <article key={label} className={workspaceStyles.statCard}>
                         <p className={workspaceStyles.statLabel}>{label}</p>

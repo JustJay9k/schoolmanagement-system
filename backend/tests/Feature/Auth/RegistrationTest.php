@@ -54,4 +54,24 @@ class RegistrationTest extends TestCase
 
         $this->assertGuest();
     }
+
+    public function test_secondary_teacher_can_register_without_a_form_class(): void
+    {
+        $response = $this->post('/register', [
+            'name' => 'Subject Teacher',
+            'email' => 'subject-only@example.com',
+            'school_track' => 'secondary',
+            'assigned_class_name' => '',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertNoContent();
+        $this->assertDatabaseHas('users', [
+            'email' => 'subject-only@example.com',
+            'school_track' => 'secondary',
+            'assigned_class_name' => null,
+        ]);
+    }
 }

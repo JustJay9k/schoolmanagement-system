@@ -31,6 +31,36 @@ const formatDate = value => {
     return new Date(value).toLocaleString()
 }
 
+const getTeacherAssignmentMeta = user => {
+    if (user.role !== 'teacher') {
+        return null
+    }
+
+    if (user.school_track === 'primary') {
+        return {
+            trackLabel: 'Primary',
+            roleLabel: 'Class teacher',
+            classLabel: user.assigned_class_name ?? 'Class required',
+        }
+    }
+
+    if (user.school_track === 'secondary') {
+        return {
+            trackLabel: 'Secondary',
+            roleLabel: user.form_class_name
+                ? 'Form teacher and subject teacher'
+                : 'Subject teacher only',
+            classLabel: user.form_class_name ?? 'No form class',
+        }
+    }
+
+    return {
+        trackLabel: 'Teacher',
+        roleLabel: 'Track required',
+        classLabel: 'Update assignment',
+    }
+}
+
 export default function AdminUsersPage() {
     const { user } = useAuth({ middleware: 'auth' })
     const [users, setUsers] = useState([])
@@ -286,7 +316,7 @@ export default function AdminUsersPage() {
         <WorkspacePageShell
             eyebrow="Administration"
             title="User accounts"
-            description="View every account in the system, assign class ownership to teachers, and switch access on or off without leaving the main workspace."
+            description="View every account in the system, assign primary class responsibility or secondary form-teacher responsibility, and switch access on or off without leaving the main workspace."
             actions={
                 <div className={adminStyles.toolbarGroup}>
                     <button
@@ -428,24 +458,25 @@ export default function AdminUsersPage() {
                                 ) : (
                                     filteredUsers.map(item => (
                                         <tr key={item.id}>
+                                            {(() => {
+                                                const assignmentMeta =
+                                                    getTeacherAssignmentMeta(
+                                                        item,
+                                                    )
+
+                                                return (
+                                                    <>
                                             <td>
                                                 <strong>{item.name}</strong>
                                                 <small>{item.email}</small>
                                             </td>
                                             <td>{item.role_label}</td>
                                             <td>
-                                                {item.school_track &&
-                                                item.assigned_class_name ? (
+                                                {assignmentMeta ? (
                                                     <>
-                                                        <strong>
-                                                            {item.school_track ===
-                                                            'primary'
-                                                                ? 'Primary'
-                                                                : 'Secondary'}
-                                                        </strong>
-                                                        <small>
-                                                            {item.assigned_class_name}
-                                                        </small>
+                                                        <strong>{assignmentMeta.trackLabel}</strong>
+                                                        <small>{assignmentMeta.roleLabel}</small>
+                                                        <small>{assignmentMeta.classLabel}</small>
                                                     </>
                                                 ) : (
                                                     <small>All-school access</small>
@@ -511,6 +542,9 @@ export default function AdminUsersPage() {
                                                     </button>
                                                 </div>
                                             </td>
+                                                    </>
+                                                )
+                                            })()}
                                         </tr>
                                     ))
                                 )}
@@ -658,7 +692,9 @@ export default function AdminUsersPage() {
 
                                     <label className={adminStyles.field}>
                                         <span className={adminStyles.fieldLabel}>
-                                            Assigned class
+                                            {form.school_track === 'secondary'
+                                                ? 'Form class (optional)'
+                                                : 'Assigned class'}
                                         </span>
                                         <select
                                             value={form.assigned_class_name}
@@ -669,10 +705,15 @@ export default function AdminUsersPage() {
                                                 )
                                             }
                                             className={adminStyles.select}
-                                            required>
+                                            required={
+                                                form.school_track === 'primary'
+                                            }>
                                             <option value="">
                                                 {form.school_track
-                                                    ? 'Select a class'
+                                                    ? form.school_track ===
+                                                      'secondary'
+                                                        ? 'No form class'
+                                                        : 'Select a class'
                                                     : 'Choose a track first'}
                                             </option>
                                             {availableClasses.map(className => {
@@ -694,9 +735,14 @@ export default function AdminUsersPage() {
                                                             ? `${className} (already assigned)`
                                                             : className}
                                                     </option>
-                                                )
+                                                    )
                                             })}
                                         </select>
+                                        <span className={adminStyles.fieldHint}>
+                                            {form.school_track === 'secondary'
+                                                ? 'Secondary teachers can stay as subject teachers only, or they can also be allocated one form class.'
+                                                : 'Primary teachers must manage exactly one class.'}
+                                        </span>
                                         <InputError
                                             messages={
                                                 formErrors.assigned_class_name
