@@ -190,6 +190,19 @@
     gap: 0.5rem;
 }
 
+.cellMeta {
+    display: grid;
+    gap: 0.2rem;
+}
+
+.cellMeta strong {
+    color: var(--ink);
+}
+
+.cellMeta small {
+    color: var(--muted);
+}
+
 .statusBadge {
     display: inline-flex;
     align-items: center;
