@@ -115,12 +115,14 @@ class ManagementTimetableApiController extends Controller
         $teachersByTrack = User::query()
             ->where('role', UserRole::Teacher)
             ->where('status', UserStatus::Active)
+            ->whereNotNull('assigned_class_name')
             ->orderBy('name')
             ->get()
             ->groupBy('school_track')
             ->map(fn ($items) => $items->map(fn (User $teacher): array => [
                 'id' => $teacher->id,
                 'name' => $teacher->name,
+                'school_track' => $teacher->school_track,
                 'assigned_class_name' => $teacher->assigned_class_name,
                 'form_class_name' => $teacher->isFormTeacher() ? $teacher->assigned_class_name : null,
                 'is_form_teacher' => $teacher->isFormTeacher(),

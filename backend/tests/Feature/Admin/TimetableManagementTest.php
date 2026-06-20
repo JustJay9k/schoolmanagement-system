@@ -85,6 +85,37 @@ class TimetableManagementTest extends TestCase
         ]);
     }
 
+    public function test_management_user_cannot_assign_a_secondary_timetable_to_a_subject_only_teacher(): void
+    {
+        $headTeacher = User::factory()->management()->create();
+        $teacher = User::factory()->teacher()->create([
+            'status' => UserStatus::Active,
+            'school_track' => 'secondary',
+            'assigned_class_name' => null,
+        ]);
+        $subject = SchoolSubject::query()->create([
+            'name' => 'Mathematics',
+            'school_track' => 'secondary',
+        ]);
+
+        $this->actingAs($headTeacher)
+            ->postJson('/api/management/timetables', [
+                'title' => 'Form 1 Timetable',
+                'school_track' => 'secondary',
+                'class_name' => 'Form 1',
+                'assigned_teacher_id' => $teacher->id,
+                'entries' => [
+                    [
+                        'day_of_week' => 'monday',
+                        'period_label' => 'Period 1',
+                        'subject_id' => $subject->id,
+                    ],
+                ],
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['assigned_teacher_id']);
+    }
+
     public function test_teacher_can_only_view_their_assigned_timetables(): void
     {
         $teacher = User::factory()->teacher()->create([
@@ -202,5 +233,115 @@ class TimetableManagementTest extends TestCase
                 'is_form_teacher' => false,
             ])
             ->assertJsonPath('options.secondaryClasses', ['Form 1', 'Form 2', 'Form 3', 'Form 4']);
+    }
+
+    public function test_management_user_can_allocate_a_secondary_subject_teacher_to_a_subject_and_class(): void
+    {
+        $headTeacher = User::factory()->management()->create();
+        $teacher = User::factory()->teacher()->create([
+            'status' => UserStatus::Active,
+            'school_track' => 'secondary',
+            'assigned_class_name' => null,
+        ]);
+        $subject = SchoolSubject::query()->create([
+            'name' => 'Mathematics',
+            'code' => 'MATH',
+            'school_track' => 'secondary',
+        ]);
+
+        $this->actingAs($headTeacher)
+            ->postJson('/api/management/teacher-subject-assignments', [
+                'teacher_id' => $teacher->id,
+                'subject_id' => $subject->id,
+                'class_name' => 'Form 3',
+            ])
+            ->assertCreated()
+            ->assertJsonFragment([
+                'class_name' => 'Form 3',
+                'name' => 'Mathematics',
+                'code' => 'MATH',
+            ]);
+
+        $this->assertDatabaseHas('teacher_subject_assignments', [
+            'teacher_id' => $teacher->id,
+            'subject_id' => $subject->id,
+            'school_track' => 'secondary',
+            'class_name' => 'Form 3',
+        ]);
+    }
+
+    public function test_secondary_teacher_can_view_form_class_timetable_and_assigned_subject_periods(): void
+    {
+        $teacher = User::factory()->teacher()->create([
+            'school_track' => 'secondary',
+            'assigned_class_name' => 'Form 1',
+        ]);
+        $otherFormTeacher = User::factory()->teacher()->create([
+            'school_track' => 'secondary',
+            'assigned_class_name' => 'Form 2',
+        ]);
+        $english = SchoolSubject::query()->create([
+            'name' => 'English',
+            'school_track' => 'secondary',
+        ]);
+        $mathematics = SchoolSubject::query()->create([
+            'name' => 'Mathematics',
+            'school_track' => 'secondary',
+        ]);
+        $chemistry = SchoolSubject::query()->create([
+            'name' => 'Chemistry',
+            'school_track' => 'secondary',
+        ]);
+
+        $formOneTimetable = Timetable::query()->create([
+            'title' => 'Form 1 Timetable',
+            'school_track' => 'secondary',
+            'class_name' => 'Form 1',
+            'assigned_teacher_id' => $teacher->id,
+        ]);
+        TimetableEntry::query()->create([
+            'timetable_id' => $formOneTimetable->id,
+            'day_of_week' => 'monday',
+            'period_label' => 'Period 1',
+            'subject_id' => $english->id,
+        ]);
+
+        $formTwoTimetable = Timetable::query()->create([
+            'title' => 'Form 2 Timetable',
+            'school_track' => 'secondary',
+            'class_name' => 'Form 2',
+            'assigned_teacher_id' => $otherFormTeacher->id,
+        ]);
+        TimetableEntry::query()->create([
+            'timetable_id' => $formTwoTimetable->id,
+            'day_of_week' => 'monday',
+            'period_label' => 'Period 1',
+            'subject_id' => $mathematics->id,
+        ]);
+        TimetableEntry::query()->create([
+            'timetable_id' => $formTwoTimetable->id,
+            'day_of_week' => 'monday',
+            'period_label' => 'Period 2',
+            'subject_id' => $chemistry->id,
+        ]);
+
+        $headTeacher = User::factory()->management()->create();
+
+        $this->actingAs($headTeacher)
+            ->postJson('/api/management/teacher-subject-assignments', [
+                'teacher_id' => $teacher->id,
+                'subject_id' => $mathematics->id,
+                'class_name' => 'Form 2',
+            ])
+            ->assertCreated();
+
+        $this->actingAs($teacher)
+            ->getJson('/api/teacher/timetables')
+            ->assertOk()
+            ->assertSee('Form 1 Timetable')
+            ->assertSee('Form 2 Timetable')
+            ->assertSee('English')
+            ->assertSee('Mathematics')
+            ->assertDontSee('Chemistry');
     }
 }

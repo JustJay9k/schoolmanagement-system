@@ -1570,8 +1570,8 @@ const Dashboard = () => {
 
                         <div className={styles.alertCard}>
                             <div>
-                                <strong>Form Teachers</strong>
-                                <p>Head teachers allocate secondary form classes separately from normal subject-teacher responsibilities.</p>
+                                <strong>Teacher Allocations</strong>
+                                <p>Head teachers allocate secondary form classes and assign the subjects each teacher handles across classes.</p>
                             </div>
                             <span className={styles.alertTag}>Management</span>
                         </div>

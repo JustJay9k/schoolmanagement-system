@@ -10,42 +10,75 @@ import axios from '@/lib/axios'
 import { canManageManagementWorkspace, formatRoleLabel } from '@/lib/userAccess'
 import { useAuth } from '@/hooks/auth'
 
-const buildDrafts = teachers =>
+const buildFormTeacherDrafts = teachers =>
     Object.fromEntries(
         teachers.map(teacher => [teacher.id, teacher.form_class_name ?? '']),
     )
+
+const emptySubjectAssignmentForm = {
+    teacher_id: '',
+    subject_id: '',
+    class_name: '',
+}
 
 const getTeacherRoleLabel = teacher =>
     teacher.is_form_teacher
         ? 'Form teacher and subject teacher'
         : 'Subject teacher only'
 
+const getTeacherOptionLabel = teacher =>
+    teacher.form_class_name
+        ? `${teacher.name} - Form teacher (${teacher.form_class_name})`
+        : `${teacher.name} - Subject teacher`
+
 export default function ManagementFormTeachersPage() {
     const { user } = useAuth({ middleware: 'auth' })
     const [teachers, setTeachers] = useState([])
-    const [options, setOptions] = useState(null)
-    const [drafts, setDrafts] = useState({})
-    const [rowErrors, setRowErrors] = useState({})
+    const [formTeacherOptions, setFormTeacherOptions] = useState(null)
+    const [subjectAssignments, setSubjectAssignments] = useState([])
+    const [subjectAssignmentOptions, setSubjectAssignmentOptions] = useState(
+        null,
+    )
+    const [formTeacherDrafts, setFormTeacherDrafts] = useState({})
+    const [formTeacherErrors, setFormTeacherErrors] = useState({})
+    const [subjectAssignmentForm, setSubjectAssignmentForm] = useState(
+        emptySubjectAssignmentForm,
+    )
+    const [subjectAssignmentErrors, setSubjectAssignmentErrors] = useState({})
     const [loading, setLoading] = useState(true)
     const [savingTeacherId, setSavingTeacherId] = useState(null)
+    const [savingSubjectAssignment, setSavingSubjectAssignment] =
+        useState(false)
+    const [deletingAssignmentId, setDeletingAssignmentId] = useState(null)
     const [pageStatus, setPageStatus] = useState(null)
 
-    const loadTeachers = async () => {
+    const loadData = async () => {
         setLoading(true)
 
         try {
-            const response = await axios.get('/api/management/form-teachers')
-            const nextTeachers = response.data?.teachers ?? []
+            const [formTeachersResponse, subjectAssignmentsResponse] =
+                await Promise.all([
+                    axios.get('/api/management/form-teachers'),
+                    axios.get('/api/management/teacher-subject-assignments'),
+                ])
+
+            const nextTeachers = formTeachersResponse.data?.teachers ?? []
 
             setTeachers(nextTeachers)
-            setOptions(response.data?.options ?? null)
-            setDrafts(buildDrafts(nextTeachers))
+            setFormTeacherOptions(formTeachersResponse.data?.options ?? null)
+            setFormTeacherDrafts(buildFormTeacherDrafts(nextTeachers))
+            setSubjectAssignments(
+                subjectAssignmentsResponse.data?.assignments ?? [],
+            )
+            setSubjectAssignmentOptions(
+                subjectAssignmentsResponse.data?.options ?? null,
+            )
         } catch (error) {
             setPageStatus({
                 type: 'error',
                 message:
                     error?.response?.data?.message ??
-                    'Unable to load secondary form-teacher allocations.',
+                    'Unable to load teacher allocations.',
             })
         } finally {
             setLoading(false)
@@ -57,21 +90,23 @@ export default function ManagementFormTeachersPage() {
             return
         }
 
-        loadTeachers()
+        loadData()
     }, [user])
 
     const stats = useMemo(
         () => ({
-            total: teachers.length,
+            totalTeachers: teachers.length,
             formTeachers: teachers.filter(teacher => teacher.is_form_teacher)
                 .length,
-            subjectOnly: teachers.filter(teacher => !teacher.is_form_teacher)
-                .length,
+            subjectAllocations: subjectAssignments.length,
         }),
-        [teachers],
+        [teachers, subjectAssignments],
     )
 
-    const availableClasses = options?.secondaryClasses ?? []
+    const availableClasses = formTeacherOptions?.secondaryClasses ?? []
+    const availableAssignmentTeachers =
+        subjectAssignmentOptions?.teachers ?? []
+    const availableSubjects = subjectAssignmentOptions?.subjects ?? []
 
     const getTakenClassesForTeacher = teacherId =>
         teachers
@@ -83,18 +118,18 @@ export default function ManagementFormTeachersPage() {
             )
             .map(teacher => teacher.form_class_name)
 
-    const updateDraft = (teacherId, value) => {
-        setDrafts(current => ({
+    const updateFormTeacherDraft = (teacherId, value) => {
+        setFormTeacherDrafts(current => ({
             ...current,
             [teacherId]: value,
         }))
-        setRowErrors(current => ({
+        setFormTeacherErrors(current => ({
             ...current,
             [teacherId]: {},
         }))
     }
 
-    const saveAllocation = async (teacherId, assignedClassName) => {
+    const saveFormTeacherAllocation = async (teacherId, assignedClassName) => {
         setSavingTeacherId(teacherId)
         setPageStatus(null)
 
@@ -112,13 +147,13 @@ export default function ManagementFormTeachersPage() {
                     response.data?.message ??
                     'Form teacher allocation updated successfully.',
             })
-            setRowErrors(current => ({
+            setFormTeacherErrors(current => ({
                 ...current,
                 [teacherId]: {},
             }))
-            await loadTeachers()
+            await loadData()
         } catch (error) {
-            setRowErrors(current => ({
+            setFormTeacherErrors(current => ({
                 ...current,
                 [teacherId]: error?.response?.data?.errors ?? {},
             }))
@@ -133,6 +168,77 @@ export default function ManagementFormTeachersPage() {
         }
     }
 
+    const createSubjectAssignment = async event => {
+        event.preventDefault()
+        setSavingSubjectAssignment(true)
+        setSubjectAssignmentErrors({})
+        setPageStatus(null)
+
+        try {
+            const response = await axios.post(
+                '/api/management/teacher-subject-assignments',
+                subjectAssignmentForm,
+            )
+
+            setPageStatus({
+                type: 'success',
+                message:
+                    response.data?.message ??
+                    'Subject teaching allocation created successfully.',
+            })
+            setSubjectAssignmentForm(emptySubjectAssignmentForm)
+            await loadData()
+        } catch (error) {
+            setSubjectAssignmentErrors(error?.response?.data?.errors ?? {})
+            setPageStatus({
+                type: 'error',
+                message:
+                    error?.response?.data?.message ??
+                    'Unable to create the subject teaching allocation.',
+            })
+        } finally {
+            setSavingSubjectAssignment(false)
+        }
+    }
+
+    const deleteSubjectAssignment = async assignment => {
+        if (
+            !window.confirm(
+                `Remove ${assignment.subject?.name ?? 'this subject'} from ${
+                    assignment.teacher?.name ?? 'this teacher'
+                } in ${assignment.class_name}?`,
+            )
+        ) {
+            return
+        }
+
+        setDeletingAssignmentId(assignment.id)
+        setPageStatus(null)
+
+        try {
+            const response = await axios.delete(
+                `/api/management/teacher-subject-assignments/${assignment.id}`,
+            )
+
+            setPageStatus({
+                type: 'success',
+                message:
+                    response.data?.message ??
+                    'Subject teaching allocation removed successfully.',
+            })
+            await loadData()
+        } catch (error) {
+            setPageStatus({
+                type: 'error',
+                message:
+                    error?.response?.data?.message ??
+                    'Unable to remove the subject teaching allocation.',
+            })
+        } finally {
+            setDeletingAssignmentId(null)
+        }
+    }
+
     if (!user) {
         return null
     }
@@ -142,11 +248,11 @@ export default function ManagementFormTeachersPage() {
             <WorkspacePageShell
                 eyebrow="Restricted"
                 title="Management access required"
-                description={`This account is signed in as ${formatRoleLabel(user?.role)}. Only head teacher / management accounts can allocate form teachers.`}>
+                description={`This account is signed in as ${formatRoleLabel(user?.role)}. Only head teacher / management accounts can allocate teacher responsibilities.`}>
                 <article className={workspaceStyles.panel}>
                     <p className={managementStyles.notice}>
-                        Secondary form-teacher allocation belongs to the
-                        management workspace.
+                        Secondary form-teacher allocation and subject teaching
+                        allocation both belong to the management workspace.
                     </p>
                 </article>
             </WorkspacePageShell>
@@ -156,13 +262,13 @@ export default function ManagementFormTeachersPage() {
     return (
         <WorkspacePageShell
             eyebrow="Management"
-            title="Secondary form teachers"
-            description="Allocate one form class to each secondary form teacher while keeping ordinary subject teachers available with no form class."
+            title="Teacher allocations"
+            description="Assign one secondary form class to each form teacher, then allocate the subjects and classes each secondary teacher will actually teach."
             actions={
                 <div className={managementStyles.toolbarGroup}>
                     <button
                         type="button"
-                        onClick={loadTeachers}
+                        onClick={loadData}
                         className={workspaceStyles.secondaryButton}>
                         Refresh
                     </button>
@@ -183,9 +289,9 @@ export default function ManagementFormTeachersPage() {
 
             <section className={managementStyles.statsGrid}>
                 {[
-                    ['Secondary teachers', stats.total],
+                    ['Secondary teachers', stats.totalTeachers],
                     ['Form teachers', stats.formTeachers],
-                    ['Subject only', stats.subjectOnly],
+                    ['Subject allocations', stats.subjectAllocations],
                 ].map(([label, value]) => (
                     <article key={label} className={workspaceStyles.statCard}>
                         <p className={workspaceStyles.statLabel}>{label}</p>
@@ -199,7 +305,7 @@ export default function ManagementFormTeachersPage() {
                     <div className={workspaceStyles.panelHeader}>
                         <div>
                             <p className={workspaceStyles.panelEyebrow}>
-                                Allocation Desk
+                                Form Responsibility
                             </p>
                             <h2 className={workspaceStyles.panelTitle}>
                                 Form teacher assignments
@@ -236,9 +342,9 @@ export default function ManagementFormTeachersPage() {
                                         const takenClasses =
                                             getTakenClassesForTeacher(teacher.id)
                                         const fieldErrors =
-                                            rowErrors[teacher.id] ?? {}
+                                            formTeacherErrors[teacher.id] ?? {}
                                         const currentDraft =
-                                            drafts[teacher.id] ?? ''
+                                            formTeacherDrafts[teacher.id] ?? ''
                                         const isSaving =
                                             savingTeacherId === teacher.id
 
@@ -255,7 +361,7 @@ export default function ManagementFormTeachersPage() {
                                                         <select
                                                             value={currentDraft}
                                                             onChange={event =>
-                                                                updateDraft(
+                                                                updateFormTeacherDraft(
                                                                     teacher.id,
                                                                     event.target
                                                                         .value,
@@ -323,7 +429,7 @@ export default function ManagementFormTeachersPage() {
                                                                 !teacher.can_receive_form_class
                                                             }
                                                             onClick={() =>
-                                                                saveAllocation(
+                                                                saveFormTeacherAllocation(
                                                                     teacher.id,
                                                                     currentDraft,
                                                                 )
@@ -332,29 +438,6 @@ export default function ManagementFormTeachersPage() {
                                                                 ? 'Saving...'
                                                                 : 'Save'}
                                                         </Button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                updateDraft(
-                                                                    teacher.id,
-                                                                    '',
-                                                                )
-                                                                saveAllocation(
-                                                                    teacher.id,
-                                                                    '',
-                                                                )
-                                                            }}
-                                                            disabled={
-                                                                isSaving ||
-                                                                (!teacher
-                                                                    .form_class_name &&
-                                                                    !currentDraft)
-                                                            }
-                                                            className={
-                                                                managementStyles.secondaryButton
-                                                            }>
-                                                            Clear
-                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -370,7 +453,7 @@ export default function ManagementFormTeachersPage() {
                     <div className={workspaceStyles.panelHeader}>
                         <div>
                             <p className={workspaceStyles.panelEyebrow}>
-                                Workflow
+                                Teaching Rules
                             </p>
                             <h2 className={workspaceStyles.panelTitle}>
                                 How this works
@@ -391,7 +474,7 @@ export default function ManagementFormTeachersPage() {
                         </div>
                         <div className={workspaceStyles.listItem}>
                             <div>
-                                <strong>Form class is optional</strong>
+                                <strong>Form class is one extra duty</strong>
                                 <p>
                                     Allocate one form class only when that
                                     teacher should report class-wide issues to
@@ -403,13 +486,225 @@ export default function ManagementFormTeachersPage() {
                             <div>
                                 <strong>Both roles can live together</strong>
                                 <p>
-                                    A secondary teacher can remain a subject
-                                    teacher and also hold one form class at the
-                                    same time.
+                                    A form teacher can still be allocated
+                                    subjects in their own class and in other
+                                    secondary classes.
                                 </p>
                             </div>
                         </div>
                     </div>
+                </article>
+            </section>
+
+            <section className={managementStyles.summaryCards}>
+                <article className={workspaceStyles.fullPanel}>
+                    <div className={workspaceStyles.panelHeader}>
+                        <div>
+                            <p className={workspaceStyles.panelEyebrow}>
+                                Subject Teaching
+                            </p>
+                            <h2 className={workspaceStyles.panelTitle}>
+                                Subject and class allocations
+                            </h2>
+                        </div>
+                    </div>
+
+                    <div className={workspaceStyles.tableWrap}>
+                        <table className={workspaceStyles.table}>
+                            <thead>
+                                <tr>
+                                    <th>Teacher</th>
+                                    <th>Subject</th>
+                                    <th>Class</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan="4" className={managementStyles.muted}>
+                                            Loading subject allocations...
+                                        </td>
+                                    </tr>
+                                ) : subjectAssignments.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="4" className={managementStyles.muted}>
+                                            No subject teaching allocations yet.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    subjectAssignments.map(assignment => (
+                                        <tr key={assignment.id}>
+                                            <td>
+                                                <strong>
+                                                    {assignment.teacher?.name ??
+                                                        'Teacher missing'}
+                                                </strong>
+                                                <small>
+                                                    {assignment.teacher
+                                                        ?.form_class_name
+                                                        ? `Form class: ${assignment.teacher.form_class_name}`
+                                                        : 'Subject teacher only'}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <strong>
+                                                    {assignment.subject?.name ??
+                                                        'Subject missing'}
+                                                </strong>
+                                                <small>
+                                                    {assignment.subject?.code ||
+                                                        'No code'}
+                                                </small>
+                                            </td>
+                                            <td>{assignment.class_name}</td>
+                                            <td>
+                                                <div
+                                                    className={
+                                                        managementStyles.tableActions
+                                                    }>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            deleteSubjectAssignment(
+                                                                assignment,
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            deletingAssignmentId ===
+                                                            assignment.id
+                                                        }
+                                                        className={
+                                                            managementStyles.dangerButton
+                                                        }>
+                                                        {deletingAssignmentId ===
+                                                        assignment.id
+                                                            ? 'Removing...'
+                                                            : 'Remove'}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+                <article className={workspaceStyles.panel}>
+                    <div className={workspaceStyles.panelHeader}>
+                        <div>
+                            <p className={workspaceStyles.panelEyebrow}>
+                                New Allocation
+                            </p>
+                            <h2 className={workspaceStyles.panelTitle}>
+                                Assign subject teacher
+                            </h2>
+                        </div>
+                    </div>
+
+                    <form
+                        onSubmit={createSubjectAssignment}
+                        className={managementStyles.stack}>
+                        <label className={managementStyles.field}>
+                            <span className={managementStyles.fieldLabel}>
+                                Teacher
+                            </span>
+                            <select
+                                value={subjectAssignmentForm.teacher_id}
+                                onChange={event =>
+                                    setSubjectAssignmentForm(current => ({
+                                        ...current,
+                                        teacher_id: event.target.value,
+                                    }))
+                                }
+                                className={managementStyles.select}
+                                required>
+                                <option value="">Select a teacher</option>
+                                {availableAssignmentTeachers.map(teacher => (
+                                    <option
+                                        key={teacher.id}
+                                        value={teacher.id}>
+                                        {getTeacherOptionLabel(teacher)}
+                                    </option>
+                                ))}
+                            </select>
+                            <InputError
+                                messages={subjectAssignmentErrors.teacher_id}
+                            />
+                        </label>
+
+                        <label className={managementStyles.field}>
+                            <span className={managementStyles.fieldLabel}>
+                                Subject
+                            </span>
+                            <select
+                                value={subjectAssignmentForm.subject_id}
+                                onChange={event =>
+                                    setSubjectAssignmentForm(current => ({
+                                        ...current,
+                                        subject_id: event.target.value,
+                                    }))
+                                }
+                                className={managementStyles.select}
+                                required>
+                                <option value="">Select a subject</option>
+                                {availableSubjects.map(subject => (
+                                    <option
+                                        key={subject.id}
+                                        value={subject.id}>
+                                        {subject.code
+                                            ? `${subject.name} (${subject.code})`
+                                            : subject.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <InputError
+                                messages={subjectAssignmentErrors.subject_id}
+                            />
+                        </label>
+
+                        <label className={managementStyles.field}>
+                            <span className={managementStyles.fieldLabel}>
+                                Class
+                            </span>
+                            <select
+                                value={subjectAssignmentForm.class_name}
+                                onChange={event =>
+                                    setSubjectAssignmentForm(current => ({
+                                        ...current,
+                                        class_name: event.target.value,
+                                    }))
+                                }
+                                className={managementStyles.select}
+                                required>
+                                <option value="">Select a class</option>
+                                {availableClasses.map(className => (
+                                    <option
+                                        key={className}
+                                        value={className}>
+                                        {className}
+                                    </option>
+                                ))}
+                            </select>
+                            <InputError
+                                messages={subjectAssignmentErrors.class_name}
+                            />
+                        </label>
+
+                        <InputError
+                            messages={subjectAssignmentErrors.assignment}
+                        />
+
+                        <div className={managementStyles.actions}>
+                            <Button disabled={savingSubjectAssignment}>
+                                {savingSubjectAssignment
+                                    ? 'Saving...'
+                                    : 'Create allocation'}
+                            </Button>
+                        </div>
+                    </form>
                 </article>
             </section>
         </WorkspacePageShell>

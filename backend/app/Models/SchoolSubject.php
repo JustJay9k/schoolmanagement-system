@@ -24,4 +24,9 @@ class SchoolSubject extends Model
     {
         return $this->hasMany(TimetableEntry::class, 'subject_id');
     }
+
+    public function teacherAssignments(): HasMany
+    {
+        return $this->hasMany(TeacherSubjectAssignment::class, 'subject_id');
+    }
 }

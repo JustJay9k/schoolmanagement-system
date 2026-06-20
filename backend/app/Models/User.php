@@ -129,4 +129,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Timetable::class, 'assigned_teacher_id');
     }
+
+    public function subjectAssignments(): HasMany
+    {
+        return $this->hasMany(TeacherSubjectAssignment::class, 'teacher_id');
+    }
 }

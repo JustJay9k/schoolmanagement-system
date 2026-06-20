@@ -78,6 +78,15 @@ class ManagementSchoolSubjectApiController extends Controller
             ], 422);
         }
 
+        if ($subject->teacherAssignments()->exists()) {
+            return response()->json([
+                'message' => 'Validation failed.',
+                'errors' => [
+                    'subject' => ['This subject is already assigned to a secondary teacher. Remove those teaching allocations first.'],
+                ],
+            ], 422);
+        }
+
         $subject->delete();
 
         return response()->json([

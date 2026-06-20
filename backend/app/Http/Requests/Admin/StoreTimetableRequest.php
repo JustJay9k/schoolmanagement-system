@@ -86,6 +86,13 @@ class StoreTimetableRequest extends FormRequest
                         $validator->errors()->add('assigned_teacher_id', 'Choose an active teacher account for this timetable.');
                     } elseif ($track !== '' && $teacher->school_track !== $track) {
                         $validator->errors()->add('assigned_teacher_id', 'The selected teacher does not belong to this school track.');
+                    } elseif ($className !== '' && $teacher->assigned_class_name !== $className) {
+                        $validator->errors()->add(
+                            'assigned_teacher_id',
+                            $track === 'secondary'
+                                ? 'Choose the form teacher allocated to this class.'
+                                : 'Choose the class teacher allocated to this class.',
+                        );
                     }
                 }
 

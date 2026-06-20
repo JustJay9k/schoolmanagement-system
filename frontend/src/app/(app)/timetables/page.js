@@ -108,8 +108,8 @@ export default function TimetablesPage() {
     return (
         <WorkspacePageShell
             eyebrow="Teacher workspace"
-            title="My assigned timetables"
-            description="This page shows only the timetables assigned to your teacher account by the head teacher.">
+            title="My teaching timetable"
+            description="This page shows your full form or class timetable where you are responsible for a class, plus any secondary subject periods allocated to you in other classes.">
             {status ? (
                 <section className={workspaceStyles.panel}>
                     <p
