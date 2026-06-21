@@ -1,11 +1,12 @@
 import useSWR from 'swr'
 import axios from '@/lib/axios'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 
 export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
     const router = useRouter()
     const params = useParams()
+    const isLoggingOutRef = useRef(false)
 
     const createStatus = (message, type = 'error') => ({ message, type })
     const getResponseStatus = error => error?.response?.status
@@ -179,8 +180,17 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
     }
 
     const logout = async () => {
+        if (isLoggingOutRef.current) {
+            return
+        }
+
+        isLoggingOutRef.current = true
+
         if (!error) {
-            await axios.post('/logout').then(() => mutate())
+            await axios
+                .post('/logout')
+                .then(() => mutate())
+                .catch(() => null)
         }
 
         window.location.pathname = '/login'
