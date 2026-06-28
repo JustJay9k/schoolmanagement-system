@@ -89,8 +89,8 @@ export default function NotificationsPage() {
     return (
         <WorkspacePageShell
             eyebrow="Workspace"
-            title="Notifications"
-            description="Review new alerts, revisit older messages, and keep a complete history of the notices sent to your account."
+            title="Notifications and announcements"
+            description="Review new alerts, revisit older messages, and keep a complete history of the notices and announcements sent to your account."
             actions={
                 summary.unread > 0 ? (
                     <button

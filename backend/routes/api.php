@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Admin\AdminSchoolStructureApiController;
 use App\Http\Controllers\Api\Admin\AdminUserApiController;
 use App\Http\Controllers\Api\Finance\FinanceStudentApiController;
+use App\Http\Controllers\Api\Guardian\GuardianChildApiController;
 use App\Http\Controllers\Api\Management\ManagementFormTeacherApiController;
 use App\Http\Controllers\Api\Management\ManagementSchoolSubjectApiController;
 use App\Http\Controllers\Api\Management\ManagementStudentRecordApiController;
@@ -10,12 +11,16 @@ use App\Http\Controllers\Api\Management\ManagementTeacherSubjectAssignmentApiCon
 use App\Http\Controllers\Api\Management\ManagementTimetableApiController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProfileSettingsController;
+use App\Http\Controllers\Api\Teacher\TeacherGradebookApiController;
 use App\Http\Controllers\Api\Teacher\TeacherTimetableApiController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
-    return $request->user()?->fresh()->load('school:id,name');
+    return $request->user()?->fresh()->load([
+        'school:id,name',
+        'linkedStudentRecord:id,school_id,school_track,class_name,full_name',
+    ]);
 });
 
 Route::middleware(['auth:sanctum', 'portal'])->prefix('settings')->group(function () {
@@ -69,4 +74,10 @@ Route::middleware(['auth:sanctum', 'finance'])->prefix('finance')->group(functio
 
 Route::middleware(['auth:sanctum', 'portal'])->prefix('teacher')->group(function () {
     Route::get('/timetables', [TeacherTimetableApiController::class, 'index']);
+    Route::get('/gradebook', [TeacherGradebookApiController::class, 'index']);
+    Route::put('/gradebook/students/{student}/performance', [TeacherGradebookApiController::class, 'upsert']);
+});
+
+Route::middleware(['auth:sanctum', 'portal'])->prefix('guardian')->group(function () {
+    Route::get('/child', [GuardianChildApiController::class, 'show']);
 });

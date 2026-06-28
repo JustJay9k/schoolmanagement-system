@@ -62,6 +62,24 @@ const icons = {
             />
         </>
     ),
+    gradebook: (
+        <>
+            <path
+                d="M6 5.5h9.5a2.5 2.5 0 012.5 2.5v10.5H8.5A2.5 2.5 0 016 16V5.5z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M9 9.5h6M9 13h6M9 16.5h3.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
+        </>
+    ),
     students: (
         <>
             <circle

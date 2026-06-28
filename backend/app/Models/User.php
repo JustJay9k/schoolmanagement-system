@@ -15,7 +15,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 
-#[Fillable(['name', 'email', 'password', 'role', 'status', 'school_id', 'school_track', 'assigned_class_name', 'profile_photo_path', 'last_login_at', 'email_verified_at'])]
+#[Fillable(['name', 'email', 'password', 'role', 'status', 'school_id', 'linked_student_record_id', 'school_track', 'assigned_class_name', 'profile_photo_path', 'last_login_at', 'email_verified_at'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -62,6 +62,11 @@ class User extends Authenticatable
         return $this->role === UserRole::Accountant;
     }
 
+    public function isGuardian(): bool
+    {
+        return $this->role === UserRole::Guardian;
+    }
+
     public function isHeadTeacher(): bool
     {
         return $this->role === UserRole::Management;
@@ -79,6 +84,7 @@ class User extends Authenticatable
             UserRole::Management,
             UserRole::Teacher,
             UserRole::Accountant,
+            UserRole::Guardian,
         ], true);
     }
 
@@ -155,8 +161,18 @@ class User extends Authenticatable
         return $this->belongsTo(School::class);
     }
 
+    public function linkedStudentRecord(): BelongsTo
+    {
+        return $this->belongsTo(StudentRecord::class, 'linked_student_record_id');
+    }
+
     public function subjectAssignments(): HasMany
     {
         return $this->hasMany(TeacherSubjectAssignment::class, 'teacher_id');
+    }
+
+    public function performanceRecordsAuthored(): HasMany
+    {
+        return $this->hasMany(StudentPerformanceRecord::class, 'teacher_id');
     }
 }

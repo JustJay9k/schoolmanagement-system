@@ -20,10 +20,12 @@ const Page = () => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [passwordConfirmation, setPasswordConfirmation] = useState('')
+    const [accountType, setAccountType] = useState('teacher')
     const [schoolId, setSchoolId] = useState('')
     const [schoolName, setSchoolName] = useState('')
     const [schoolTrack, setSchoolTrack] = useState('')
     const [assignedClassName, setAssignedClassName] = useState('')
+    const [childName, setChildName] = useState('')
     const [registrationOptions, setRegistrationOptions] = useState({
         schools: [],
         tracks: {},
@@ -99,19 +101,23 @@ const Page = () => {
                   ).includes(className),
           )
         : []
-    const showClassPicker = schoolTrack !== ''
-    const requiresClassSelection = schoolTrack === 'primary'
+    const isGuardianRegistration = accountType === 'guardian'
+    const showClassPicker = !isGuardianRegistration && schoolTrack !== ''
+    const requiresClassSelection =
+        !isGuardianRegistration && schoolTrack === 'primary'
 
     const submitForm = event => {
         event.preventDefault()
 
         register({
+            account_type: accountType,
             name,
             email,
             school_id: schoolId,
             school_name: schoolName,
             school_track: schoolTrack,
             assigned_class_name: assignedClassName,
+            child_name: childName,
             password,
             password_confirmation: passwordConfirmation,
             setErrors,
@@ -125,12 +131,56 @@ const Page = () => {
 
             <form onSubmit={submitForm}>
                 <div className="mb-5 rounded-3xl border border-[var(--line)] bg-[var(--surface-raised)] px-4 py-4 text-sm text-[var(--muted)] shadow-sm">
-                    New self-registrations create teacher accounts. Start by
-                    choosing the school you work for, then choose whether you
-                    belong to the primary or secondary section and set your
-                    class responsibility. Primary teachers must choose one
-                    class. Secondary teachers can register as subject teachers
-                    with no form class, or optionally claim one form class.
+                    {isGuardianRegistration
+                        ? 'Guardian accounts must choose the existing school and type the learner name exactly as it appears in the student record. Once linked, the dashboard will show the learner profile, uploaded grades, and teacher comments.'
+                        : 'New self-registrations create teacher accounts. Start by choosing the school you work for, then choose whether you belong to the primary or secondary section and set your class responsibility. Primary teachers must choose one class. Secondary teachers can register as subject teachers with no form class, or optionally claim one form class.'}
+                </div>
+
+                <div className="mb-4">
+                    <p className="mb-2 text-sm font-semibold text-[var(--ink)]">
+                        Account Type
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setAccountType('teacher')
+                                setChildName('')
+                            }}
+                            className={`rounded-2xl border px-4 py-3 text-left text-sm shadow-sm transition ${
+                                accountType === 'teacher'
+                                    ? 'border-[var(--accent)] bg-[var(--surface-tint)] text-[var(--ink)]'
+                                    : 'border-[var(--line)] bg-[var(--surface-field)] text-[var(--muted)]'
+                            }`}>
+                            <span className="block font-semibold text-[var(--ink)]">
+                                Teacher account
+                            </span>
+                            <span className="mt-1 block text-xs">
+                                Registers, class tools, and learner grade entry.
+                            </span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setAccountType('guardian')
+                                setSchoolName('')
+                                setSchoolTrack('')
+                                setAssignedClassName('')
+                            }}
+                            className={`rounded-2xl border px-4 py-3 text-left text-sm shadow-sm transition ${
+                                accountType === 'guardian'
+                                    ? 'border-[var(--accent)] bg-[var(--surface-tint)] text-[var(--ink)]'
+                                    : 'border-[var(--line)] bg-[var(--surface-field)] text-[var(--muted)]'
+                            }`}>
+                            <span className="block font-semibold text-[var(--ink)]">
+                                Parent / Guardian
+                            </span>
+                            <span className="mt-1 block text-xs">
+                                Link to one learner and review grades, comments, and notices.
+                            </span>
+                        </button>
+                    </div>
                 </div>
 
                 <div>
@@ -188,65 +238,90 @@ const Page = () => {
                     <InputError messages={errors.school_id} className="mt-2" />
                 </div>
 
-                <div className="mt-4">
-                    <Label htmlFor="schoolName">New School Name</Label>
+                {isGuardianRegistration ? (
+                    <div className="mt-4">
+                        <Label htmlFor="childName">Child Full Name</Label>
 
-                    <Input
-                        id="schoolName"
-                        type="text"
-                        value={schoolName}
-                        className="block mt-1 w-full"
-                        onChange={event => {
-                            setSchoolName(event.target.value)
-                            setSchoolId('')
-                            setAssignedClassName('')
-                        }}
-                        placeholder="Enter a new school if it is not listed"
-                    />
+                        <Input
+                            id="childName"
+                            type="text"
+                            value={childName}
+                            className="block mt-1 w-full"
+                            onChange={event => setChildName(event.target.value)}
+                            placeholder="Type the learner name exactly as saved by the school"
+                            required
+                        />
 
-                    <p className="mt-2 text-sm text-[var(--muted)]">
-                        Leave this blank if your school is already listed above.
-                    </p>
+                        <p className="mt-2 text-sm text-[var(--muted)]">
+                            Guardians must choose an existing school. New school
+                            creation is reserved for staff registration.
+                        </p>
 
-                    <InputError messages={errors.school_name} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <Label>Responsible For:</Label>
-
-                    <div className="grid gap-3 sm:grid-cols-2">
-                        {Object.entries(registrationOptions.tracks).map(
-                            ([trackValue, trackLabel]) => (
-                                <label
-                                    key={trackValue}
-                                    className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface-field)] px-4 py-3 text-sm text-[var(--ink)] shadow-sm transition hover:border-[var(--accent)]">
-                                    <input
-                                        type="radio"
-                                        name="schoolTrack"
-                                        value={trackValue}
-                                        checked={schoolTrack === trackValue}
-                                        onChange={event => {
-                                            setSchoolTrack(event.target.value)
-                                            setAssignedClassName('')
-                                        }}
-                                        className="mt-1 h-4 w-4 accent-[var(--accent)]"
-                                    />
-                                    <span className="grid gap-1">
-                                        <span className="font-semibold">
-                                            {trackLabel}
-                                        </span>
-                                        <span className="text-xs text-[var(--muted)]">
-                                            Your dashboard and registers will be
-                                            limited to this section only.
-                                        </span>
-                                    </span>
-                                </label>
-                            ),
-                        )}
+                        <InputError messages={errors.child_name} className="mt-2" />
                     </div>
+                ) : (
+                    <>
+                        <div className="mt-4">
+                            <Label htmlFor="schoolName">New School Name</Label>
 
-                    <InputError messages={errors.school_track} className="mt-2" />
-                </div>
+                            <Input
+                                id="schoolName"
+                                type="text"
+                                value={schoolName}
+                                className="block mt-1 w-full"
+                                onChange={event => {
+                                    setSchoolName(event.target.value)
+                                    setSchoolId('')
+                                    setAssignedClassName('')
+                                }}
+                                placeholder="Enter a new school if it is not listed"
+                            />
+
+                            <p className="mt-2 text-sm text-[var(--muted)]">
+                                Leave this blank if your school is already listed above.
+                            </p>
+
+                            <InputError messages={errors.school_name} className="mt-2" />
+                        </div>
+
+                        <div className="mt-4">
+                            <Label>Responsible For:</Label>
+
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                {Object.entries(registrationOptions.tracks).map(
+                                    ([trackValue, trackLabel]) => (
+                                        <label
+                                            key={trackValue}
+                                            className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface-field)] px-4 py-3 text-sm text-[var(--ink)] shadow-sm transition hover:border-[var(--accent)]">
+                                            <input
+                                                type="radio"
+                                                name="schoolTrack"
+                                                value={trackValue}
+                                                checked={schoolTrack === trackValue}
+                                                onChange={event => {
+                                                    setSchoolTrack(event.target.value)
+                                                    setAssignedClassName('')
+                                                }}
+                                                className="mt-1 h-4 w-4 accent-[var(--accent)]"
+                                            />
+                                            <span className="grid gap-1">
+                                                <span className="font-semibold">
+                                                    {trackLabel}
+                                                </span>
+                                                <span className="text-xs text-[var(--muted)]">
+                                                    Your dashboard and registers will be
+                                                    limited to this section only.
+                                                </span>
+                                            </span>
+                                        </label>
+                                    ),
+                                )}
+                            </div>
+
+                            <InputError messages={errors.school_track} className="mt-2" />
+                        </div>
+                    </>
+                )}
 
                 {showClassPicker ? (
                     <div className="mt-4">
@@ -347,9 +422,15 @@ const Page = () => {
                         className="ml-4"
                         disabled={
                             isLoadingOptions ||
-                            (schoolId === '' && schoolName.trim() === '') ||
-                            schoolTrack === '' ||
-                            (requiresClassSelection && assignedClassName === '')
+                            (isGuardianRegistration
+                                ? schoolId === ''
+                                : schoolId === '' &&
+                                  schoolName.trim() === '') ||
+                            (isGuardianRegistration
+                                ? childName.trim() === ''
+                                : schoolTrack === '' ||
+                                  (requiresClassSelection &&
+                                      assignedClassName === ''))
                         }>
                         Register
                     </Button>

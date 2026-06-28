@@ -76,6 +76,13 @@ class UserFactory extends Factory
         ]);
     }
 
+    public function guardian(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::Guardian,
+        ]);
+    }
+
     public function inactive(): static
     {
         return $this->state(fn (array $attributes) => [

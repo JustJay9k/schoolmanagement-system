@@ -1,0 +1,53 @@
+.stack {
+    display: grid;
+    gap: 1rem;
+}
+
+.toolbar {
+    display: grid;
+    gap: 1rem;
+}
+
+.filterGrid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+.statusBar {
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--surface-card-soft);
+    padding: 0.9rem 1rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.statusError {
+    border-color: color-mix(in srgb, var(--danger) 24%, var(--line));
+    color: var(--danger);
+}
+
+.tableField {
+    min-width: 8rem;
+}
+
+.commentField {
+    min-width: 16rem;
+    min-height: 5.6rem;
+}
+
+.metaText {
+    display: block;
+    margin-top: 0.2rem;
+    color: var(--muted);
+    line-height: 1.4;
+}
+
+.actionsCell {
+    min-width: 8.5rem;
+}
+
+.emptyState {
+    color: var(--muted);
+}

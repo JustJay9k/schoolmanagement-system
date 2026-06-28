@@ -39,7 +39,13 @@ class StoreStudentRecordRequest extends FormRequest
             'sex' => ['nullable', Rule::in(['male', 'female', 'other'])],
             'date_of_birth' => ['nullable', 'date'],
             'age' => ['nullable', 'integer', 'min:0', 'max:120'],
-            'student_code' => ['nullable', 'string', 'max:100', Rule::unique(StudentRecord::class, 'student_code')],
+            'student_code' => [
+                'nullable',
+                'string',
+                'max:100',
+                Rule::unique(StudentRecord::class, 'student_code')
+                    ->where(fn ($query) => $query->where('school_id', $this->user()?->school_id)),
+            ],
             'orphan_status' => ['nullable', 'string', 'max:100'],
             'disability_name' => ['nullable', 'string', 'max:255'],
             'guardian_name' => ['nullable', 'string', 'max:255'],

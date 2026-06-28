@@ -20,6 +20,7 @@ class FinanceStudentApiController extends Controller
         ];
 
         $students = StudentRecord::query()
+            ->where('school_id', $request->user()?->school_id)
             ->when($filters['search'] !== '', function ($query) use ($filters) {
                 $query->where(function ($nestedQuery) use ($filters) {
                     $nestedQuery
@@ -53,6 +54,10 @@ class FinanceStudentApiController extends Controller
 
     public function update(UpdateStudentFinanceRequest $request, StudentRecord $student): JsonResponse
     {
+        if ($student->school_id !== $request->user()?->school_id) {
+            abort(404);
+        }
+
         $student->update($request->validated());
 
         return response()->json([

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/hooks/auth'
+import GuardianDashboard from './GuardianDashboard'
 import styles from './dashboard.module.css'
 
 const statusMeta = {
@@ -646,6 +647,17 @@ const Dashboard = () => {
     const adminOnlyView = userRole === 'admin'
     const managementView = userRole === 'management'
     const financeView = userRole === 'accountant'
+    const guardianView = userRole === 'guardian'
+    const currentDateLabel = useMemo(
+        () =>
+            new Date().toLocaleDateString(undefined, {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+            }),
+        [],
+    )
 
     const [activeTrack, setActiveTrack] = useState(userTrack ?? 'secondary')
     const [registerState, setRegisterState] = useState(() =>
@@ -863,6 +875,8 @@ const Dashboard = () => {
           ? 'System Administration'
           : financeView
             ? 'Student Finance Desk'
+            : guardianView
+              ? 'Parent / Guardian Portal'
             : 'Management Dashboard'
     const pageTitle = teacherOnlyView
         ? assignedFixture?.className ??
@@ -873,6 +887,8 @@ const Dashboard = () => {
           ? 'System Control Center'
           : financeView
             ? `${trackLabels[activeTrack]} Student Accounts`
+            : guardianView
+              ? user?.linked_student_record?.full_name ?? 'Guardian Dashboard'
             : `${trackLabels[activeTrack]} School Overview`
     const pageRoleLabel = formatRoleLabel(userRole)
     const pageMeta = teacherOnlyView
@@ -885,6 +901,8 @@ const Dashboard = () => {
           ? 'Administrator workspace for access control, school structure, and system-level oversight.'
           : financeView
             ? `${trackLabels[activeTrack]} student balances, books, uniform, and learner basics.`
+            : guardianView
+              ? 'View the linked learner profile, teacher comments, uploaded grades, and account notices.'
             : `${trackLabels[activeTrack]} overview across all assigned classes`
 
     const updateAttendance = (studentId, status) => {
@@ -1713,6 +1731,8 @@ const Dashboard = () => {
                                     ? 'Search students in your class...'
                                     : financeView
                                       ? 'Search student accounts...'
+                                    : guardianView
+                                      ? 'Search learner updates...'
                                     : 'Search classes or students...'
                             }
                         />
@@ -1756,11 +1776,13 @@ const Dashboard = () => {
                 <div className={styles.filterRow}>
                     <button type="button" className={styles.filterControl}>
                         <span className={styles.filterLabel}>Date</span>
-                        <span>Tuesday, 21 May 2024</span>
+                        <span>{currentDateLabel}</span>
                     </button>
 
                     <button type="button" className={styles.filterControl}>
-                        <span className={styles.filterLabel}>Class scope</span>
+                        <span className={styles.filterLabel}>
+                            {guardianView ? 'Learner scope' : 'Class scope'}
+                        </span>
                         <span>
                             {teacherOnlyView
                                 ? assignedFixture?.className ??
@@ -1769,11 +1791,14 @@ const Dashboard = () => {
                                   ? 'System administration'
                                   : financeView
                                     ? `All ${trackLabels[activeTrack].toLowerCase()} student accounts`
+                                  : guardianView
+                                    ? user?.linked_student_record?.full_name ??
+                                      'Awaiting learner link'
                                   : `All ${trackLabels[activeTrack].toLowerCase()} classes`}
                         </span>
                     </button>
 
-                    {adminOnlyView ? null : (
+                    {adminOnlyView || guardianView ? null : (
                         <div className={styles.segmentedControl}>
                             {Object.entries(trackLabels).map(([value, label]) => (
                                 <button
@@ -1807,9 +1832,14 @@ const Dashboard = () => {
                         </>
                     ) : null}
 
-                    <button type="button" onClick={exportRegister} className={styles.secondaryAction}>
-                        Export
-                    </button>
+                    {guardianView ? null : (
+                        <button
+                            type="button"
+                            onClick={exportRegister}
+                            className={styles.secondaryAction}>
+                            Export
+                        </button>
+                    )}
                 </div>
             </section>
 
@@ -1819,6 +1849,8 @@ const Dashboard = () => {
                   ? renderAdminView()
                   : financeView
                     ? renderFinanceView()
+                  : guardianView
+                    ? <GuardianDashboard user={user} />
                   : managementView
                     ? renderManagementView()
                     : renderUnsupportedView()}

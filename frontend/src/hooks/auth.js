@@ -23,6 +23,7 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
         const schoolNameErrors = validationErrors.school_name ?? []
         const trackErrors = validationErrors.school_track ?? []
         const assignedClassErrors = validationErrors.assigned_class_name ?? []
+        const childNameErrors = validationErrors.child_name ?? []
         const passwordConfirmationErrors =
             validationErrors.password_confirmation ?? []
 
@@ -64,6 +65,10 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
 
         if (assignedClassErrors.length > 0) {
             return `Class assignment issue: ${assignedClassErrors[0]}`
+        }
+
+        if (childNameErrors.length > 0) {
+            return `Learner lookup issue: ${childNameErrors[0]}`
         }
 
         if (emailErrors.length > 0) {

@@ -5,6 +5,7 @@ const teacherNavItems = [
     { label: 'Notifications', href: '/notifications', icon: 'notifications' },
     { label: 'Registers', href: '/registers', icon: 'register' },
     { label: 'Classes', href: '/classes', icon: 'classes' },
+    { label: 'Gradebook', href: '/gradebook', icon: 'gradebook' },
     { label: 'Attendance Reports', href: '/attendance-reports', icon: 'reports' },
     { label: 'Timetables', href: '/timetables', icon: 'timetable' },
     { label: 'Behaviour', href: '/behaviour', icon: 'behaviour' },
@@ -17,6 +18,7 @@ const managementNavItems = [
     { label: 'Registers', href: '/registers', icon: 'register' },
     { label: 'Classes', href: '/classes', icon: 'classes' },
     { label: 'Students', href: '/students', icon: 'students' },
+    { label: 'Gradebook', href: '/gradebook', icon: 'gradebook' },
     { label: 'Attendance Reports', href: '/attendance-reports', icon: 'reports' },
     { label: 'Subjects', href: '/management/subjects', icon: 'subjects' },
     { label: 'Teacher Allocations', href: '/management/form-teachers', icon: 'users' },
@@ -41,6 +43,12 @@ const financeNavItems = [
     { label: 'Settings', href: '/settings', icon: 'settings' },
 ]
 
+const guardianNavItems = [
+    { label: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
+    { label: 'Notifications', href: '/notifications', icon: 'notifications' },
+    { label: 'Settings', href: '/settings', icon: 'settings' },
+]
+
 export const getNavItems = user => {
     const role = normalizeRole(user?.role)
 
@@ -54,6 +62,10 @@ export const getNavItems = user => {
 
     if (role === 'accountant') {
         return financeNavItems
+    }
+
+    if (role === 'guardian') {
+        return guardianNavItems
     }
 
     return teacherNavItems

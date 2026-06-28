@@ -15,6 +15,7 @@ class ManagementStudentRecordApiController extends Controller
     public function index(): JsonResponse
     {
         $students = StudentRecord::query()
+            ->where('school_id', request()->user()?->school_id)
             ->with('creator:id,name')
             ->orderBy('school_track')
             ->orderBy('class_name')
@@ -41,6 +42,7 @@ class ManagementStudentRecordApiController extends Controller
         $student = StudentRecord::query()->create($this->payload(
             $request->validated(),
             $request->user()?->id,
+            $request->user()?->school_id,
         ));
 
         return response()->json([
@@ -54,11 +56,16 @@ class ManagementStudentRecordApiController extends Controller
         $validated = $request->validated();
         $created = 0;
         $updated = 0;
+        $schoolId = $request->user()?->school_id;
 
         foreach ($validated['records'] as $row) {
             $lookup = ! empty($row['student_code'])
-                ? ['student_code' => $row['student_code']]
+                ? [
+                    'school_id' => $schoolId,
+                    'student_code' => $row['student_code'],
+                ]
                 : [
+                    'school_id' => $schoolId,
                     'school_track' => $validated['school_track'],
                     'class_name' => $validated['class_name'],
                     'full_name' => $row['full_name'],
@@ -72,7 +79,7 @@ class ManagementStudentRecordApiController extends Controller
                 ...$row,
                 'school_track' => $validated['school_track'],
                 'class_name' => $validated['class_name'],
-            ], $request->user()?->id));
+            ], $request->user()?->id, $schoolId));
             $student->save();
 
             if ($isExisting) {
@@ -96,9 +103,10 @@ class ManagementStudentRecordApiController extends Controller
      * @param  array<string, mixed>  $validated
      * @return array<string, mixed>
      */
-    private function payload(array $validated, ?int $actorId): array
+    private function payload(array $validated, ?int $actorId, ?int $schoolId): array
     {
         return [
+            'school_id' => $schoolId,
             'school_track' => $validated['school_track'],
             'class_name' => $validated['class_name'],
             'full_name' => $validated['full_name'],
@@ -138,6 +146,7 @@ class ManagementStudentRecordApiController extends Controller
     {
         return [
             'id' => $student->id,
+            'school_id' => $student->school_id,
             'school_track' => $student->school_track,
             'school_track_label' => SchoolContextOptions::tracks()[$student->school_track] ?? ucfirst($student->school_track),
             'class_name' => $student->class_name,
