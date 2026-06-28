@@ -3,6 +3,14 @@
 import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import adminStyles from '@/app/(app)/admin/admin-tools.module.css'
+import {
+    AddIcon,
+    DeleteIcon,
+    EditIcon,
+    RefreshIcon,
+    ResetIcon,
+    StatusIcon,
+} from '@/app/(app)/admin/action-icons'
 import Button from '@/components/Button'
 import Input from '@/components/Input'
 import InputError from '@/components/InputError'
@@ -369,14 +377,20 @@ export default function AdminUsersPage() {
                     <button
                         type="button"
                         onClick={startCreate}
-                        className={workspaceStyles.secondaryButton}>
-                        New account
+                        aria-label="Create new account"
+                        title="Create new account"
+                        className={`${workspaceStyles.secondaryButton} ${adminStyles.iconButton}`}>
+                        <span className={adminStyles.srOnly}>Create new account</span>
+                        <AddIcon />
                     </button>
                     <button
                         type="button"
                         onClick={loadUsers}
-                        className={workspaceStyles.secondaryButton}>
-                        Refresh
+                        aria-label="Refresh user accounts"
+                        title="Refresh user accounts"
+                        className={`${workspaceStyles.secondaryButton} ${adminStyles.iconButton}`}>
+                        <span className={adminStyles.srOnly}>Refresh user accounts</span>
+                        <RefreshIcon />
                     </button>
                 </div>
             }
@@ -588,35 +602,54 @@ export default function AdminUsersPage() {
                                                     <button
                                                         type="button"
                                                         onClick={() => startEdit(item)}
-                                                        className={
-                                                            adminStyles.ghostButton
-                                                        }>
-                                                        Edit
+                                                        aria-label={`Edit ${item.name}`}
+                                                        title={`Edit ${item.name}`}
+                                                        className={`${adminStyles.ghostButton} ${adminStyles.iconButton}`}>
+                                                        <span className={adminStyles.srOnly}>
+                                                            {`Edit ${item.name}`}
+                                                        </span>
+                                                        <EditIcon />
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={() =>
                                                             toggleStatus(item)
                                                         }
+                                                        aria-label={
+                                                            item.status === 'active'
+                                                                ? `Disable ${item.name}`
+                                                                : `Enable ${item.name}`
+                                                        }
+                                                        title={
+                                                            item.status === 'active'
+                                                                ? `Disable ${item.name}`
+                                                                : `Enable ${item.name}`
+                                                        }
                                                         className={`${adminStyles.statusButton} ${
                                                             item.status ===
                                                             'active'
                                                                 ? adminStyles.statusDisabled
                                                                 : adminStyles.statusEnabled
-                                                        }`}>
-                                                        {item.status === 'active'
-                                                            ? 'Disable'
-                                                            : 'Enable'}
+                                                        } ${adminStyles.iconButton}`}>
+                                                        <span className={adminStyles.srOnly}>
+                                                            {item.status === 'active'
+                                                                ? `Disable ${item.name}`
+                                                                : `Enable ${item.name}`}
+                                                        </span>
+                                                        <StatusIcon />
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={() =>
                                                             deleteUser(item)
                                                         }
-                                                        className={
-                                                            adminStyles.dangerButton
-                                                        }>
-                                                        Delete
+                                                        aria-label={`Delete ${item.name}`}
+                                                        title={`Delete ${item.name}`}
+                                                        className={`${adminStyles.dangerButton} ${adminStyles.iconButton}`}>
+                                                        <span className={adminStyles.srOnly}>
+                                                            {`Delete ${item.name}`}
+                                                        </span>
+                                                        <DeleteIcon />
                                                     </button>
                                                 </div>
                                             </td>
@@ -956,8 +989,11 @@ export default function AdminUsersPage() {
                             <button
                                 type="button"
                                 onClick={startCreate}
-                                className={adminStyles.secondaryButton}>
-                                Reset form
+                                aria-label="Reset form"
+                                title="Reset form"
+                                className={`${adminStyles.secondaryButton} ${adminStyles.iconButton}`}>
+                                <span className={adminStyles.srOnly}>Reset form</span>
+                                <ResetIcon />
                             </button>
                         </div>
                     </form>

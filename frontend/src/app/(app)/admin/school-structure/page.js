@@ -3,6 +3,10 @@
 import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import adminStyles from '@/app/(app)/admin/admin-tools.module.css'
+import {
+    RefreshIcon,
+    ResetIcon,
+} from '@/app/(app)/admin/action-icons'
 import Button from '@/components/Button'
 import InputError from '@/components/InputError'
 import axios from '@/lib/axios'
@@ -121,8 +125,11 @@ export default function SchoolStructurePage() {
                 <button
                     type="button"
                     onClick={loadStructure}
-                    className={workspaceStyles.secondaryButton}>
-                    Refresh
+                    aria-label="Refresh school structure"
+                    title="Refresh school structure"
+                    className={`${workspaceStyles.secondaryButton} ${adminStyles.iconButton}`}>
+                    <span className={adminStyles.srOnly}>Refresh school structure</span>
+                    <RefreshIcon />
                 </button>
             }
         >
@@ -271,8 +278,11 @@ export default function SchoolStructurePage() {
                             <button
                                 type="button"
                                 onClick={loadStructure}
-                                className={adminStyles.secondaryButton}>
-                                Reset
+                                aria-label="Reset school structure form"
+                                title="Reset school structure form"
+                                className={`${adminStyles.secondaryButton} ${adminStyles.iconButton}`}>
+                                <span className={adminStyles.srOnly}>Reset school structure form</span>
+                                <ResetIcon />
                             </button>
                         </div>
                     </form>
