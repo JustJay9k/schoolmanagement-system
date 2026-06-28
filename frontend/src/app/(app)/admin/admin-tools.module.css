@@ -123,6 +123,40 @@
     gap: 1rem;
 }
 
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgba(10, 16, 24, 0.48);
+    backdrop-filter: blur(8px);
+}
+
+.modalCard {
+    width: min(100%, 68rem);
+    max-height: calc(100vh - 2rem);
+    overflow: auto;
+    border: 1px solid var(--line);
+    border-radius: 1.3rem;
+    background: var(--panel-strong);
+    box-shadow: 0 28px 72px var(--shadow-strong);
+    padding: 1rem;
+}
+
+.modalHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.9rem;
+}
+
+.modalForm {
+    gap: 1rem;
+}
+
 .stack {
     display: grid;
     gap: 0.85rem;

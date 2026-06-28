@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import managementStyles from '@/app/(app)/management/management-tools.module.css'
@@ -17,8 +17,22 @@ const emptyForm = {
     school_track: 'primary',
 }
 
+const CloseIcon = () => (
+    <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round">
+        <path d="M6 6l12 12M18 6 6 18" />
+    </svg>
+)
+
 export default function ManagementSubjectsPage() {
     const { user } = useAuth({ middleware: 'auth' })
+    const editorModalRef = useRef(null)
     const [subjects, setSubjects] = useState([])
     const [stats, setStats] = useState(null)
     const [options, setOptions] = useState(null)
@@ -29,6 +43,7 @@ export default function ManagementSubjectsPage() {
     const [form, setForm] = useState(emptyForm)
     const [editorMode, setEditorMode] = useState('create')
     const [editingSubjectId, setEditingSubjectId] = useState(null)
+    const [editorOpen, setEditorOpen] = useState(false)
 
     const loadSubjects = async () => {
         setLoading(true)
@@ -76,6 +91,17 @@ export default function ManagementSubjectsPage() {
         setFormErrors({})
     }
 
+    const closeEditor = () => {
+        setEditorOpen(false)
+        resetEditor()
+    }
+
+    const startCreate = () => {
+        resetEditor()
+        setPageStatus(null)
+        setEditorOpen(true)
+    }
+
     const startEdit = subject => {
         setEditorMode('edit')
         setEditingSubjectId(subject.id)
@@ -86,7 +112,38 @@ export default function ManagementSubjectsPage() {
         })
         setFormErrors({})
         setPageStatus(null)
+        setEditorOpen(true)
     }
+
+    useEffect(() => {
+        if (!editorOpen) {
+            return
+        }
+
+        const originalOverflow = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+
+        window.requestAnimationFrame(() => {
+            const firstField = editorModalRef.current?.querySelector(
+                'input, select, textarea',
+            )
+
+            firstField?.focus()
+        })
+
+        const handleKeyDown = event => {
+            if (event.key === 'Escape') {
+                closeEditor()
+            }
+        }
+
+        window.addEventListener('keydown', handleKeyDown)
+
+        return () => {
+            document.body.style.overflow = originalOverflow
+            window.removeEventListener('keydown', handleKeyDown)
+        }
+    }, [editorOpen])
 
     const submitForm = async event => {
         event.preventDefault()
@@ -101,13 +158,14 @@ export default function ManagementSubjectsPage() {
                     type: 'success',
                     message: 'Subject updated successfully.',
                 })
+                closeEditor()
             } else {
                 await axios.post('/api/management/subjects', form)
                 setPageStatus({
                     type: 'success',
                     message: 'Subject saved successfully.',
                 })
-                resetEditor()
+                closeEditor()
             }
 
             await loadSubjects()
@@ -135,7 +193,7 @@ export default function ManagementSubjectsPage() {
             const response = await axios.delete(`/api/management/subjects/${subject.id}`)
 
             if (editingSubjectId === subject.id) {
-                resetEditor()
+                closeEditor()
             }
 
             setPageStatus({
@@ -183,7 +241,7 @@ export default function ManagementSubjectsPage() {
                 <div className={managementStyles.toolbarGroup}>
                     <button
                         type="button"
-                        onClick={resetEditor}
+                        onClick={startCreate}
                         className={workspaceStyles.secondaryButton}>
                         New subject
                     </button>
@@ -293,92 +351,118 @@ export default function ManagementSubjectsPage() {
                         )}
                     </div>
                 </article>
+            </section>
 
-                <article className={workspaceStyles.panel}>
-                    <div className={workspaceStyles.panelHeader}>
-                        <div>
-                            <p className={workspaceStyles.panelEyebrow}>
-                                {editorMode === 'edit' ? 'Editor' : 'New subject'}
-                            </p>
-                            <h2 className={workspaceStyles.panelTitle}>
-                                {editorMode === 'edit' ? 'Update subject' : 'Add subject'}
-                            </h2>
-                        </div>
-                    </div>
-
-                    <form onSubmit={submitForm} className={managementStyles.stack}>
-                        <label className={managementStyles.field}>
-                            <span className={managementStyles.fieldLabel}>Subject name</span>
-                            <Input
-                                value={form.name}
-                                onChange={event =>
-                                    setForm(current => ({
-                                        ...current,
-                                        name: event.target.value,
-                                    }))
-                                }
-                                placeholder="Mathematics"
-                                required
-                            />
-                            <InputError messages={formErrors.name} />
-                        </label>
-
-                        <label className={managementStyles.field}>
-                            <span className={managementStyles.fieldLabel}>Code</span>
-                            <Input
-                                value={form.code}
-                                onChange={event =>
-                                    setForm(current => ({
-                                        ...current,
-                                        code: event.target.value,
-                                    }))
-                                }
-                                placeholder="MATH"
-                            />
-                            <InputError messages={formErrors.code} />
-                        </label>
-
-                        <label className={managementStyles.field}>
-                            <span className={managementStyles.fieldLabel}>School track</span>
-                            <select
-                                value={form.school_track}
-                                onChange={event =>
-                                    setForm(current => ({
-                                        ...current,
-                                        school_track: event.target.value,
-                                    }))
-                                }
-                                className={managementStyles.select}
-                                required>
-                                {Object.entries(options?.schoolTracks ?? {}).map(
-                                    ([value, label]) => (
-                                        <option key={value} value={value}>
-                                            {label}
-                                        </option>
-                                    ),
-                                )}
-                            </select>
-                            <InputError messages={formErrors.school_track} />
-                        </label>
-
-                        <div className={managementStyles.actions}>
-                            <Button disabled={saving}>
-                                {saving
-                                    ? 'Saving...'
-                                    : editorMode === 'edit'
-                                    ? 'Save subject'
-                                    : 'Create subject'}
-                            </Button>
+            {editorOpen ? (
+                <div
+                    className={managementStyles.modalOverlay}
+                    onClick={closeEditor}>
+                    <div
+                        ref={editorModalRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="subject-editor-modal-title"
+                        className={managementStyles.modalCard}
+                        onClick={event => event.stopPropagation()}>
+                        <div className={managementStyles.modalHeader}>
+                            <div>
+                                <p className={workspaceStyles.panelEyebrow}>
+                                    {editorMode === 'edit' ? 'Editor' : 'New subject'}
+                                </p>
+                                <h2
+                                    id="subject-editor-modal-title"
+                                    className={workspaceStyles.panelTitle}>
+                                    {editorMode === 'edit'
+                                        ? 'Update subject'
+                                        : 'Add subject'}
+                                </h2>
+                            </div>
                             <button
                                 type="button"
-                                onClick={resetEditor}
+                                onClick={closeEditor}
+                                aria-label="Close subject editor"
+                                title="Close subject editor"
                                 className={managementStyles.secondaryButton}>
-                                Reset
+                                <CloseIcon />
                             </button>
                         </div>
-                    </form>
-                </article>
-            </section>
+
+                        <form
+                            onSubmit={submitForm}
+                            className={`${managementStyles.stack} ${managementStyles.modalForm}`}>
+                            <label className={managementStyles.field}>
+                                <span className={managementStyles.fieldLabel}>Subject name</span>
+                                <Input
+                                    value={form.name}
+                                    onChange={event =>
+                                        setForm(current => ({
+                                            ...current,
+                                            name: event.target.value,
+                                        }))
+                                    }
+                                    placeholder="Mathematics"
+                                    required
+                                />
+                                <InputError messages={formErrors.name} />
+                            </label>
+
+                            <label className={managementStyles.field}>
+                                <span className={managementStyles.fieldLabel}>Code</span>
+                                <Input
+                                    value={form.code}
+                                    onChange={event =>
+                                        setForm(current => ({
+                                            ...current,
+                                            code: event.target.value,
+                                        }))
+                                    }
+                                    placeholder="MATH"
+                                />
+                                <InputError messages={formErrors.code} />
+                            </label>
+
+                            <label className={managementStyles.field}>
+                                <span className={managementStyles.fieldLabel}>School track</span>
+                                <select
+                                    value={form.school_track}
+                                    onChange={event =>
+                                        setForm(current => ({
+                                            ...current,
+                                            school_track: event.target.value,
+                                        }))
+                                    }
+                                    className={managementStyles.select}
+                                    required>
+                                    {Object.entries(options?.schoolTracks ?? {}).map(
+                                        ([value, label]) => (
+                                            <option key={value} value={value}>
+                                                {label}
+                                            </option>
+                                        ),
+                                    )}
+                                </select>
+                                <InputError messages={formErrors.school_track} />
+                            </label>
+
+                            <div className={managementStyles.actions}>
+                                <Button disabled={saving}>
+                                    {saving
+                                        ? 'Saving...'
+                                        : editorMode === 'edit'
+                                        ? 'Save subject'
+                                        : 'Create subject'}
+                                </Button>
+                                <button
+                                    type="button"
+                                    onClick={resetEditor}
+                                    className={managementStyles.secondaryButton}>
+                                    Reset
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            ) : null}
         </WorkspacePageShell>
     )
 }

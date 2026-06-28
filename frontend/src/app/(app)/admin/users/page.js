@@ -19,6 +19,19 @@ import { formatRoleLabel, isAdminUser } from '@/lib/userAccess'
 import { useAuth } from '@/hooks/auth'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+const CloseIcon = () => (
+    <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round">
+        <path d="M6 6l12 12M18 6 6 18" />
+    </svg>
+)
+
 const createEmptyForm = () => ({
     name: '',
     email: '',
@@ -73,7 +86,7 @@ const getTeacherAssignmentMeta = user => {
 
 export default function AdminUsersPage() {
     const { user } = useAuth({ middleware: 'auth' })
-    const editorCardRef = useRef(null)
+    const editorModalRef = useRef(null)
     const [users, setUsers] = useState([])
     const [stats, setStats] = useState(null)
     const [options, setOptions] = useState(null)
@@ -86,6 +99,7 @@ export default function AdminUsersPage() {
     })
     const [editorMode, setEditorMode] = useState('create')
     const [editingUserId, setEditingUserId] = useState(null)
+    const [editorOpen, setEditorOpen] = useState(false)
     const [form, setForm] = useState(createEmptyForm())
     const [formErrors, setFormErrors] = useState({})
     const [pageStatus, setPageStatus] = useState(null)
@@ -176,19 +190,9 @@ export default function AdminUsersPage() {
     const availableClasses =
         options?.classesByTrack?.[form.school_track] ?? []
 
-    const scrollToEditor = () => {
-        window.requestAnimationFrame(() => {
-            editorCardRef.current?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start',
-            })
-
-            const firstField = editorCardRef.current?.querySelector(
-                'input, select, textarea',
-            )
-
-            firstField?.focus()
-        })
+    const closeEditor = () => {
+        setEditorOpen(false)
+        resetEditor()
     }
 
     const resetEditor = () => {
@@ -201,7 +205,7 @@ export default function AdminUsersPage() {
     const startCreate = () => {
         resetEditor()
         setPageStatus(null)
-        scrollToEditor()
+        setEditorOpen(true)
     }
 
     const startEdit = selectedUser => {
@@ -222,8 +226,38 @@ export default function AdminUsersPage() {
         })
         setFormErrors({})
         setPageStatus(null)
-        scrollToEditor()
+        setEditorOpen(true)
     }
+
+    useEffect(() => {
+        if (!editorOpen) {
+            return
+        }
+
+        const originalOverflow = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+
+        window.requestAnimationFrame(() => {
+            const firstField = editorModalRef.current?.querySelector(
+                'input, select, textarea',
+            )
+
+            firstField?.focus()
+        })
+
+        const handleKeyDown = event => {
+            if (event.key === 'Escape') {
+                closeEditor()
+            }
+        }
+
+        window.addEventListener('keydown', handleKeyDown)
+
+        return () => {
+            document.body.style.overflow = originalOverflow
+            window.removeEventListener('keydown', handleKeyDown)
+        }
+    }, [editorOpen])
 
     const handleFieldChange = (field, value) => {
         setForm(current => {
@@ -262,13 +296,14 @@ export default function AdminUsersPage() {
                     type: 'success',
                     message: 'User account updated successfully.',
                 })
+                closeEditor()
             } else {
                 await axios.post('/api/admin/users', form)
-                resetEditor()
                 setPageStatus({
                     type: 'success',
                     message: 'User account created successfully.',
                 })
+                closeEditor()
             }
 
             await loadUsers()
@@ -331,7 +366,7 @@ export default function AdminUsersPage() {
             })
 
             if (editingUserId === selectedUser.id) {
-                startCreate()
+                closeEditor()
             }
 
             await loadUsers()
@@ -368,33 +403,34 @@ export default function AdminUsersPage() {
     }
 
     return (
-        <WorkspacePageShell
-            eyebrow="Administration"
-            title="User accounts"
-            description="View every account in the system, assign primary class responsibility or secondary form-teacher responsibility, and switch access on or off without leaving the main workspace."
-            actions={
-                <div className={adminStyles.toolbarGroup}>
-                    <button
-                        type="button"
-                        onClick={startCreate}
-                        aria-label="Create new account"
-                        title="Create new account"
-                        className={`${workspaceStyles.secondaryButton} ${adminStyles.iconButton}`}>
-                        <span className={adminStyles.srOnly}>Create new account</span>
-                        <AddIcon />
-                    </button>
-                    <button
-                        type="button"
-                        onClick={loadUsers}
-                        aria-label="Refresh user accounts"
-                        title="Refresh user accounts"
-                        className={`${workspaceStyles.secondaryButton} ${adminStyles.iconButton}`}>
-                        <span className={adminStyles.srOnly}>Refresh user accounts</span>
-                        <RefreshIcon />
-                    </button>
-                </div>
-            }
-        >
+        <>
+            <WorkspacePageShell
+                eyebrow="Administration"
+                title="User accounts"
+                description="View every account in the system, assign primary class responsibility or secondary form-teacher responsibility, and switch access on or off without leaving the main workspace."
+                actions={
+                    <div className={adminStyles.toolbarGroup}>
+                        <button
+                            type="button"
+                            onClick={startCreate}
+                            aria-label="Create new account"
+                            title="Create new account"
+                            className={`${workspaceStyles.secondaryButton} ${adminStyles.iconButton}`}>
+                            <span className={adminStyles.srOnly}>Create new account</span>
+                            <AddIcon />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={loadUsers}
+                            aria-label="Refresh user accounts"
+                            title="Refresh user accounts"
+                            className={`${workspaceStyles.secondaryButton} ${adminStyles.iconButton}`}>
+                            <span className={adminStyles.srOnly}>Refresh user accounts</span>
+                            <RefreshIcon />
+                        </button>
+                    </div>
+                }
+            >
             {pageStatus ? (
                 <section className={workspaceStyles.panel}>
                     <p
@@ -423,8 +459,8 @@ export default function AdminUsersPage() {
                 ))}
             </section>
 
-            <section className={adminStyles.splitPanel}>
-                <article className={workspaceStyles.fullPanel}>
+                <section className={adminStyles.splitPanel}>
+                    <article className={workspaceStyles.fullPanel}>
                     <div className={workspaceStyles.panelHeader}>
                         <div>
                             <p className={workspaceStyles.panelEyebrow}>Roster</p>
@@ -662,343 +698,378 @@ export default function AdminUsersPage() {
                             </tbody>
                         </table>
                     </div>
-                </article>
+                    </article>
+                </section>
+            </WorkspacePageShell>
 
-                <article
-                    ref={editorCardRef}
-                    className={`${workspaceStyles.panel} ${adminStyles.editorPanel}`}>
-                    <div className={workspaceStyles.panelHeader}>
-                        <div>
-                            <p className={workspaceStyles.panelEyebrow}>
-                                {editorMode === 'edit'
-                                    ? 'Account editor'
-                                    : 'New account'}
-                            </p>
-                            <h2 className={workspaceStyles.panelTitle}>
-                                {editorMode === 'edit'
-                                    ? 'Update user account'
-                                    : 'Create user account'}
-                            </h2>
-                        </div>
-                    </div>
-
-                    <form onSubmit={submitForm} className={adminStyles.stack}>
-                        <div className={adminStyles.formGrid}>
-                            <label className={adminStyles.field}>
-                                <span className={adminStyles.fieldLabel}>Name</span>
-                                <Input
-                                    value={form.name}
-                                    onChange={event =>
-                                        handleFieldChange(
-                                            'name',
-                                            event.target.value,
-                                        )
-                                    }
-                                    required
-                                />
-                                <InputError messages={formErrors.name} />
-                            </label>
-
-                            <label className={adminStyles.field}>
-                                <span className={adminStyles.fieldLabel}>Email</span>
-                                <Input
-                                    type="email"
-                                    value={form.email}
-                                    onChange={event =>
-                                        handleFieldChange(
-                                            'email',
-                                            event.target.value,
-                                        )
-                                    }
-                                    required
-                                />
-                                <InputError messages={formErrors.email} />
-                            </label>
-
-                            <label className={adminStyles.field}>
-                                <span className={adminStyles.fieldLabel}>Role</span>
-                                <select
-                                    value={form.role}
-                                    onChange={event =>
-                                        handleFieldChange(
-                                            'role',
-                                            event.target.value,
-                                        )
-                                    }
-                                    className={adminStyles.select}
-                                    required>
-                                    {(options?.roles ?? []).map(option => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                <InputError messages={formErrors.role} />
-                            </label>
-
-                            <label className={adminStyles.field}>
-                                <span className={adminStyles.fieldLabel}>School</span>
-                                <select
-                                    value={form.school_id}
-                                    onChange={event =>
-                                        handleFieldChange(
-                                            'school_id',
-                                            event.target.value,
-                                        )
-                                    }
-                                    className={adminStyles.select}
-                                    required={form.school_name.trim() === ''}>
-                                    <option value="">Select a school</option>
-                                    {(options?.schools ?? []).map(option => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                <InputError messages={formErrors.school_id} />
-                            </label>
-
-                            <label className={adminStyles.field}>
-                                <span className={adminStyles.fieldLabel}>
-                                    New school name
-                                </span>
-                                <Input
-                                    value={form.school_name}
-                                    onChange={event =>
-                                        handleFieldChange(
-                                            'school_name',
-                                            event.target.value,
-                                        )
-                                    }
-                                    placeholder="Add a new school if it is not listed"
-                                />
-                                <span className={adminStyles.fieldHint}>
-                                    Leave this blank when assigning the user to an
-                                    existing school.
-                                </span>
-                                <InputError messages={formErrors.school_name} />
-                            </label>
-
-                            <label className={adminStyles.field}>
-                                <span className={adminStyles.fieldLabel}>Status</span>
-                                <select
-                                    value={form.status}
-                                    onChange={event =>
-                                        handleFieldChange(
-                                            'status',
-                                            event.target.value,
-                                        )
-                                    }
-                                    className={adminStyles.select}
-                                    required>
-                                    {(options?.statuses ?? []).map(option => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                <InputError messages={formErrors.status} />
-                            </label>
-
-                            {form.role === 'teacher' ? (
-                                <>
-                                    <div
-                                        className={`${adminStyles.field} ${adminStyles.fullWidth}`}>
-                                        <span className={adminStyles.fieldLabel}>
-                                            School track
-                                        </span>
-                                        <div className={adminStyles.radioGrid}>
-                                            {Object.entries(
-                                                options?.schoolTracks ?? {},
-                                            ).map(([value, label]) => (
-                                                <label
-                                                    key={value}
-                                                    className={adminStyles.radioCard}>
-                                                    <input
-                                                        type="radio"
-                                                        checked={
-                                                            form.school_track ===
-                                                            value
-                                                        }
-                                                        onChange={() =>
-                                                            handleFieldChange(
-                                                                'school_track',
-                                                                value,
-                                                            )
-                                                        }
-                                                    />
-                                                    <span
-                                                        className={
-                                                            adminStyles.radioMeta
-                                                        }>
-                                                        <strong>{label}</strong>
-                                                        <span>
-                                                            Limit this teacher
-                                                            to {label.toLowerCase()}{' '}
-                                                            classes only.
-                                                        </span>
-                                                    </span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                        <InputError
-                                            messages={formErrors.school_track}
-                                        />
-                                    </div>
-
-                                    <label className={adminStyles.field}>
-                                        <span className={adminStyles.fieldLabel}>
-                                            {form.school_track === 'secondary'
-                                                ? 'Form class (optional)'
-                                                : 'Assigned class'}
-                                        </span>
-                                        <select
-                                            value={form.assigned_class_name}
-                                            onChange={event =>
-                                                handleFieldChange(
-                                                    'assigned_class_name',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            className={adminStyles.select}
-                                            required={
-                                                form.school_track === 'primary'
-                                            }>
-                                            <option value="">
-                                                {form.school_track
-                                                    ? form.school_track ===
-                                                      'secondary'
-                                                        ? 'No form class'
-                                                        : 'Select a class'
-                                                    : 'Choose a track first'}
-                                            </option>
-                                            {availableClasses.map(className => {
-                                                const selectedSchoolKey =
-                                                    form.school_id || null
-                                                const reservedByOtherTeacher =
-                                                    selectedSchoolKey &&
-                                                    takenClassesByTrack[
-                                                        selectedSchoolKey
-                                                    ]?.[
-                                                        form.school_track
-                                                    ]?.includes(className) &&
-                                                    className !==
-                                                        form.assigned_class_name
-
-                                                return (
-                                                    <option
-                                                        key={className}
-                                                        value={className}
-                                                        disabled={
-                                                            reservedByOtherTeacher
-                                                        }>
-                                                        {reservedByOtherTeacher
-                                                            ? `${className} (already assigned)`
-                                                            : className}
-                                                    </option>
-                                                    )
-                                            })}
-                                        </select>
-                                        <span className={adminStyles.fieldHint}>
-                                            {form.school_track === 'secondary'
-                                                ? 'Secondary teachers can stay as subject teachers only, or they can also be allocated one form class.'
-                                                : 'Primary teachers must manage exactly one class.'}
-                                        </span>
-                                        <InputError
-                                            messages={
-                                                formErrors.assigned_class_name
-                                            }
-                                        />
-                                    </label>
-                                </>
-                            ) : null}
-
-                            <label className={adminStyles.field}>
-                                <span className={adminStyles.fieldLabel}>
-                                    Password
-                                </span>
-                                <Input
-                                    type="password"
-                                    value={form.password}
-                                    onChange={event =>
-                                        handleFieldChange(
-                                            'password',
-                                            event.target.value,
-                                        )
-                                    }
-                                    required={editorMode === 'create'}
-                                />
-                                <span className={adminStyles.fieldHint}>
+            {editorOpen ? (
+                <div
+                    className={adminStyles.modalOverlay}
+                    onClick={closeEditor}>
+                    <div
+                        ref={editorModalRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="user-account-modal-title"
+                        className={adminStyles.modalCard}
+                        onClick={event => event.stopPropagation()}>
+                        <div className={adminStyles.modalHeader}>
+                            <div>
+                                <p className={workspaceStyles.panelEyebrow}>
                                     {editorMode === 'edit'
-                                        ? 'Leave blank to keep the current password.'
-                                        : 'Set the initial password for this account.'}
-                                </span>
-                                <InputError messages={formErrors.password} />
-                            </label>
-
-                            <label className={adminStyles.field}>
-                                <span className={adminStyles.fieldLabel}>
-                                    Confirm password
-                                </span>
-                                <Input
-                                    type="password"
-                                    value={form.password_confirmation}
-                                    onChange={event =>
-                                        handleFieldChange(
-                                            'password_confirmation',
-                                            event.target.value,
-                                        )
-                                    }
-                                    required={editorMode === 'create'}
-                                />
-                                <InputError
-                                    messages={
-                                        formErrors.password_confirmation
-                                    }
-                                />
-                            </label>
-                        </div>
-
-                        <label className={adminStyles.checkboxCard}>
-                            <input
-                                type="checkbox"
-                                checked={form.email_verified}
-                                onChange={event =>
-                                    handleFieldChange(
-                                        'email_verified',
-                                        event.target.checked,
-                                    )
-                                }
-                            />
-                            <span className={adminStyles.checkboxMeta}>
-                                <strong>Email verified</strong>
-                                <span>
-                                    Mark this account as verified immediately.
-                                </span>
-                            </span>
-                        </label>
-
-                        <div className={adminStyles.actions}>
-                            <Button disabled={saving}>
-                                {saving
-                                    ? 'Saving...'
-                                    : editorMode === 'edit'
-                                    ? 'Save changes'
-                                    : 'Create account'}
-                            </Button>
+                                        ? 'Account editor'
+                                        : 'New account'}
+                                </p>
+                                <h2
+                                    id="user-account-modal-title"
+                                    className={workspaceStyles.panelTitle}>
+                                    {editorMode === 'edit'
+                                        ? 'Update user account'
+                                        : 'Create user account'}
+                                </h2>
+                            </div>
                             <button
                                 type="button"
-                                onClick={startCreate}
-                                aria-label="Reset form"
-                                title="Reset form"
+                                onClick={closeEditor}
+                                aria-label="Close account editor"
+                                title="Close account editor"
                                 className={`${adminStyles.secondaryButton} ${adminStyles.iconButton}`}>
-                                <span className={adminStyles.srOnly}>Reset form</span>
-                                <ResetIcon />
+                                <span className={adminStyles.srOnly}>
+                                    Close account editor
+                                </span>
+                                <CloseIcon />
                             </button>
                         </div>
-                    </form>
-                </article>
-            </section>
-        </WorkspacePageShell>
+
+                        <form
+                            onSubmit={submitForm}
+                            className={`${adminStyles.stack} ${adminStyles.modalForm}`}>
+                            <div className={adminStyles.formGrid}>
+                                <label className={adminStyles.field}>
+                                    <span className={adminStyles.fieldLabel}>Name</span>
+                                    <Input
+                                        value={form.name}
+                                        onChange={event =>
+                                            handleFieldChange(
+                                                'name',
+                                                event.target.value,
+                                            )
+                                        }
+                                        required
+                                    />
+                                    <InputError messages={formErrors.name} />
+                                </label>
+
+                                <label className={adminStyles.field}>
+                                    <span className={adminStyles.fieldLabel}>Email</span>
+                                    <Input
+                                        type="email"
+                                        value={form.email}
+                                        onChange={event =>
+                                            handleFieldChange(
+                                                'email',
+                                                event.target.value,
+                                            )
+                                        }
+                                        required
+                                    />
+                                    <InputError messages={formErrors.email} />
+                                </label>
+
+                                <label className={adminStyles.field}>
+                                    <span className={adminStyles.fieldLabel}>Role</span>
+                                    <select
+                                        value={form.role}
+                                        onChange={event =>
+                                            handleFieldChange(
+                                                'role',
+                                                event.target.value,
+                                            )
+                                        }
+                                        className={adminStyles.select}
+                                        required>
+                                        {(options?.roles ?? []).map(option => (
+                                            <option
+                                                key={option.value}
+                                                value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <InputError messages={formErrors.role} />
+                                </label>
+
+                                <label className={adminStyles.field}>
+                                    <span className={adminStyles.fieldLabel}>School</span>
+                                    <select
+                                        value={form.school_id}
+                                        onChange={event =>
+                                            handleFieldChange(
+                                                'school_id',
+                                                event.target.value,
+                                            )
+                                        }
+                                        className={adminStyles.select}
+                                        required={form.school_name.trim() === ''}>
+                                        <option value="">Select a school</option>
+                                        {(options?.schools ?? []).map(option => (
+                                            <option
+                                                key={option.value}
+                                                value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <InputError messages={formErrors.school_id} />
+                                </label>
+
+                                <label className={adminStyles.field}>
+                                    <span className={adminStyles.fieldLabel}>
+                                        New school name
+                                    </span>
+                                    <Input
+                                        value={form.school_name}
+                                        onChange={event =>
+                                            handleFieldChange(
+                                                'school_name',
+                                                event.target.value,
+                                            )
+                                        }
+                                        placeholder="Add a new school if it is not listed"
+                                    />
+                                    <span className={adminStyles.fieldHint}>
+                                        Leave this blank when assigning the user to an
+                                        existing school.
+                                    </span>
+                                    <InputError messages={formErrors.school_name} />
+                                </label>
+
+                                <label className={adminStyles.field}>
+                                    <span className={adminStyles.fieldLabel}>Status</span>
+                                    <select
+                                        value={form.status}
+                                        onChange={event =>
+                                            handleFieldChange(
+                                                'status',
+                                                event.target.value,
+                                            )
+                                        }
+                                        className={adminStyles.select}
+                                        required>
+                                        {(options?.statuses ?? []).map(option => (
+                                            <option
+                                                key={option.value}
+                                                value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <InputError messages={formErrors.status} />
+                                </label>
+
+                                {form.role === 'teacher' ? (
+                                    <>
+                                        <div
+                                            className={`${adminStyles.field} ${adminStyles.fullWidth}`}>
+                                            <span className={adminStyles.fieldLabel}>
+                                                School track
+                                            </span>
+                                            <div className={adminStyles.radioGrid}>
+                                                {Object.entries(
+                                                    options?.schoolTracks ?? {},
+                                                ).map(([value, label]) => (
+                                                    <label
+                                                        key={value}
+                                                        className={adminStyles.radioCard}>
+                                                        <input
+                                                            type="radio"
+                                                            checked={
+                                                                form.school_track ===
+                                                                value
+                                                            }
+                                                            onChange={() =>
+                                                                handleFieldChange(
+                                                                    'school_track',
+                                                                    value,
+                                                                )
+                                                            }
+                                                        />
+                                                        <span
+                                                            className={
+                                                                adminStyles.radioMeta
+                                                            }>
+                                                            <strong>{label}</strong>
+                                                            <span>
+                                                                Limit this teacher
+                                                                to{' '}
+                                                                {label.toLowerCase()}{' '}
+                                                                classes only.
+                                                            </span>
+                                                        </span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                            <InputError
+                                                messages={formErrors.school_track}
+                                            />
+                                        </div>
+
+                                        <label className={adminStyles.field}>
+                                            <span className={adminStyles.fieldLabel}>
+                                                {form.school_track === 'secondary'
+                                                    ? 'Form class (optional)'
+                                                    : 'Assigned class'}
+                                            </span>
+                                            <select
+                                                value={form.assigned_class_name}
+                                                onChange={event =>
+                                                    handleFieldChange(
+                                                        'assigned_class_name',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                className={adminStyles.select}
+                                                required={
+                                                    form.school_track === 'primary'
+                                                }>
+                                                <option value="">
+                                                    {form.school_track
+                                                        ? form.school_track ===
+                                                          'secondary'
+                                                            ? 'No form class'
+                                                            : 'Select a class'
+                                                        : 'Choose a track first'}
+                                                </option>
+                                                {availableClasses.map(className => {
+                                                    const selectedSchoolKey =
+                                                        form.school_id || null
+                                                    const reservedByOtherTeacher =
+                                                        selectedSchoolKey &&
+                                                        takenClassesByTrack[
+                                                            selectedSchoolKey
+                                                        ]?.[
+                                                            form.school_track
+                                                        ]?.includes(className) &&
+                                                        className !==
+                                                            form.assigned_class_name
+
+                                                    return (
+                                                        <option
+                                                            key={className}
+                                                            value={className}
+                                                            disabled={
+                                                                reservedByOtherTeacher
+                                                            }>
+                                                            {reservedByOtherTeacher
+                                                                ? `${className} (already assigned)`
+                                                                : className}
+                                                        </option>
+                                                    )
+                                                })}
+                                            </select>
+                                            <span className={adminStyles.fieldHint}>
+                                                {form.school_track === 'secondary'
+                                                    ? 'Secondary teachers can stay as subject teachers only, or they can also be allocated one form class.'
+                                                    : 'Primary teachers must manage exactly one class.'}
+                                            </span>
+                                            <InputError
+                                                messages={
+                                                    formErrors.assigned_class_name
+                                                }
+                                            />
+                                        </label>
+                                    </>
+                                ) : null}
+
+                                <label className={adminStyles.field}>
+                                    <span className={adminStyles.fieldLabel}>
+                                        Password
+                                    </span>
+                                    <Input
+                                        type="password"
+                                        value={form.password}
+                                        onChange={event =>
+                                            handleFieldChange(
+                                                'password',
+                                                event.target.value,
+                                            )
+                                        }
+                                        required={editorMode === 'create'}
+                                    />
+                                    <span className={adminStyles.fieldHint}>
+                                        {editorMode === 'edit'
+                                            ? 'Leave blank to keep the current password.'
+                                            : 'Set the initial password for this account.'}
+                                    </span>
+                                    <InputError messages={formErrors.password} />
+                                </label>
+
+                                <label className={adminStyles.field}>
+                                    <span className={adminStyles.fieldLabel}>
+                                        Confirm password
+                                    </span>
+                                    <Input
+                                        type="password"
+                                        value={form.password_confirmation}
+                                        onChange={event =>
+                                            handleFieldChange(
+                                                'password_confirmation',
+                                                event.target.value,
+                                            )
+                                        }
+                                        required={editorMode === 'create'}
+                                    />
+                                    <InputError
+                                        messages={
+                                            formErrors.password_confirmation
+                                        }
+                                    />
+                                </label>
+                            </div>
+
+                            <label className={adminStyles.checkboxCard}>
+                                <input
+                                    type="checkbox"
+                                    checked={form.email_verified}
+                                    onChange={event =>
+                                        handleFieldChange(
+                                            'email_verified',
+                                            event.target.checked,
+                                        )
+                                    }
+                                />
+                                <span className={adminStyles.checkboxMeta}>
+                                    <strong>Email verified</strong>
+                                    <span>
+                                        Mark this account as verified immediately.
+                                    </span>
+                                </span>
+                            </label>
+
+                            <div className={adminStyles.actions}>
+                                <Button disabled={saving}>
+                                    {saving
+                                        ? 'Saving...'
+                                        : editorMode === 'edit'
+                                        ? 'Save changes'
+                                        : 'Create account'}
+                                </Button>
+                                <button
+                                    type="button"
+                                    onClick={resetEditor}
+                                    aria-label="Reset form"
+                                    title="Reset form"
+                                    className={`${adminStyles.secondaryButton} ${adminStyles.iconButton}`}>
+                                    <span className={adminStyles.srOnly}>
+                                        Reset form
+                                    </span>
+                                    <ResetIcon />
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            ) : null}
+        </>
     )
 }

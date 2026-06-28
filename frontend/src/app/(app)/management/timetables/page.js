@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import managementStyles from '@/app/(app)/management/management-tools.module.css'
@@ -64,8 +64,22 @@ const formatTeacherRoleSummary = teacher => {
     return 'Teacher'
 }
 
+const CloseIcon = () => (
+    <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round">
+        <path d="M6 6l12 12M18 6 6 18" />
+    </svg>
+)
+
 export default function ManagementTimetablesPage() {
     const { user } = useAuth({ middleware: 'auth' })
+    const editorModalRef = useRef(null)
     const [timetables, setTimetables] = useState([])
     const [options, setOptions] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -75,6 +89,7 @@ export default function ManagementTimetablesPage() {
     const [form, setForm] = useState(createEmptyForm())
     const [editorMode, setEditorMode] = useState('create')
     const [editingTimetableId, setEditingTimetableId] = useState(null)
+    const [editorOpen, setEditorOpen] = useState(false)
 
     const loadTimetables = async () => {
         setLoading(true)
@@ -124,6 +139,17 @@ export default function ManagementTimetablesPage() {
         setFormErrors({})
     }
 
+    const closeEditor = () => {
+        setEditorOpen(false)
+        resetEditor()
+    }
+
+    const startCreate = () => {
+        resetEditor()
+        setPageStatus(null)
+        setEditorOpen(true)
+    }
+
     const startEdit = timetable => {
         setEditorMode('edit')
         setEditingTimetableId(timetable.id)
@@ -148,8 +174,38 @@ export default function ManagementTimetablesPage() {
         })
         setFormErrors({})
         setPageStatus(null)
-        window.scrollTo({ top: 0, behavior: 'smooth' })
+        setEditorOpen(true)
     }
+
+    useEffect(() => {
+        if (!editorOpen) {
+            return
+        }
+
+        const originalOverflow = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+
+        window.requestAnimationFrame(() => {
+            const firstField = editorModalRef.current?.querySelector(
+                'input, select, textarea',
+            )
+
+            firstField?.focus()
+        })
+
+        const handleKeyDown = event => {
+            if (event.key === 'Escape') {
+                closeEditor()
+            }
+        }
+
+        window.addEventListener('keydown', handleKeyDown)
+
+        return () => {
+            document.body.style.overflow = originalOverflow
+            window.removeEventListener('keydown', handleKeyDown)
+        }
+    }, [editorOpen])
 
     const handleFieldChange = (field, value) => {
         setForm(current => {
@@ -213,13 +269,14 @@ export default function ManagementTimetablesPage() {
                     type: 'success',
                     message: 'Timetable updated successfully.',
                 })
+                closeEditor()
             } else {
                 await axios.post('/api/management/timetables', form)
                 setPageStatus({
                     type: 'success',
                     message: 'Timetable created successfully.',
                 })
-                resetEditor()
+                closeEditor()
             }
 
             await loadTimetables()
@@ -249,7 +306,7 @@ export default function ManagementTimetablesPage() {
             )
 
             if (editingTimetableId === timetable.id) {
-                resetEditor()
+                closeEditor()
             }
 
             setPageStatus({
@@ -298,7 +355,7 @@ export default function ManagementTimetablesPage() {
                 <div className={managementStyles.toolbarGroup}>
                     <button
                         type="button"
-                        onClick={resetEditor}
+                        onClick={startCreate}
                         className={workspaceStyles.secondaryButton}>
                         New timetable
                     </button>
@@ -437,371 +494,395 @@ export default function ManagementTimetablesPage() {
                         )}
                     </div>
                 </article>
+            </section>
 
-                <article className={workspaceStyles.panel}>
-                    <div className={workspaceStyles.panelHeader}>
-                        <div>
-                            <p className={workspaceStyles.panelEyebrow}>
-                                {editorMode === 'edit' ? 'Editor' : 'New timetable'}
-                            </p>
-                            <h2 className={workspaceStyles.panelTitle}>
-                                {editorMode === 'edit'
-                                    ? 'Update timetable'
-                                    : 'Create timetable'}
-                            </h2>
-                        </div>
-                    </div>
-
-                    <form onSubmit={submitForm} className={managementStyles.stack}>
-                        <div className={managementStyles.formGrid}>
-                            <label className={managementStyles.field}>
-                                <span className={managementStyles.fieldLabel}>Title</span>
-                                <Input
-                                    value={form.title}
-                                    onChange={event =>
-                                        handleFieldChange('title', event.target.value)
-                                    }
-                                    placeholder="Form 2 East timetable"
-                                    required
-                                />
-                                <InputError messages={formErrors.title} />
-                            </label>
-
-                            <label className={managementStyles.field}>
-                                <span className={managementStyles.fieldLabel}>
-                                    Assigned teacher
-                                </span>
-                                <select
-                                    value={form.assigned_teacher_id}
-                                    onChange={event =>
-                                        handleFieldChange(
-                                            'assigned_teacher_id',
-                                            event.target.value,
-                                        )
-                                    }
-                                    className={managementStyles.select}
-                                    required>
-                                    <option value="">
-                                        {availableTeachers.length
-                                            ? 'Select a teacher'
-                                            : 'Choose a track with active teachers'}
-                                    </option>
-                                    {availableTeachers.map(teacher => (
-                                        <option key={teacher.id} value={teacher.id}>
-                                            {`${teacher.name} - ${formatTeacherRoleSummary(
-                                                teacher,
-                                            )}`}
-                                        </option>
-                                    ))}
-                                </select>
-                                <span className={managementStyles.fieldHint}>
-                                    Secondary teachers can remain subject
-                                    teachers only, or also hold one form class.
-                                </span>
-                                <InputError messages={formErrors.assigned_teacher_id} />
-                            </label>
-
-                            <div
-                                className={`${managementStyles.field} ${managementStyles.fullWidth}`}>
-                                <span className={managementStyles.fieldLabel}>School track</span>
-                                <div className={managementStyles.radioGrid}>
-                                    {Object.entries(options?.schoolTracks ?? {}).map(
-                                        ([value, label]) => (
-                                            <label
-                                                key={value}
-                                                className={managementStyles.radioCard}>
-                                                <input
-                                                    type="radio"
-                                                    checked={form.school_track === value}
-                                                    onChange={() =>
-                                                        handleFieldChange('school_track', value)
-                                                    }
-                                                />
-                                                <span className={managementStyles.radioMeta}>
-                                                    <strong>{label}</strong>
-                                                    <span>
-                                                        Use {label.toLowerCase()} classes,
-                                                        teachers, and subjects for this
-                                                        timetable.
-                                                    </span>
-                                                </span>
-                                            </label>
-                                        ),
-                                    )}
-                                </div>
-                                <InputError messages={formErrors.school_track} />
+            {editorOpen ? (
+                <div
+                    className={managementStyles.modalOverlay}
+                    onClick={closeEditor}>
+                    <div
+                        ref={editorModalRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="timetable-editor-modal-title"
+                        className={`${managementStyles.modalCard} ${managementStyles.modalWideCard}`}
+                        onClick={event => event.stopPropagation()}>
+                        <div className={managementStyles.modalHeader}>
+                            <div>
+                                <p className={workspaceStyles.panelEyebrow}>
+                                    {editorMode === 'edit' ? 'Editor' : 'New timetable'}
+                                </p>
+                                <h2
+                                    id="timetable-editor-modal-title"
+                                    className={workspaceStyles.panelTitle}>
+                                    {editorMode === 'edit'
+                                        ? 'Update timetable'
+                                        : 'Create timetable'}
+                                </h2>
                             </div>
-
-                            <label className={managementStyles.field}>
-                                <span className={managementStyles.fieldLabel}>Class</span>
-                                <select
-                                    value={form.class_name}
-                                    onChange={event =>
-                                        handleFieldChange('class_name', event.target.value)
-                                    }
-                                    className={managementStyles.select}
-                                    required>
-                                    <option value="">
-                                        {availableClasses.length
-                                            ? 'Select a class'
-                                            : 'No classes available for this track'}
-                                    </option>
-                                    {availableClasses.map(className => (
-                                        <option key={className} value={className}>
-                                            {className}
-                                        </option>
-                                    ))}
-                                </select>
-                                <InputError messages={formErrors.class_name} />
-                            </label>
-
-                            <label
-                                className={`${managementStyles.field} ${managementStyles.fullWidth}`}>
-                                <span className={managementStyles.fieldLabel}>Notes</span>
-                                <textarea
-                                    value={form.notes}
-                                    onChange={event =>
-                                        handleFieldChange('notes', event.target.value)
-                                    }
-                                    className={managementStyles.textarea}
-                                    placeholder="Assembly notes, lunch break reminders, or special schedule rules."
-                                />
-                                <InputError messages={formErrors.notes} />
-                            </label>
-                        </div>
-
-                        <article className={workspaceStyles.panel}>
-                            <div className={workspaceStyles.panelHeader}>
-                                <div>
-                                    <p className={workspaceStyles.panelEyebrow}>Periods</p>
-                                    <h2 className={workspaceStyles.panelTitle}>
-                                        Timetable rows
-                                    </h2>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={addEntry}
-                                    className={managementStyles.secondaryButton}>
-                                    Add period
-                                </button>
-                            </div>
-
-                            <div className={workspaceStyles.list}>
-                                {form.entries.map((entry, index) => (
-                                    <div key={`entry-${index}`} className={managementStyles.entryCard}>
-                                        <div className={managementStyles.entryCardHeader}>
-                                            <div>
-                                                <strong>Period row {index + 1}</strong>
-                                                <p className={managementStyles.cardMeta}>
-                                                    Pick the day, time, subject, and room.
-                                                </p>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => removeEntry(index)}
-                                                className={managementStyles.ghostButton}>
-                                                Remove
-                                            </button>
-                                        </div>
-
-                                        <div className={managementStyles.entryGrid}>
-                                            <label className={managementStyles.field}>
-                                                <span className={managementStyles.fieldLabel}>
-                                                    Day
-                                                </span>
-                                                <select
-                                                    value={entry.day_of_week}
-                                                    onChange={event =>
-                                                        handleEntryChange(
-                                                            index,
-                                                            'day_of_week',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                    className={managementStyles.select}
-                                                    required>
-                                                    {Object.entries(
-                                                        options?.daysOfWeek ?? {},
-                                                    ).map(([value, label]) => (
-                                                        <option key={value} value={value}>
-                                                            {label}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                <InputError
-                                                    messages={
-                                                        formErrors[`entries.${index}.day_of_week`]
-                                                    }
-                                                />
-                                            </label>
-
-                                            <label className={managementStyles.field}>
-                                                <span className={managementStyles.fieldLabel}>
-                                                    Period
-                                                </span>
-                                                <Input
-                                                    value={entry.period_label}
-                                                    onChange={event =>
-                                                        handleEntryChange(
-                                                            index,
-                                                            'period_label',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                    placeholder="Period 1"
-                                                    required
-                                                />
-                                                <InputError
-                                                    messages={
-                                                        formErrors[`entries.${index}.period_label`]
-                                                    }
-                                                />
-                                            </label>
-
-                                            <label className={managementStyles.field}>
-                                                <span className={managementStyles.fieldLabel}>
-                                                    Start
-                                                </span>
-                                                <Input
-                                                    type="time"
-                                                    value={entry.start_time}
-                                                    onChange={event =>
-                                                        handleEntryChange(
-                                                            index,
-                                                            'start_time',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                />
-                                                <InputError
-                                                    messages={
-                                                        formErrors[`entries.${index}.start_time`]
-                                                    }
-                                                />
-                                            </label>
-
-                                            <label className={managementStyles.field}>
-                                                <span className={managementStyles.fieldLabel}>
-                                                    End
-                                                </span>
-                                                <Input
-                                                    type="time"
-                                                    value={entry.end_time}
-                                                    onChange={event =>
-                                                        handleEntryChange(
-                                                            index,
-                                                            'end_time',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                />
-                                                <InputError
-                                                    messages={
-                                                        formErrors[`entries.${index}.end_time`]
-                                                    }
-                                                />
-                                            </label>
-
-                                            <label className={managementStyles.field}>
-                                                <span className={managementStyles.fieldLabel}>
-                                                    Subject
-                                                </span>
-                                                <select
-                                                    value={entry.subject_id}
-                                                    onChange={event =>
-                                                        handleEntryChange(
-                                                            index,
-                                                            'subject_id',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                    className={managementStyles.select}
-                                                    required>
-                                                    <option value="">
-                                                        {availableSubjects.length
-                                                            ? 'Select a subject'
-                                                            : 'Add subjects for this track first'}
-                                                    </option>
-                                                    {availableSubjects.map(subject => (
-                                                        <option key={subject.id} value={subject.id}>
-                                                            {subject.code
-                                                                ? `${subject.name} (${subject.code})`
-                                                                : subject.name}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                <InputError
-                                                    messages={
-                                                        formErrors[`entries.${index}.subject_id`]
-                                                    }
-                                                />
-                                            </label>
-
-                                            <label className={managementStyles.field}>
-                                                <span className={managementStyles.fieldLabel}>
-                                                    Room
-                                                </span>
-                                                <Input
-                                                    value={entry.room}
-                                                    onChange={event =>
-                                                        handleEntryChange(
-                                                            index,
-                                                            'room',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                    placeholder="Lab 1"
-                                                />
-                                                <InputError
-                                                    messages={formErrors[`entries.${index}.room`]}
-                                                />
-                                            </label>
-
-                                            <label
-                                                className={`${managementStyles.field} ${managementStyles.fullWidth}`}>
-                                                <span className={managementStyles.fieldLabel}>
-                                                    Notes
-                                                </span>
-                                                <Input
-                                                    value={entry.notes}
-                                                    onChange={event =>
-                                                        handleEntryChange(
-                                                            index,
-                                                            'notes',
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                    placeholder="Double period or special instruction"
-                                                />
-                                                <InputError
-                                                    messages={formErrors[`entries.${index}.notes`]}
-                                                />
-                                            </label>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            <InputError messages={formErrors.entries} />
-                        </article>
-
-                        <div className={managementStyles.actions}>
-                            <Button disabled={saving}>
-                                {saving
-                                    ? 'Saving...'
-                                    : editorMode === 'edit'
-                                    ? 'Save timetable'
-                                    : 'Create timetable'}
-                            </Button>
                             <button
                                 type="button"
-                                onClick={resetEditor}
+                                onClick={closeEditor}
+                                aria-label="Close timetable editor"
+                                title="Close timetable editor"
                                 className={managementStyles.secondaryButton}>
-                                Reset
+                                <CloseIcon />
                             </button>
                         </div>
-                    </form>
-                </article>
-            </section>
+
+                        <form
+                            onSubmit={submitForm}
+                            className={`${managementStyles.stack} ${managementStyles.modalForm}`}>
+                            <div className={managementStyles.formGrid}>
+                                <label className={managementStyles.field}>
+                                    <span className={managementStyles.fieldLabel}>Title</span>
+                                    <Input
+                                        value={form.title}
+                                        onChange={event =>
+                                            handleFieldChange('title', event.target.value)
+                                        }
+                                        placeholder="Form 2 East timetable"
+                                        required
+                                    />
+                                    <InputError messages={formErrors.title} />
+                                </label>
+
+                                <label className={managementStyles.field}>
+                                    <span className={managementStyles.fieldLabel}>
+                                        Assigned teacher
+                                    </span>
+                                    <select
+                                        value={form.assigned_teacher_id}
+                                        onChange={event =>
+                                            handleFieldChange(
+                                                'assigned_teacher_id',
+                                                event.target.value,
+                                            )
+                                        }
+                                        className={managementStyles.select}
+                                        required>
+                                        <option value="">
+                                            {availableTeachers.length
+                                                ? 'Select a teacher'
+                                                : 'Choose a track with active teachers'}
+                                        </option>
+                                        {availableTeachers.map(teacher => (
+                                            <option key={teacher.id} value={teacher.id}>
+                                                {`${teacher.name} - ${formatTeacherRoleSummary(
+                                                    teacher,
+                                                )}`}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <span className={managementStyles.fieldHint}>
+                                        Secondary teachers can remain subject
+                                        teachers only, or also hold one form class.
+                                    </span>
+                                    <InputError messages={formErrors.assigned_teacher_id} />
+                                </label>
+
+                                <div
+                                    className={`${managementStyles.field} ${managementStyles.fullWidth}`}>
+                                    <span className={managementStyles.fieldLabel}>School track</span>
+                                    <div className={managementStyles.radioGrid}>
+                                        {Object.entries(options?.schoolTracks ?? {}).map(
+                                            ([value, label]) => (
+                                                <label
+                                                    key={value}
+                                                    className={managementStyles.radioCard}>
+                                                    <input
+                                                        type="radio"
+                                                        checked={form.school_track === value}
+                                                        onChange={() =>
+                                                            handleFieldChange('school_track', value)
+                                                        }
+                                                    />
+                                                    <span className={managementStyles.radioMeta}>
+                                                        <strong>{label}</strong>
+                                                        <span>
+                                                            Use {label.toLowerCase()} classes,
+                                                            teachers, and subjects for this
+                                                            timetable.
+                                                        </span>
+                                                    </span>
+                                                </label>
+                                            ),
+                                        )}
+                                    </div>
+                                    <InputError messages={formErrors.school_track} />
+                                </div>
+
+                                <label className={managementStyles.field}>
+                                    <span className={managementStyles.fieldLabel}>Class</span>
+                                    <select
+                                        value={form.class_name}
+                                        onChange={event =>
+                                            handleFieldChange('class_name', event.target.value)
+                                        }
+                                        className={managementStyles.select}
+                                        required>
+                                        <option value="">
+                                            {availableClasses.length
+                                                ? 'Select a class'
+                                                : 'No classes available for this track'}
+                                        </option>
+                                        {availableClasses.map(className => (
+                                            <option key={className} value={className}>
+                                                {className}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <InputError messages={formErrors.class_name} />
+                                </label>
+
+                                <label
+                                    className={`${managementStyles.field} ${managementStyles.fullWidth}`}>
+                                    <span className={managementStyles.fieldLabel}>Notes</span>
+                                    <textarea
+                                        value={form.notes}
+                                        onChange={event =>
+                                            handleFieldChange('notes', event.target.value)
+                                        }
+                                        className={managementStyles.textarea}
+                                        placeholder="Assembly notes, lunch break reminders, or special schedule rules."
+                                    />
+                                    <InputError messages={formErrors.notes} />
+                                </label>
+                            </div>
+
+                            <article className={workspaceStyles.panel}>
+                                <div className={workspaceStyles.panelHeader}>
+                                    <div>
+                                        <p className={workspaceStyles.panelEyebrow}>Periods</p>
+                                        <h2 className={workspaceStyles.panelTitle}>
+                                            Timetable rows
+                                        </h2>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={addEntry}
+                                        className={managementStyles.secondaryButton}>
+                                        Add period
+                                    </button>
+                                </div>
+
+                                <div className={workspaceStyles.list}>
+                                    {form.entries.map((entry, index) => (
+                                        <div key={`entry-${index}`} className={managementStyles.entryCard}>
+                                            <div className={managementStyles.entryCardHeader}>
+                                                <div>
+                                                    <strong>Period row {index + 1}</strong>
+                                                    <p className={managementStyles.cardMeta}>
+                                                        Pick the day, time, subject, and room.
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeEntry(index)}
+                                                    className={managementStyles.ghostButton}>
+                                                    Remove
+                                                </button>
+                                            </div>
+
+                                            <div className={managementStyles.entryGrid}>
+                                                <label className={managementStyles.field}>
+                                                    <span className={managementStyles.fieldLabel}>
+                                                        Day
+                                                    </span>
+                                                    <select
+                                                        value={entry.day_of_week}
+                                                        onChange={event =>
+                                                            handleEntryChange(
+                                                                index,
+                                                                'day_of_week',
+                                                                event.target.value,
+                                                            )
+                                                        }
+                                                        className={managementStyles.select}
+                                                        required>
+                                                        {Object.entries(
+                                                            options?.daysOfWeek ?? {},
+                                                        ).map(([value, label]) => (
+                                                            <option key={value} value={value}>
+                                                                {label}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <InputError
+                                                        messages={
+                                                            formErrors[`entries.${index}.day_of_week`]
+                                                        }
+                                                    />
+                                                </label>
+
+                                                <label className={managementStyles.field}>
+                                                    <span className={managementStyles.fieldLabel}>
+                                                        Period
+                                                    </span>
+                                                    <Input
+                                                        value={entry.period_label}
+                                                        onChange={event =>
+                                                            handleEntryChange(
+                                                                index,
+                                                                'period_label',
+                                                                event.target.value,
+                                                            )
+                                                        }
+                                                        placeholder="Period 1"
+                                                        required
+                                                    />
+                                                    <InputError
+                                                        messages={
+                                                            formErrors[`entries.${index}.period_label`]
+                                                        }
+                                                    />
+                                                </label>
+
+                                                <label className={managementStyles.field}>
+                                                    <span className={managementStyles.fieldLabel}>
+                                                        Start
+                                                    </span>
+                                                    <Input
+                                                        type="time"
+                                                        value={entry.start_time}
+                                                        onChange={event =>
+                                                            handleEntryChange(
+                                                                index,
+                                                                'start_time',
+                                                                event.target.value,
+                                                            )
+                                                        }
+                                                    />
+                                                    <InputError
+                                                        messages={
+                                                            formErrors[`entries.${index}.start_time`]
+                                                        }
+                                                    />
+                                                </label>
+
+                                                <label className={managementStyles.field}>
+                                                    <span className={managementStyles.fieldLabel}>
+                                                        End
+                                                    </span>
+                                                    <Input
+                                                        type="time"
+                                                        value={entry.end_time}
+                                                        onChange={event =>
+                                                            handleEntryChange(
+                                                                index,
+                                                                'end_time',
+                                                                event.target.value,
+                                                            )
+                                                        }
+                                                    />
+                                                    <InputError
+                                                        messages={
+                                                            formErrors[`entries.${index}.end_time`]
+                                                        }
+                                                    />
+                                                </label>
+
+                                                <label className={managementStyles.field}>
+                                                    <span className={managementStyles.fieldLabel}>
+                                                        Subject
+                                                    </span>
+                                                    <select
+                                                        value={entry.subject_id}
+                                                        onChange={event =>
+                                                            handleEntryChange(
+                                                                index,
+                                                                'subject_id',
+                                                                event.target.value,
+                                                            )
+                                                        }
+                                                        className={managementStyles.select}
+                                                        required>
+                                                        <option value="">
+                                                            {availableSubjects.length
+                                                                ? 'Select a subject'
+                                                                : 'Add subjects for this track first'}
+                                                        </option>
+                                                        {availableSubjects.map(subject => (
+                                                            <option key={subject.id} value={subject.id}>
+                                                                {subject.code
+                                                                    ? `${subject.name} (${subject.code})`
+                                                                    : subject.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <InputError
+                                                        messages={
+                                                            formErrors[`entries.${index}.subject_id`]
+                                                        }
+                                                    />
+                                                </label>
+
+                                                <label className={managementStyles.field}>
+                                                    <span className={managementStyles.fieldLabel}>
+                                                        Room
+                                                    </span>
+                                                    <Input
+                                                        value={entry.room}
+                                                        onChange={event =>
+                                                            handleEntryChange(
+                                                                index,
+                                                                'room',
+                                                                event.target.value,
+                                                            )
+                                                        }
+                                                        placeholder="Lab 1"
+                                                    />
+                                                    <InputError
+                                                        messages={formErrors[`entries.${index}.room`]}
+                                                    />
+                                                </label>
+
+                                                <label
+                                                    className={`${managementStyles.field} ${managementStyles.fullWidth}`}>
+                                                    <span className={managementStyles.fieldLabel}>
+                                                        Notes
+                                                    </span>
+                                                    <Input
+                                                        value={entry.notes}
+                                                        onChange={event =>
+                                                            handleEntryChange(
+                                                                index,
+                                                                'notes',
+                                                                event.target.value,
+                                                            )
+                                                        }
+                                                        placeholder="Double period or special instruction"
+                                                    />
+                                                    <InputError
+                                                        messages={formErrors[`entries.${index}.notes`]}
+                                                    />
+                                                </label>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <InputError messages={formErrors.entries} />
+                            </article>
+
+                            <div className={managementStyles.actions}>
+                                <Button disabled={saving}>
+                                    {saving
+                                        ? 'Saving...'
+                                        : editorMode === 'edit'
+                                        ? 'Save timetable'
+                                        : 'Create timetable'}
+                                </Button>
+                                <button
+                                    type="button"
+                                    onClick={resetEditor}
+                                    className={managementStyles.secondaryButton}>
+                                    Reset
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            ) : null}
         </WorkspacePageShell>
     )
 }
