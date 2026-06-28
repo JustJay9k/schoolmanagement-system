@@ -110,6 +110,14 @@
     text-decoration: none;
 }
 
+.navIconWrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+
 .navLinkCollapsed {
     justify-content: center;
     padding-inline: 0.58rem;
@@ -136,6 +144,37 @@
     height: 0.95rem;
     width: 0.95rem;
     flex: 0 0 auto;
+}
+
+.navBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.15rem;
+    height: 1.15rem;
+    margin-left: auto;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 0 0.3rem;
+}
+
+.navLinkActive .navBadge {
+    background: rgba(255, 255, 255, 0.18);
+    color: var(--accent-contrast);
+}
+
+.navBadgeDot {
+    position: absolute;
+    top: -0.16rem;
+    right: -0.2rem;
+    width: 0.45rem;
+    height: 0.45rem;
+    border: 2px solid var(--surface-sidebar);
+    border-radius: 999px;
+    background: var(--accent);
 }
 
 .profileCard {

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Management\ManagementSchoolSubjectApiController;
 use App\Http\Controllers\Api\Management\ManagementStudentRecordApiController;
 use App\Http\Controllers\Api\Management\ManagementTeacherSubjectAssignmentApiController;
 use App\Http\Controllers\Api\Management\ManagementTimetableApiController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProfileSettingsController;
 use App\Http\Controllers\Api\Teacher\TeacherTimetableApiController;
 use Illuminate\Http\Request;
@@ -19,6 +20,12 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 
 Route::middleware(['auth:sanctum', 'portal'])->prefix('settings')->group(function () {
     Route::post('/profile', [ProfileSettingsController::class, 'update']);
+});
+
+Route::middleware(['auth:sanctum', 'portal'])->prefix('notifications')->group(function () {
+    Route::get('/', [NotificationController::class, 'index']);
+    Route::patch('/read-all', [NotificationController::class, 'markAllRead']);
+    Route::patch('/{notification}/read', [NotificationController::class, 'markRead']);
 });
 
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {

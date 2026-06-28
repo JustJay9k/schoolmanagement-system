@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\School;
 use App\Models\User;
 use App\Support\SchoolContextOptions;
+use App\Support\UserNotificationCenter;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -105,6 +106,7 @@ class RegisteredUserController extends Controller
             'assigned_class_name' => $validated['assigned_class_name'] ?? null,
             'password' => Hash::make($request->string('password')),
         ]);
+        UserNotificationCenter::welcome($user);
 
         event(new Registered($user));
 

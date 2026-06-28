@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { useAuth } from '@/hooks/auth'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import useSWR from 'swr'
+import axios from '@/lib/axios'
 import styles from './navigation.module.css'
 import { getNavItems } from './navigation.config'
 import { formatRoleLabel } from '@/lib/userAccess'
@@ -251,6 +253,24 @@ const icons = {
             />
         </>
     ),
+    notifications: (
+        <>
+            <path
+                d="M12 5.2a4.2 4.2 0 0 1 4.2 4.2v2.1c0 .8.2 1.5.6 2.2l.9 1.5H6.3l.9-1.5c.4-.7.6-1.4.6-2.2V9.4A4.2 4.2 0 0 1 12 5.2z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M9.8 18a2.2 2.2 0 0 0 4.4 0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
+        </>
+    ),
 }
 
 const NavIcon = ({ name }) => (
@@ -267,6 +287,11 @@ const Navigation = ({ user, sidebarCollapsed }) => {
     const pathname = usePathname()
     const [open, setOpen] = useState(false)
     const navItems = getNavItems(user)
+    const { data: notificationsData } = useSWR(
+        user ? '/api/notifications' : null,
+        url => axios.get(url).then(response => response.data),
+    )
+    const unreadNotifications = notificationsData?.summary?.unread ?? 0
     const isItemActive = href =>
         pathname === href || pathname.startsWith(`${href}/`)
     const activeItem = navItems.find(item => isItemActive(item.href))
@@ -291,6 +316,8 @@ const Navigation = ({ user, sidebarCollapsed }) => {
             <nav className={styles.navList}>
                 {navItems.map(item => {
                     const active = isItemActive(item.href)
+                    const showNotificationBadge =
+                        item.href === '/notifications' && unreadNotifications > 0
 
                     return (
                         <Link
@@ -300,12 +327,22 @@ const Navigation = ({ user, sidebarCollapsed }) => {
                             className={`${styles.navLink} ${active ? styles.navLinkActive : ''} ${
                                 sidebarCollapsed ? styles.navLinkCollapsed : ''
                             }`}>
-                            <NavIcon name={item.icon} />
+                            <span className={styles.navIconWrap}>
+                                <NavIcon name={item.icon} />
+                                {showNotificationBadge && sidebarCollapsed ? (
+                                    <span className={styles.navBadgeDot} />
+                                ) : null}
+                            </span>
                             <span
                                 className={`${styles.navLabel} ${
                                     sidebarCollapsed ? styles.navLabelCollapsed : ''
                                 }`}>
-                                {item.label}
+                                <span>{item.label}</span>
+                                {showNotificationBadge ? (
+                                    <span className={styles.navBadge}>
+                                        {unreadNotifications}
+                                    </span>
+                                ) : null}
                             </span>
                         </Link>
                     )

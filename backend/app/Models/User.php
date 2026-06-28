@@ -136,6 +136,11 @@ class User extends Authenticatable
         return $this->hasMany(Timetable::class, 'assigned_teacher_id');
     }
 
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(UserNotification::class)->latest();
+    }
+
     public function getProfilePhotoUrlAttribute(): ?string
     {
         if (! filled($this->profile_photo_path)) {

@@ -7,6 +7,7 @@ use App\Enums\UserStatus;
 use App\Models\School;
 use App\Models\SchoolSubject;
 use App\Models\User;
+use App\Support\UserNotificationCenter;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -33,6 +34,7 @@ class DatabaseSeeder extends Seeder
             'school_id' => $defaultSchool->id,
             'email_verified_at' => now(),
         ]);
+        $adminUser = User::query()->where('email', env('ADMIN_EMAIL', 'admin@school.test'))->first();
 
         User::query()->updateOrCreate([
             'email' => 'test@example.com',
@@ -44,6 +46,7 @@ class DatabaseSeeder extends Seeder
             'school_id' => $defaultSchool->id,
             'email_verified_at' => now(),
         ]);
+        $managementUser = User::query()->where('email', 'test@example.com')->first();
 
         User::query()->updateOrCreate([
             'email' => 'teacher@example.com',
@@ -57,6 +60,7 @@ class DatabaseSeeder extends Seeder
             'assigned_class_name' => 'Standard 1',
             'email_verified_at' => now(),
         ]);
+        $teacherUser = User::query()->where('email', 'teacher@example.com')->first();
 
         User::query()->updateOrCreate([
             'email' => 'finance@example.com',
@@ -68,6 +72,7 @@ class DatabaseSeeder extends Seeder
             'school_id' => $defaultSchool->id,
             'email_verified_at' => now(),
         ]);
+        $financeUser = User::query()->where('email', 'finance@example.com')->first();
 
         SchoolSubject::query()->updateOrCreate([
             'school_track' => 'primary',
@@ -82,5 +87,15 @@ class DatabaseSeeder extends Seeder
         ], [
             'code' => 'ENG',
         ]);
+
+        foreach ([$adminUser, $managementUser, $teacherUser, $financeUser] as $seedUser) {
+            if (! $seedUser) {
+                continue;
+            }
+
+            if (! $seedUser->notifications()->exists()) {
+                UserNotificationCenter::welcome($seedUser);
+            }
+        }
     }
 }

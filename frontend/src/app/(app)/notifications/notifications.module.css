@@ -1,0 +1,138 @@
+.stack {
+    display: grid;
+    gap: 0.8rem;
+}
+
+.summaryGrid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+.summaryCard {
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--surface-card-muted);
+    padding: 0.82rem 0.9rem;
+}
+
+.summaryLabel {
+    margin: 0;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.summaryValue {
+    margin: 0.25rem 0 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--ink);
+}
+
+.status {
+    margin: 0;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--surface-card-soft);
+    padding: 0.9rem 1rem;
+    color: var(--muted);
+    font-size: 0.88rem;
+}
+
+.statusError {
+    color: var(--danger);
+}
+
+.notificationList {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.notificationCard {
+    display: grid;
+    gap: 0.8rem;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--surface-card-muted);
+    padding: 0.95rem 1rem;
+}
+
+.notificationUnread {
+    border-color: color-mix(in srgb, var(--accent) 26%, var(--line));
+    box-shadow: 0 14px 28px var(--shadow-soft);
+}
+
+.notificationHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.notificationTitle {
+    margin: 0;
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: var(--ink);
+}
+
+.notificationMeta {
+    margin: 0.18rem 0 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+}
+
+.notificationBody {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.55;
+    font-size: 0.9rem;
+}
+
+.badgeRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.badge,
+.badgeRead,
+.badgeWarning,
+.badgeSuccess {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.24rem 0.58rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+}
+
+.badge {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+}
+
+.badgeRead {
+    background: var(--surface-card-soft);
+    color: var(--muted);
+}
+
+.badgeWarning {
+    background: color-mix(in srgb, #f59e0b 14%, var(--surface-card-soft));
+    color: #b45309;
+}
+
+.badgeSuccess {
+    background: color-mix(in srgb, #10b981 14%, var(--surface-card-soft));
+    color: #047857;
+}
+
+.actionsRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+}

@@ -10,6 +10,7 @@ use App\Http\Requests\Admin\UpdateAdminUserRequest;
 use App\Models\School;
 use App\Models\User;
 use App\Support\SchoolContextOptions;
+use App\Support\UserNotificationCenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -69,6 +70,7 @@ class AdminUserApiController extends Controller
     public function store(StoreAdminUserRequest $request): JsonResponse
     {
         $user = User::create($this->payload($request));
+        UserNotificationCenter::welcome($user);
 
         return response()->json([
             'message' => 'User account created successfully.',

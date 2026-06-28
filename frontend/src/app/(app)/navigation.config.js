@@ -2,6 +2,7 @@ import { normalizeRole } from '@/lib/userAccess'
 
 const teacherNavItems = [
     { label: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
+    { label: 'Notifications', href: '/notifications', icon: 'notifications' },
     { label: 'Registers', href: '/registers', icon: 'register' },
     { label: 'Classes', href: '/classes', icon: 'classes' },
     { label: 'Attendance Reports', href: '/attendance-reports', icon: 'reports' },
@@ -12,6 +13,7 @@ const teacherNavItems = [
 
 const managementNavItems = [
     { label: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
+    { label: 'Notifications', href: '/notifications', icon: 'notifications' },
     { label: 'Registers', href: '/registers', icon: 'register' },
     { label: 'Classes', href: '/classes', icon: 'classes' },
     { label: 'Students', href: '/students', icon: 'students' },
@@ -25,14 +27,16 @@ const managementNavItems = [
 
 const adminNavItems = [
     { label: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
+    { label: 'Notifications', href: '/notifications', icon: 'notifications' },
     { label: 'User Accounts', href: '/admin/users', icon: 'users' },
     { label: 'School Structure', href: '/admin/school-structure', icon: 'schoolStructure' },
-    { label: 'Settings', href: '/settings', icon: 'users' },
+    { label: 'Settings', href: '/settings', icon: 'settings' },
     { label: 'System Settings', href: '/admin/settings', icon: 'settings' },
 ]
 
 const financeNavItems = [
     { label: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
+    { label: 'Notifications', href: '/notifications', icon: 'notifications' },
     { label: 'Finance', href: '/finance', icon: 'finance' },
     { label: 'Settings', href: '/settings', icon: 'settings' },
 ]
