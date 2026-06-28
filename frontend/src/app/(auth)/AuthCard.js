@@ -8,7 +8,7 @@ const AuthCard = ({ logo, children }) => {
 
     return (
         <div
-            className={`relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-8 sm:px-6 xl:px-8 ${
+            className={`relative flex min-h-screen items-center justify-center overflow-hidden px-3 py-4 sm:px-4 sm:py-5 xl:px-5 ${
                 isLoginPage ? 'bg-slate-950' : ''
             }`}>
             {isLoginPage ? (
@@ -27,14 +27,14 @@ const AuthCard = ({ logo, children }) => {
             )}
 
             <div
-                className={`relative w-full max-w-2xl rounded-[36px] border p-6 shadow-[0_32px_80px_var(--shadow-strong)] backdrop-blur sm:p-8 xl:p-10 ${
+                className={`relative w-full max-w-[35rem] rounded-[24px] border p-4 shadow-[0_18px_44px_var(--shadow-strong)] backdrop-blur sm:p-5 xl:p-6 ${
                     isLoginPage
                         ? 'border-white/30 bg-[rgba(255,252,246,0.18)]'
                         : 'border-[var(--line)] bg-[var(--surface-card)]'
                 }`}>
-                <div className="mx-auto w-full max-w-xl">
-                    <div className="mb-8 flex items-center gap-4">
-                        <div className="rounded-3xl bg-[linear-gradient(180deg,var(--accent),var(--accent-strong))] p-3 text-[var(--accent-contrast)]">
+                <div className="mx-auto w-full max-w-[30rem]">
+                    <div className="mb-5 flex items-center gap-2.5">
+                        <div className="rounded-[0.95rem] bg-[linear-gradient(180deg,var(--accent),var(--accent-strong))] p-2 text-[var(--accent-contrast)]">
                             {logo}
                         </div>
                         <div>
@@ -47,7 +47,7 @@ const AuthCard = ({ logo, children }) => {
                                 Phunziro Class Management System (PCMS)
                             </p>
                             <h1
-                                className={`font-[var(--font-display)] text-2xl ${
+                                className={`font-[var(--font-display)] text-[1.3rem] ${
                                     isLoginPage
                                         ? 'text-white'
                                         : 'text-[var(--ink)]'
@@ -58,7 +58,7 @@ const AuthCard = ({ logo, children }) => {
                     </div>
 
                     <div
-                        className={`rounded-[30px] border p-7 shadow-[0_18px_50px_var(--shadow-soft)] backdrop-blur sm:p-9 ${
+                        className={`rounded-[20px] border p-4 shadow-[0_12px_28px_var(--shadow-soft)] backdrop-blur sm:p-5 ${
                             isLoginPage
                                 ? 'border-white/35 bg-[rgba(255,252,246,0.72)]'
                                 : 'border-[var(--line)] bg-[var(--surface-raised)]'

@@ -3,35 +3,35 @@
 }
 
 .desktopSidebarCollapsed {
-    width: 5.75rem;
+    width: 4.85rem;
 }
 
 .sidebar {
     display: flex;
     height: 100%;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
     overflow-y: auto;
     overscroll-behavior: contain;
     border-right: 1px solid var(--line);
     background: var(--surface-sidebar);
     backdrop-filter: blur(20px);
-    padding: 1.5rem 1rem;
+    padding: 1rem 0.75rem;
     scrollbar-width: thin;
     scrollbar-color: rgba(var(--accent-rgb), 0.3) transparent;
 }
 
 .sidebarCollapsed {
     align-items: center;
-    gap: 1rem;
-    padding-inline: 0.75rem;
+    gap: 0.72rem;
+    padding-inline: 0.55rem;
 }
 
 .brand {
     display: flex;
     align-items: center;
-    gap: 0.9rem;
-    padding: 0 0.5rem;
+    gap: 0.6rem;
+    padding: 0 0.25rem;
 }
 
 .brandCopy,
@@ -76,35 +76,35 @@
 }
 
 .brandMark {
-    height: 3rem;
-    width: 3rem;
+    height: 2.35rem;
+    width: 2.35rem;
 }
 
 .schoolName {
     margin: 0;
-    font-size: 1rem;
+    font-size: 0.84rem;
     font-weight: 800;
     color: var(--ink);
 }
 
 .schoolMeta {
     margin: 0.2rem 0 0;
-    font-size: 0.8rem;
+    font-size: 0.68rem;
     color: var(--muted);
 }
 
 .navList {
     display: grid;
-    gap: 0.35rem;
+    gap: 0.2rem;
 }
 
 .navLink {
     display: flex;
     align-items: center;
-    gap: 0.85rem;
-    border-radius: 1rem;
-    padding: 0.9rem 1rem;
-    font-size: 0.94rem;
+    gap: 0.62rem;
+    border-radius: 0.8rem;
+    padding: 0.65rem 0.78rem;
+    font-size: 0.8rem;
     font-weight: 700;
     color: var(--ink);
     text-decoration: none;
@@ -112,7 +112,7 @@
 
 .navLinkCollapsed {
     justify-content: center;
-    padding-inline: 0.8rem;
+    padding-inline: 0.58rem;
     gap: 0;
 }
 
@@ -133,37 +133,37 @@
 }
 
 .navIcon {
-    height: 1.2rem;
-    width: 1.2rem;
+    height: 0.95rem;
+    width: 0.95rem;
     flex: 0 0 auto;
 }
 
 .profileCard {
     display: flex;
     align-items: center;
-    gap: 0.85rem;
+    gap: 0.6rem;
     margin-top: auto;
     border: 1px solid var(--line);
-    border-radius: 1.15rem;
+    border-radius: 0.9rem;
     background: var(--surface-tint);
-    padding: 0.95rem;
+    padding: 0.7rem;
 }
 
 .profileCardCollapsed {
     justify-content: center;
-    padding: 0.82rem;
+    padding: 0.62rem;
     gap: 0;
 }
 
 .avatar {
     display: grid;
     place-items: center;
-    height: 2.7rem;
-    width: 2.7rem;
+    height: 2.05rem;
+    width: 2.05rem;
     border-radius: 999px;
     background: var(--accent-soft);
     color: var(--accent-strong);
-    font-size: 0.85rem;
+    font-size: 0.72rem;
     font-weight: 800;
 }
 
@@ -173,24 +173,24 @@
 
 .profileName {
     margin: 0;
-    font-size: 0.94rem;
+    font-size: 0.8rem;
     font-weight: 700;
     color: var(--ink);
 }
 
 .profileRole {
     margin: 0.12rem 0 0;
-    font-size: 0.76rem;
+    font-size: 0.64rem;
     color: var(--muted);
 }
 
 .logoutButton,
 .mobileButton {
     border: 1px solid var(--line);
-    border-radius: 1rem;
+    border-radius: 0.8rem;
     background: var(--surface-card-strong);
-    padding: 0.85rem 1rem;
-    font-size: 0.92rem;
+    padding: 0.62rem 0.78rem;
+    font-size: 0.8rem;
     font-weight: 700;
     color: var(--ink);
 }
@@ -220,7 +220,7 @@
     justify-content: space-between;
     border-bottom: 1px solid var(--line);
     background: var(--surface-sidebar);
-    padding: 1rem;
+    padding: 0.75rem;
     backdrop-filter: blur(18px);
 }
 
@@ -232,8 +232,8 @@
 }
 
 .mobileBrandMark {
-    height: 2.6rem;
-    width: 2.6rem;
+    height: 2.1rem;
+    width: 2.1rem;
 }
 
 .mobileOverlay {
@@ -267,11 +267,11 @@
         position: fixed;
         inset: 0 auto 0 0;
         display: block;
-        width: 17.25rem;
+        width: 14.75rem;
     }
 
     .desktopSidebarCollapsed {
-        width: 5.75rem;
+        width: 4.85rem;
     }
 
     .sidebarCollapsed .navList {

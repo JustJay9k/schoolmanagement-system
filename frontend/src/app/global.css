@@ -151,6 +151,7 @@
 
 html {
     scroll-behavior: smooth;
+    font-size: 14px;
 }
 
 body {
@@ -183,13 +184,13 @@ body::before {
 
 @media (min-width: 1024px) {
     body[data-sidebar-collapsed='false'] .appShellMain {
-        width: calc(100% - 17.25rem);
-        margin-left: 17.25rem;
+        width: calc(100% - 16rem);
+        margin-left: 16rem;
     }
 
     body[data-sidebar-collapsed='true'] .appShellMain {
-        width: calc(100% - 5.75rem);
-        margin-left: 5.75rem;
+        width: calc(100% - 5.25rem);
+        margin-left: 5.25rem;
     }
 }
 
