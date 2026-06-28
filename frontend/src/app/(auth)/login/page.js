@@ -188,11 +188,17 @@ const LoginContent = () => {
 
                 <div className={styles.actions}>
                     <p className={styles.helperText}>
-                        Need a new staff account? Ask an administrator to create
-                        or verify your access.
+                        Don&apos;t have an account yet? Create one here or ask an
+                        administrator to verify your access if you run into any
+                        approval issues.
                     </p>
 
-                    <Button className={styles.submitButton}>Enter workspace</Button>
+                    <div className={styles.actionRow}>
+                        <Button className={styles.submitButton}>Enter workspace</Button>
+                        <Link href="/register" className={styles.secondaryAction}>
+                            Create account
+                        </Link>
+                    </div>
                 </div>
             </form>
         </div>

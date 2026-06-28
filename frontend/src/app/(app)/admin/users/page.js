@@ -545,7 +545,7 @@ export default function AdminUsersPage() {
                                                 <strong>{item.school_name ?? 'Unassigned'}</strong>
                                                 <small>
                                                     {item.school_name
-                                                        ? 'School account scope'
+                                                        ? 'Assigned School'
                                                         : 'Needs assignment'}
                                                 </small>
                                             </td>

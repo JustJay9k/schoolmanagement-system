@@ -19,6 +19,8 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
         const emailErrors = validationErrors.email ?? []
         const passwordErrors = validationErrors.password ?? []
         const nameErrors = validationErrors.name ?? []
+        const schoolErrors = validationErrors.school_id ?? []
+        const schoolNameErrors = validationErrors.school_name ?? []
         const trackErrors = validationErrors.school_track ?? []
         const assignedClassErrors = validationErrors.assigned_class_name ?? []
         const passwordConfirmationErrors =
@@ -46,6 +48,14 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
 
         if (passwordErrors.length > 0) {
             return `Password issue: ${passwordErrors[0]}`
+        }
+
+        if (schoolErrors.length > 0) {
+            return `School issue: ${schoolErrors[0]}`
+        }
+
+        if (schoolNameErrors.length > 0) {
+            return `School issue: ${schoolNameErrors[0]}`
         }
 
         if (trackErrors.length > 0) {

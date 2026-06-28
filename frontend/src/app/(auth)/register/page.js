@@ -20,11 +20,16 @@ const Page = () => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [passwordConfirmation, setPasswordConfirmation] = useState('')
+    const [schoolId, setSchoolId] = useState('')
+    const [schoolName, setSchoolName] = useState('')
     const [schoolTrack, setSchoolTrack] = useState('')
     const [assignedClassName, setAssignedClassName] = useState('')
     const [registrationOptions, setRegistrationOptions] = useState({
+        schools: [],
         tracks: {},
+        classesByTrack: {},
         availableClassesByTrack: {},
+        takenClassesByTrackBySchool: {},
     })
     const [isLoadingOptions, setIsLoadingOptions] = useState(true)
     const [errors, setErrors] = useState([])
@@ -42,9 +47,13 @@ const Page = () => {
                 }
 
                 setRegistrationOptions({
+                    schools: response.data?.schools ?? [],
                     tracks: response.data?.tracks ?? {},
+                    classesByTrack: response.data?.classesByTrack ?? {},
                     availableClassesByTrack:
                         response.data?.availableClassesByTrack ?? {},
+                    takenClassesByTrackBySchool:
+                        response.data?.takenClassesByTrackBySchool ?? {},
                 })
             } catch (error) {
                 if (!isMounted) {
@@ -70,8 +79,26 @@ const Page = () => {
         }
     }, [])
 
-    const availableClasses =
-        registrationOptions.availableClassesByTrack?.[schoolTrack] ?? []
+    const matchingExistingSchool = registrationOptions.schools.find(
+        option =>
+            option.label.trim().toLowerCase() ===
+            schoolName.trim().toLowerCase(),
+    )
+    const effectiveSchoolId = schoolId || matchingExistingSchool?.value || ''
+    const takenClassesForSelectedSchool =
+        effectiveSchoolId === ''
+            ? { primary: [], secondary: [] }
+            : registrationOptions.takenClassesByTrackBySchool?.[
+                  effectiveSchoolId
+              ] ?? { primary: [], secondary: [] }
+    const availableClasses = schoolTrack
+        ? (registrationOptions.classesByTrack?.[schoolTrack] ?? []).filter(
+              className =>
+                  !(
+                      takenClassesForSelectedSchool?.[schoolTrack] ?? []
+                  ).includes(className),
+          )
+        : []
     const showClassPicker = schoolTrack !== ''
     const requiresClassSelection = schoolTrack === 'primary'
 
@@ -81,6 +108,8 @@ const Page = () => {
         register({
             name,
             email,
+            school_id: schoolId,
+            school_name: schoolName,
             school_track: schoolTrack,
             assigned_class_name: assignedClassName,
             password,
@@ -96,12 +125,12 @@ const Page = () => {
 
             <form onSubmit={submitForm}>
                 <div className="mb-5 rounded-3xl border border-[var(--line)] bg-[var(--surface-raised)] px-4 py-4 text-sm text-[var(--muted)] shadow-sm">
-                    New self-registrations create teacher accounts. Choose
-                    whether you belong to the primary or secondary section, then
-                    set your class responsibility. Primary teachers must choose
-                    one class. Secondary teachers can register as subject
-                    teachers with no form class, or optionally claim one form
-                    class.
+                    New self-registrations create teacher accounts. Start by
+                    choosing the school you work for, then choose whether you
+                    belong to the primary or secondary section and set your
+                    class responsibility. Primary teachers must choose one
+                    class. Secondary teachers can register as subject teachers
+                    with no form class, or optionally claim one form class.
                 </div>
 
                 <div>
@@ -136,7 +165,54 @@ const Page = () => {
                 </div>
 
                 <div className="mt-4">
-                    <Label>School Track</Label>
+                    <Label htmlFor="schoolId">School</Label>
+
+                    <select
+                        id="schoolId"
+                        value={schoolId}
+                        onChange={event => {
+                            setSchoolId(event.target.value)
+                            setSchoolName('')
+                            setAssignedClassName('')
+                        }}
+                        className="block w-full rounded-2xl border border-[var(--line)] bg-[var(--surface-field)] px-4 py-3 text-sm text-[var(--ink)] shadow-sm outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--focus-ring)]"
+                        required={schoolName.trim() === ''}>
+                        <option value="">Select a school</option>
+                        {registrationOptions.schools.map(option => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </select>
+
+                    <InputError messages={errors.school_id} className="mt-2" />
+                </div>
+
+                <div className="mt-4">
+                    <Label htmlFor="schoolName">New School Name</Label>
+
+                    <Input
+                        id="schoolName"
+                        type="text"
+                        value={schoolName}
+                        className="block mt-1 w-full"
+                        onChange={event => {
+                            setSchoolName(event.target.value)
+                            setSchoolId('')
+                            setAssignedClassName('')
+                        }}
+                        placeholder="Enter a new school if it is not listed"
+                    />
+
+                    <p className="mt-2 text-sm text-[var(--muted)]">
+                        Leave this blank if your school is already listed above.
+                    </p>
+
+                    <InputError messages={errors.school_name} className="mt-2" />
+                </div>
+
+                <div className="mt-4">
+                    <Label>Responsible For:</Label>
 
                     <div className="grid gap-3 sm:grid-cols-2">
                         {Object.entries(registrationOptions.tracks).map(
@@ -203,8 +279,8 @@ const Page = () => {
                         {availableClasses.length === 0 && requiresClassSelection ? (
                             <p className="mt-2 text-sm text-[var(--muted)]">
                                 No unassigned classes are available in this
-                                section right now. Ask the administrator to set
-                                up a class for you.
+                                school section right now. Ask the administrator
+                                to set up a class for you.
                             </p>
                         ) : null}
 
@@ -271,6 +347,7 @@ const Page = () => {
                         className="ml-4"
                         disabled={
                             isLoadingOptions ||
+                            (schoolId === '' && schoolName.trim() === '') ||
                             schoolTrack === '' ||
                             (requiresClassSelection && assignedClassName === '')
                         }>

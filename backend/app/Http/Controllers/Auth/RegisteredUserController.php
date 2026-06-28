@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
+use App\Models\School;
 use App\Models\User;
 use App\Support\SchoolContextOptions;
 use Illuminate\Auth\Events\Registered;
@@ -14,6 +15,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 
@@ -21,11 +23,23 @@ class RegisteredUserController extends Controller
 {
     public function options(): JsonResponse
     {
+        $schools = School::query()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         return response()->json([
             'tracks' => SchoolContextOptions::tracks(),
             'classesByTrack' => SchoolContextOptions::classesByTrack(),
             'takenClassesByTrack' => SchoolContextOptions::takenClassesByTrack(),
             'availableClassesByTrack' => SchoolContextOptions::availableClassesByTrack(),
+            'schools' => $schools->map(fn (School $school): array => [
+                'value' => (string) $school->id,
+                'label' => $school->name,
+            ])->values(),
+            'takenClassesByTrackBySchool' => $schools
+                ->mapWithKeys(fn (School $school): array => [
+                    (string) $school->id => SchoolContextOptions::takenClassesByTrackForSchool($school->id),
+                ]),
         ]);
     }
 
@@ -39,14 +53,21 @@ class RegisteredUserController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'school_id' => ['nullable', 'integer', 'exists:schools,id'],
+            'school_name' => ['nullable', 'string', 'max:180'],
             'school_track' => ['required', 'string', 'in:'.implode(',', SchoolContextOptions::trackValues())],
             'assigned_class_name' => ['nullable', 'string', 'in:'.implode(',', SchoolContextOptions::allClasses())],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $validator->after(function ($validator) use ($request): void {
+            $schoolId = $this->resolveSchoolIdFromRequest($request);
             $track = $request->string('school_track')->toString();
             $className = $request->string('assigned_class_name')->toString();
+
+            if (! $request->input('school_id') && Str::squish($request->string('school_name')->toString()) === '') {
+                $validator->errors()->add('school_id', 'Choose an existing school or enter a new school name.');
+            }
 
             if ($track === 'primary' && $className === '') {
                 $validator->errors()->add('assigned_class_name', 'Choose the primary class this teacher will manage.');
@@ -62,7 +83,7 @@ class RegisteredUserController extends Controller
                 return;
             }
 
-            if (! SchoolContextOptions::isTeacherClassAvailable($track, $className)) {
+            if (! SchoolContextOptions::isTeacherClassAvailableForSchool($track, $className, $schoolId)) {
                 $message = $track === 'secondary'
                     ? 'That form class already has a form teacher.'
                     : 'That class is already assigned to another teacher.';
@@ -72,12 +93,14 @@ class RegisteredUserController extends Controller
         });
 
         $validated = $validator->validate();
+        $school = $this->resolveSchoolFromRequest($request);
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'role' => UserRole::Teacher,
             'status' => UserStatus::Active,
+            'school_id' => $school?->id,
             'school_track' => $validated['school_track'],
             'assigned_class_name' => $validated['assigned_class_name'] ?? null,
             'password' => Hash::make($request->string('password')),
@@ -88,5 +111,46 @@ class RegisteredUserController extends Controller
         Auth::login($user);
 
         return response()->noContent();
+    }
+
+    private function resolveSchoolIdFromRequest(Request $request): ?int
+    {
+        $schoolId = $request->input('school_id');
+        if (is_numeric($schoolId)) {
+            return (int) $schoolId;
+        }
+
+        $schoolName = Str::squish($request->string('school_name')->toString());
+        if ($schoolName === '') {
+            return null;
+        }
+
+        return School::query()
+            ->whereRaw('LOWER(name) = ?', [Str::lower($schoolName)])
+            ->value('id');
+    }
+
+    private function resolveSchoolFromRequest(Request $request): ?School
+    {
+        $schoolName = Str::squish($request->string('school_name')->toString());
+        if ($schoolName !== '') {
+            $existingSchool = School::query()
+                ->whereRaw('LOWER(name) = ?', [Str::lower($schoolName)])
+                ->first();
+
+            if ($existingSchool) {
+                return $existingSchool;
+            }
+
+            return School::query()->create([
+                'name' => $schoolName,
+            ]);
+        }
+
+        $schoolId = $request->input('school_id');
+
+        return is_numeric($schoolId)
+            ? School::query()->find((int) $schoolId)
+            : null;
     }
 }
