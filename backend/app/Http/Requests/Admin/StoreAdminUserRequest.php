@@ -4,8 +4,10 @@ namespace App\Http\Requests\Admin;
 
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
+use App\Models\School;
 use App\Support\SchoolContextOptions;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
@@ -23,6 +25,8 @@ class StoreAdminUserRequest extends FormRequest
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'role' => ['required', Rule::in(UserRole::values())],
             'status' => ['required', Rule::in(UserStatus::values())],
+            'school_id' => ['nullable', 'integer', 'exists:schools,id'],
+            'school_name' => ['nullable', 'string', 'max:180'],
             'school_track' => ['nullable', Rule::in(SchoolContextOptions::trackValues())],
             'assigned_class_name' => ['nullable', 'string', Rule::in(SchoolContextOptions::allClasses())],
             'email_verified' => ['nullable', 'boolean'],
@@ -35,8 +39,14 @@ class StoreAdminUserRequest extends FormRequest
         return [
             function ($validator): void {
                 $role = $this->string('role')->toString();
+                $schoolId = $this->input('school_id');
+                $schoolName = trim($this->string('school_name')->toString());
                 $track = $this->string('school_track')->toString();
                 $className = $this->string('assigned_class_name')->toString();
+
+                if (! $schoolId && $schoolName === '') {
+                    $validator->errors()->add('school_id', 'Choose an existing school or enter a new school name.');
+                }
 
                 if ($role !== UserRole::Teacher->value) {
                     return;
@@ -61,7 +71,9 @@ class StoreAdminUserRequest extends FormRequest
                     return;
                 }
 
-                if (! SchoolContextOptions::isTeacherClassAvailable($track, $className)) {
+                $targetSchoolId = $this->targetSchoolId();
+
+                if (! SchoolContextOptions::isTeacherClassAvailableForSchool($track, $className, $targetSchoolId)) {
                     $message = $track === 'secondary'
                         ? 'That form class already has a form teacher.'
                         : 'That class is already assigned to another teacher.';
@@ -70,5 +82,22 @@ class StoreAdminUserRequest extends FormRequest
                 }
             },
         ];
+    }
+
+    private function targetSchoolId(): ?int
+    {
+        $schoolId = $this->input('school_id');
+        if (is_numeric($schoolId)) {
+            return (int) $schoolId;
+        }
+
+        $schoolName = Str::squish($this->string('school_name')->toString());
+        if ($schoolName === '') {
+            return null;
+        }
+
+        return School::query()
+            ->whereRaw('LOWER(name) = ?', [Str::lower($schoolName)])
+            ->value('id');
     }
 }

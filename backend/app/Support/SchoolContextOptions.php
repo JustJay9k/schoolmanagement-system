@@ -135,6 +135,41 @@ final class SchoolContextOptions
     /**
      * @return array<string, list<string>>
      */
+    public static function takenClassesByTrackForSchool(?int $schoolId, ?User $ignoreUser = null): array
+    {
+        if (! $schoolId) {
+            return self::emptyTrackBuckets();
+        }
+
+        $takenClasses = self::emptyTrackBuckets();
+
+        User::query()
+            ->where('role', UserRole::Teacher)
+            ->where('school_id', $schoolId)
+            ->whereNotNull('school_track')
+            ->whereNotNull('assigned_class_name')
+            ->when($ignoreUser, fn ($query) => $query->whereKeyNot($ignoreUser->getKey()))
+            ->get(['school_track', 'assigned_class_name'])
+            ->each(function (User $teacher) use (&$takenClasses): void {
+                $track = is_string($teacher->school_track) ? $teacher->school_track : null;
+                $className = is_string($teacher->assigned_class_name) ? $teacher->assigned_class_name : null;
+
+                if (! self::isValidClassForTrack($track, $className)) {
+                    return;
+                }
+
+                $takenClasses[$track][] = $className;
+            });
+
+        return array_map(
+            static fn (array $classes): array => array_values(array_unique($classes)),
+            $takenClasses,
+        );
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
     public static function availableClassesByTrack(?User $ignoreUser = null): array
     {
         $takenClasses = self::takenClassesByTrack($ignoreUser);
@@ -153,6 +188,23 @@ final class SchoolContextOptions
         }
 
         return ! in_array($className, self::takenClassesByTrack($ignoreUser)[$track] ?? [], true);
+    }
+
+    public static function isTeacherClassAvailableForSchool(
+        ?string $track,
+        ?string $className,
+        ?int $schoolId,
+        ?User $ignoreUser = null,
+    ): bool {
+        if (! self::isValidClassForTrack($track, $className)) {
+            return false;
+        }
+
+        if (! $schoolId) {
+            return true;
+        }
+
+        return ! in_array($className, self::takenClassesByTrackForSchool($schoolId, $ignoreUser)[$track] ?? [], true);
     }
 
     /**

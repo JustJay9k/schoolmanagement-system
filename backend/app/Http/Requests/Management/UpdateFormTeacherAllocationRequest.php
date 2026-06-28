@@ -58,7 +58,7 @@ class UpdateFormTeacherAllocationRequest extends FormRequest
                     return;
                 }
 
-                if (! SchoolContextOptions::isTeacherClassAvailable('secondary', $className, $teacher)) {
+                if (! SchoolContextOptions::isTeacherClassAvailableForSchool('secondary', $className, $teacher->school_id, $teacher)) {
                     $validator->errors()->add('assigned_class_name', 'That form class already has a form teacher.');
                 }
             },

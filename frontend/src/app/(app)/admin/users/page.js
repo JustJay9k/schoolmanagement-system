@@ -9,13 +9,15 @@ import InputError from '@/components/InputError'
 import axios from '@/lib/axios'
 import { formatRoleLabel, isAdminUser } from '@/lib/userAccess'
 import { useAuth } from '@/hooks/auth'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const createEmptyForm = () => ({
     name: '',
     email: '',
     role: 'teacher',
     status: 'active',
+    school_id: '',
+    school_name: '',
     school_track: '',
     assigned_class_name: '',
     password: '',
@@ -63,6 +65,7 @@ const getTeacherAssignmentMeta = user => {
 
 export default function AdminUsersPage() {
     const { user } = useAuth({ middleware: 'auth' })
+    const editorCardRef = useRef(null)
     const [users, setUsers] = useState([])
     const [stats, setStats] = useState(null)
     const [options, setOptions] = useState(null)
@@ -70,6 +73,7 @@ export default function AdminUsersPage() {
     const [filters, setFilters] = useState({
         search: '',
         role: '',
+        school: '',
         status: '',
     })
     const [editorMode, setEditorMode] = useState('create')
@@ -113,13 +117,21 @@ export default function AdminUsersPage() {
             const matchesSearch =
                 filters.search.trim() === '' ||
                 item.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-                item.email.toLowerCase().includes(filters.search.toLowerCase())
+                item.email.toLowerCase().includes(filters.search.toLowerCase()) ||
+                (item.school_name ?? '')
+                    .toLowerCase()
+                    .includes(filters.search.toLowerCase())
             const matchesRole =
                 filters.role === '' || item.role === filters.role
+            const matchesSchool =
+                filters.school === '' ||
+                (filters.school === 'unassigned'
+                    ? !item.school_id
+                    : String(item.school_id ?? '') === filters.school)
             const matchesStatus =
                 filters.status === '' || item.status === filters.status
 
-            return matchesSearch && matchesRole && matchesStatus
+            return matchesSearch && matchesRole && matchesSchool && matchesStatus
         })
     }, [filters, users])
 
@@ -128,21 +140,48 @@ export default function AdminUsersPage() {
             (accumulator, item) => {
                 if (
                     item.role === 'teacher' &&
+                    item.school_id &&
                     item.school_track &&
                     item.assigned_class_name &&
                     item.id !== editingUserId
                 ) {
-                    accumulator[item.school_track].push(item.assigned_class_name)
+                    const schoolKey = String(item.school_id)
+
+                    if (!accumulator[schoolKey]) {
+                        accumulator[schoolKey] = {
+                            primary: [],
+                            secondary: [],
+                        }
+                    }
+
+                    accumulator[schoolKey][item.school_track].push(
+                        item.assigned_class_name,
+                    )
                 }
 
                 return accumulator
             },
-            { primary: [], secondary: [] },
+            {},
         )
     }, [editingUserId, users])
 
     const availableClasses =
         options?.classesByTrack?.[form.school_track] ?? []
+
+    const scrollToEditor = () => {
+        window.requestAnimationFrame(() => {
+            editorCardRef.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+            })
+
+            const firstField = editorCardRef.current?.querySelector(
+                'input, select, textarea',
+            )
+
+            firstField?.focus()
+        })
+    }
 
     const resetEditor = () => {
         setEditorMode('create')
@@ -154,6 +193,7 @@ export default function AdminUsersPage() {
     const startCreate = () => {
         resetEditor()
         setPageStatus(null)
+        scrollToEditor()
     }
 
     const startEdit = selectedUser => {
@@ -164,6 +204,8 @@ export default function AdminUsersPage() {
             email: selectedUser.email ?? '',
             role: selectedUser.role ?? 'teacher',
             status: selectedUser.status ?? 'active',
+            school_id: selectedUser.school_id ? String(selectedUser.school_id) : '',
+            school_name: '',
             school_track: selectedUser.school_track ?? '',
             assigned_class_name: selectedUser.assigned_class_name ?? '',
             password: '',
@@ -172,6 +214,7 @@ export default function AdminUsersPage() {
         })
         setFormErrors({})
         setPageStatus(null)
+        scrollToEditor()
     }
 
     const handleFieldChange = (field, value) => {
@@ -184,6 +227,10 @@ export default function AdminUsersPage() {
             if (field === 'role' && value !== 'teacher') {
                 next.school_track = ''
                 next.assigned_class_name = ''
+            }
+
+            if (field === 'school_id') {
+                next.school_name = ''
             }
 
             if (field === 'school_track') {
@@ -348,9 +395,10 @@ export default function AdminUsersPage() {
             ) : null}
 
             <section className={adminStyles.statsGrid}>
-                {[
+                {[ 
                     ['Total users', stats?.total ?? 0],
                     ['Administrators', stats?.admins ?? 0],
+                    ['Schools', stats?.schools ?? options?.schools?.length ?? 0],
                     ['Active', stats?.active ?? 0],
                     ['Inactive', stats?.inactive ?? 0],
                 ].map(([label, value]) => (
@@ -408,6 +456,27 @@ export default function AdminUsersPage() {
                         </label>
 
                         <label className={adminStyles.field}>
+                            <span className={adminStyles.fieldLabel}>School</span>
+                            <select
+                                value={filters.school}
+                                onChange={event =>
+                                    setFilters(current => ({
+                                        ...current,
+                                        school: event.target.value,
+                                    }))
+                                }
+                                className={adminStyles.select}>
+                                <option value="">All schools</option>
+                                <option value="unassigned">Unassigned</option>
+                                {(options?.schools ?? []).map(option => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+
+                        <label className={adminStyles.field}>
                             <span className={adminStyles.fieldLabel}>Status</span>
                             <select
                                 value={filters.status}
@@ -434,6 +503,7 @@ export default function AdminUsersPage() {
                                 <tr>
                                     <th>User</th>
                                     <th>Role</th>
+                                    <th>School</th>
                                     <th>Assignment</th>
                                     <th>Status</th>
                                     <th>Verified</th>
@@ -445,13 +515,13 @@ export default function AdminUsersPage() {
                             <tbody>
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="8" className={adminStyles.muted}>
+                                        <td colSpan="9" className={adminStyles.muted}>
                                             Loading user accounts...
                                         </td>
                                     </tr>
                                 ) : filteredUsers.length === 0 ? (
                                     <tr>
-                                        <td colSpan="8" className={adminStyles.muted}>
+                                        <td colSpan="9" className={adminStyles.muted}>
                                             No users match the current filters.
                                         </td>
                                     </tr>
@@ -471,6 +541,14 @@ export default function AdminUsersPage() {
                                                 <small>{item.email}</small>
                                             </td>
                                             <td>{item.role_label}</td>
+                                            <td>
+                                                <strong>{item.school_name ?? 'Unassigned'}</strong>
+                                                <small>
+                                                    {item.school_name
+                                                        ? 'School account scope'
+                                                        : 'Needs assignment'}
+                                                </small>
+                                            </td>
                                             <td>
                                                 {assignmentMeta ? (
                                                     <>
@@ -553,7 +631,9 @@ export default function AdminUsersPage() {
                     </div>
                 </article>
 
-                <article className={workspaceStyles.panel}>
+                <article
+                    ref={editorCardRef}
+                    className={`${workspaceStyles.panel} ${adminStyles.editorPanel}`}>
                     <div className={workspaceStyles.panelHeader}>
                         <div>
                             <p className={workspaceStyles.panelEyebrow}>
@@ -621,6 +701,49 @@ export default function AdminUsersPage() {
                                     ))}
                                 </select>
                                 <InputError messages={formErrors.role} />
+                            </label>
+
+                            <label className={adminStyles.field}>
+                                <span className={adminStyles.fieldLabel}>School</span>
+                                <select
+                                    value={form.school_id}
+                                    onChange={event =>
+                                        handleFieldChange(
+                                            'school_id',
+                                            event.target.value,
+                                        )
+                                    }
+                                    className={adminStyles.select}
+                                    required={form.school_name.trim() === ''}>
+                                    <option value="">Select a school</option>
+                                    {(options?.schools ?? []).map(option => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                                <InputError messages={formErrors.school_id} />
+                            </label>
+
+                            <label className={adminStyles.field}>
+                                <span className={adminStyles.fieldLabel}>
+                                    New school name
+                                </span>
+                                <Input
+                                    value={form.school_name}
+                                    onChange={event =>
+                                        handleFieldChange(
+                                            'school_name',
+                                            event.target.value,
+                                        )
+                                    }
+                                    placeholder="Add a new school if it is not listed"
+                                />
+                                <span className={adminStyles.fieldHint}>
+                                    Leave this blank when assigning the user to an
+                                    existing school.
+                                </span>
+                                <InputError messages={formErrors.school_name} />
                             </label>
 
                             <label className={adminStyles.field}>
@@ -717,8 +840,13 @@ export default function AdminUsersPage() {
                                                     : 'Choose a track first'}
                                             </option>
                                             {availableClasses.map(className => {
+                                                const selectedSchoolKey =
+                                                    form.school_id || null
                                                 const reservedByOtherTeacher =
+                                                    selectedSchoolKey &&
                                                     takenClassesByTrack[
+                                                        selectedSchoolKey
+                                                    ]?.[
                                                         form.school_track
                                                     ]?.includes(className) &&
                                                     className !==

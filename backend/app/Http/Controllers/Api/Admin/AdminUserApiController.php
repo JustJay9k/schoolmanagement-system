@@ -7,11 +7,13 @@ use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreAdminUserRequest;
 use App\Http\Requests\Admin\UpdateAdminUserRequest;
+use App\Models\School;
 use App\Models\User;
 use App\Support\SchoolContextOptions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class AdminUserApiController extends Controller
 {
@@ -20,10 +22,12 @@ class AdminUserApiController extends Controller
         $filters = [
             'search' => trim((string) $request->string('search')),
             'role' => $request->string('role')->toString(),
+            'school' => $request->string('school')->toString(),
             'status' => $request->string('status')->toString(),
         ];
 
         $users = User::query()
+            ->with('school:id,name')
             ->when($filters['search'] !== '', function ($query) use ($filters) {
                 $query->where(function ($nestedQuery) use ($filters) {
                     $nestedQuery
@@ -32,6 +36,15 @@ class AdminUserApiController extends Controller
                 });
             })
             ->when($filters['role'] !== '', fn ($query) => $query->where('role', $filters['role']))
+            ->when($filters['school'] !== '', function ($query) use ($filters) {
+                if ($filters['school'] === 'unassigned') {
+                    $query->whereNull('school_id');
+
+                    return;
+                }
+
+                $query->where('school_id', $filters['school']);
+            })
             ->when($filters['status'] !== '', fn ($query) => $query->where('status', $filters['status']))
             ->latest()
             ->get()
@@ -47,6 +60,7 @@ class AdminUserApiController extends Controller
                 'active' => User::where('status', UserStatus::Active)->count(),
                 'inactive' => User::where('status', UserStatus::Inactive)->count(),
                 'suspended' => User::where('status', UserStatus::Suspended)->count(),
+                'schools' => School::count(),
             ],
             'options' => $this->options(),
         ]);
@@ -206,11 +220,16 @@ class AdminUserApiController extends Controller
         $validated = $request->validated();
 
         $role = UserRole::from($validated['role']);
+        $school = $this->resolveSchoolFromInput(
+            isset($validated['school_id']) ? (int) $validated['school_id'] : null,
+            $validated['school_name'] ?? null,
+        );
         $payload = [
             'name' => $validated['name'],
             'email' => $validated['email'],
             'role' => $role,
             'status' => UserStatus::from($validated['status']),
+            'school_id' => $school?->id,
             'school_track' => $role === UserRole::Teacher
                 ? ($validated['school_track'] ?? null)
                 : null,
@@ -227,6 +246,30 @@ class AdminUserApiController extends Controller
         }
 
         return $payload;
+    }
+
+    private function resolveSchoolFromInput(?int $schoolId, ?string $schoolName): ?School
+    {
+        $normalizedName = Str::squish((string) $schoolName);
+        if ($normalizedName !== '') {
+            $existingSchool = School::query()
+                ->whereRaw('LOWER(name) = ?', [Str::lower($normalizedName)])
+                ->first();
+
+            if ($existingSchool) {
+                return $existingSchool;
+            }
+
+            return School::query()->create([
+                'name' => $normalizedName,
+            ]);
+        }
+
+        if ($schoolId) {
+            return School::query()->find($schoolId);
+        }
+
+        return null;
     }
 
     /**
@@ -250,6 +293,14 @@ class AdminUserApiController extends Controller
             'schoolTracks' => SchoolContextOptions::tracks(),
             'classesByTrack' => SchoolContextOptions::classesByTrack(),
             'takenClassesByTrack' => SchoolContextOptions::takenClassesByTrack(),
+            'schools' => School::query()
+                ->orderBy('name')
+                ->get()
+                ->map(fn (School $school): array => [
+                    'value' => (string) $school->id,
+                    'label' => $school->name,
+                ])
+                ->values(),
         ];
     }
 
@@ -266,6 +317,8 @@ class AdminUserApiController extends Controller
             'role_label' => $user->role?->label() ?? (string) $user->role,
             'status' => $user->status?->value ?? $user->status,
             'status_label' => $user->status?->label() ?? (string) $user->status,
+            'school_id' => $user->school_id,
+            'school_name' => $user->school?->name,
             'school_track' => $user->school_track,
             'assigned_class_name' => $user->assigned_class_name,
             'form_class_name' => $user->isFormTeacher() ? $user->assigned_class_name : null,

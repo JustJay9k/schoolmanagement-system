@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
+use App\Models\School;
 use App\Models\SchoolSubject;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -18,6 +19,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $defaultSchool = School::query()->firstOrCreate([
+            'name' => trim((string) config('app.name', 'School Management System')),
+        ]);
+
         User::query()->updateOrCreate([
             'email' => env('ADMIN_EMAIL', 'admin@school.test'),
         ], [
@@ -25,6 +30,7 @@ class DatabaseSeeder extends Seeder
             'password' => env('ADMIN_PASSWORD', 'password'),
             'role' => UserRole::Admin,
             'status' => UserStatus::Active,
+            'school_id' => $defaultSchool->id,
             'email_verified_at' => now(),
         ]);
 
@@ -35,6 +41,7 @@ class DatabaseSeeder extends Seeder
             'password' => 'password',
             'role' => UserRole::Management,
             'status' => UserStatus::Active,
+            'school_id' => $defaultSchool->id,
             'email_verified_at' => now(),
         ]);
 
@@ -45,6 +52,7 @@ class DatabaseSeeder extends Seeder
             'password' => 'password',
             'role' => UserRole::Teacher,
             'status' => UserStatus::Active,
+            'school_id' => $defaultSchool->id,
             'school_track' => 'primary',
             'assigned_class_name' => 'Standard 1',
             'email_verified_at' => now(),
@@ -57,6 +65,7 @@ class DatabaseSeeder extends Seeder
             'password' => 'password',
             'role' => UserRole::Accountant,
             'status' => UserStatus::Active,
+            'school_id' => $defaultSchool->id,
             'email_verified_at' => now(),
         ]);
 
