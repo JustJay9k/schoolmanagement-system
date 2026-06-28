@@ -8,12 +8,17 @@ use App\Http\Controllers\Api\Management\ManagementSchoolSubjectApiController;
 use App\Http\Controllers\Api\Management\ManagementStudentRecordApiController;
 use App\Http\Controllers\Api\Management\ManagementTeacherSubjectAssignmentApiController;
 use App\Http\Controllers\Api\Management\ManagementTimetableApiController;
+use App\Http\Controllers\Api\ProfileSettingsController;
 use App\Http\Controllers\Api\Teacher\TeacherTimetableApiController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
-    return $request->user();
+    return $request->user()?->fresh()->load('school:id,name');
+});
+
+Route::middleware(['auth:sanctum', 'portal'])->prefix('settings')->group(function () {
+    Route::post('/profile', [ProfileSettingsController::class, 'update']);
 });
 
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {

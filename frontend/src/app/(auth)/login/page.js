@@ -13,7 +13,6 @@ import styles from './login.module.css'
 
 const trustSignals = [
     'Daily attendance capture for primary and secondary tracks',
-    'Secure staff access tied to Sanctum-backed sessions',
     'Fast recovery path for password reset and account support',
 ]
 

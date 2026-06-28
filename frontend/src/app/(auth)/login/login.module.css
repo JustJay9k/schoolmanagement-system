@@ -228,9 +228,3 @@
         align-items: center;
     }
 }
-
-@media (min-width: 1180px) {
-    .signalGrid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-}

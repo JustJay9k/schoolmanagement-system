@@ -13,13 +13,18 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
-#[Fillable(['name', 'email', 'password', 'role', 'status', 'school_id', 'school_track', 'assigned_class_name', 'last_login_at', 'email_verified_at'])]
+#[Fillable(['name', 'email', 'password', 'role', 'status', 'school_id', 'school_track', 'assigned_class_name', 'profile_photo_path', 'last_login_at', 'email_verified_at'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    protected $appends = [
+        'profile_photo_url',
+    ];
 
     /**
      * Get the attributes that should be cast.
@@ -129,6 +134,15 @@ class User extends Authenticatable
     public function assignedTimetables(): HasMany
     {
         return $this->hasMany(Timetable::class, 'assigned_teacher_id');
+    }
+
+    public function getProfilePhotoUrlAttribute(): ?string
+    {
+        if (! filled($this->profile_photo_path)) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->profile_photo_path);
     }
 
     public function school(): BelongsTo

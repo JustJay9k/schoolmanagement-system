@@ -27,7 +27,8 @@ const adminNavItems = [
     { label: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
     { label: 'User Accounts', href: '/admin/users', icon: 'users' },
     { label: 'School Structure', href: '/admin/school-structure', icon: 'schoolStructure' },
-    { label: 'Settings', href: '/settings', icon: 'settings' },
+    { label: 'Settings', href: '/settings', icon: 'users' },
+    { label: 'System Settings', href: '/admin/settings', icon: 'settings' },
 ]
 
 const financeNavItems = [

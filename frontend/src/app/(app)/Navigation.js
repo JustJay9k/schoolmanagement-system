@@ -1,6 +1,7 @@
 'use client'
 
 import ApplicationLogo from '@/components/ApplicationLogo'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/auth'
 import { usePathname } from 'next/navigation'
@@ -313,11 +314,22 @@ const Navigation = ({ user, sidebarCollapsed }) => {
 
             <div className={`${styles.profileCard} ${sidebarCollapsed ? styles.profileCardCollapsed : ''}`}>
                 <div className={styles.avatar}>
-                    {(user?.name ?? 'U')
-                        .split(' ')
-                        .slice(0, 2)
-                        .map(part => part[0])
-                        .join('')}
+                    {user?.profile_photo_url ? (
+                        <Image
+                            src={user.profile_photo_url}
+                            alt={`${user?.name ?? 'User'} profile`}
+                            className={styles.avatarImage}
+                            fill
+                            sizes="32px"
+                            unoptimized
+                        />
+                    ) : (
+                        (user?.name ?? 'U')
+                            .split(' ')
+                            .slice(0, 2)
+                            .map(part => part[0])
+                            .join('')
+                    )}
                 </div>
                 <div
                     className={`${styles.profileCopy} ${
