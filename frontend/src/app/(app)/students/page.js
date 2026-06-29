@@ -9,7 +9,7 @@ import Button from '@/components/Button'
 import Input from '@/components/Input'
 import InputError from '@/components/InputError'
 import axios from '@/lib/axios'
-import { canManageManagementWorkspace, formatRoleLabel } from '@/lib/userAccess'
+import { canManageStudentRecords, formatRoleLabel } from '@/lib/userAccess'
 import { useAuth } from '@/hooks/auth'
 
 const createManualForm = () => ({
@@ -166,6 +166,14 @@ const normalizeSpreadsheetRows = rows =>
         })
         .filter(row => row.full_name !== '')
 
+const getSchoolMeta = user => ({
+    key:
+        user?.school?.id != null && user.school.id !== ''
+            ? String(user.school.id)
+            : 'current-school',
+    label: user?.school?.name ?? 'Assigned school',
+})
+
 export default function StudentsPage() {
     const { user } = useAuth({ middleware: 'auth' })
     const [students, setStudents] = useState([])
@@ -179,6 +187,7 @@ export default function StudentsPage() {
     const [importErrors, setImportErrors] = useState({})
     const [importing, setImporting] = useState(false)
     const [pageStatus, setPageStatus] = useState(null)
+    const schoolMeta = useMemo(() => getSchoolMeta(user), [user])
 
     const loadStudents = async () => {
         setLoading(true)
@@ -202,7 +211,7 @@ export default function StudentsPage() {
     }
 
     useEffect(() => {
-        if (!user || !canManageManagementWorkspace(user)) {
+        if (!user || !canManageStudentRecords(user)) {
             return
         }
 
@@ -212,18 +221,40 @@ export default function StudentsPage() {
     const manualClasses = options?.classesByTrack?.[manualForm.school_track] ?? []
     const importClasses = options?.classesByTrack?.[importForm.school_track] ?? []
 
-    const groupedStudents = useMemo(() => {
-        return students.reduce((groups, student) => {
-            const key = `${student.school_track}::${student.class_name}`
+    const schoolCount = schoolMeta.label ? 1 : 0
 
-            if (!groups[key]) {
-                groups[key] = []
+    const groupedStudents = useMemo(() => {
+        const classes = students.reduce((groups, student) => {
+            const classKey = `${student.school_track}::${student.class_name}`
+
+            if (!groups[classKey]) {
+                groups[classKey] = {
+                    key: classKey,
+                    school_track: student.school_track,
+                    class_name: student.class_name,
+                    students: [],
+                }
             }
 
-            groups[key].push(student)
+            groups[classKey].students.push(student)
+
             return groups
         }, {})
-    }, [students])
+
+        return [
+            {
+                ...schoolMeta,
+                students,
+                classes: Object.values(classes).sort((left, right) => {
+                    if (left.school_track !== right.school_track) {
+                        return left.school_track.localeCompare(right.school_track)
+                    }
+
+                    return left.class_name.localeCompare(right.class_name)
+                }),
+            },
+        ]
+    }, [schoolMeta, students])
 
     const handleSpreadsheetSelection = async event => {
         const file = event.target.files?.[0]
@@ -346,15 +377,16 @@ export default function StudentsPage() {
         return null
     }
 
-    if (!canManageManagementWorkspace(user)) {
+    if (!canManageStudentRecords(user)) {
         return (
             <WorkspacePageShell
                 eyebrow="Restricted"
-                title="Management access required"
+                title="Student management access required"
                 description={`This account is signed in as ${formatRoleLabel(user?.role)}. Only head teacher / management accounts can add or import student records.`}>
                 <article className={workspaceStyles.panel}>
                     <p className={managementStyles.notice}>
-                        Student uploading belongs to the head teacher workspace.
+                        Student uploading belongs to the head teacher /
+                        management workspace.
                     </p>
                 </article>
             </WorkspacePageShell>
@@ -365,7 +397,7 @@ export default function StudentsPage() {
         <WorkspacePageShell
             eyebrow="Management"
             title="Student records"
-            description="Add students one by one or upload a class register spreadsheet, then keep every learner attached to the correct primary or secondary class."
+            description={`Add students one by one or upload a class register spreadsheet for ${schoolMeta.label}, then keep every learner attached to the correct track and class.`}
             actions={
                 <button
                     type="button"
@@ -388,6 +420,7 @@ export default function StudentsPage() {
             <section className={managementStyles.statsGrid}>
                 {[
                     ['Student records', stats?.total ?? 0],
+                    ['Schools', schoolCount],
                     ['Primary', stats?.primary ?? 0],
                     ['Secondary', stats?.secondary ?? 0],
                     ['Classes covered', stats?.classes ?? 0],
@@ -744,7 +777,7 @@ export default function StudentsPage() {
                 <div className={workspaceStyles.panelHeader}>
                     <div>
                         <p className={workspaceStyles.panelEyebrow}>Stored records</p>
-                        <h2 className={workspaceStyles.panelTitle}>Student register by class</h2>
+                        <h2 className={workspaceStyles.panelTitle}>Student register by school</h2>
                     </div>
                 </div>
 
@@ -757,56 +790,96 @@ export default function StudentsPage() {
                     </p>
                 ) : (
                     <div className={workspaceStyles.list}>
-                        {Object.entries(groupedStudents).map(([key, records]) => {
-                            const [track, className] = key.split('::')
-
-                            return (
-                                <article key={key} className={workspaceStyles.panel}>
-                                    <div className={workspaceStyles.panelHeader}>
-                                        <div>
-                                            <p className={workspaceStyles.panelEyebrow}>
-                                                {options?.schoolTracks?.[track] ?? track}
-                                            </p>
-                                            <h2 className={workspaceStyles.panelTitle}>{className}</h2>
-                                        </div>
-                                        <span className={workspaceStyles.badge}>
-                                            {records.length} student{records.length === 1 ? '' : 's'}
-                                        </span>
+                        {groupedStudents.map(school => (
+                            <article key={school.key} className={workspaceStyles.panel}>
+                                <div className={workspaceStyles.panelHeader}>
+                                    <div>
+                                        <p className={workspaceStyles.panelEyebrow}>School</p>
+                                        <h2 className={workspaceStyles.panelTitle}>
+                                            {school.label}
+                                        </h2>
                                     </div>
+                                    <span className={workspaceStyles.badge}>
+                                        {school.students.length} student
+                                        {school.students.length === 1 ? '' : 's'}
+                                    </span>
+                                </div>
 
-                                    <div className={workspaceStyles.tableWrap}>
-                                        <table className={workspaceStyles.table}>
-                                            <thead>
-                                                <tr>
-                                                    <th>Full name</th>
-                                                    <th>Sex</th>
-                                                    <th>DOB</th>
-                                                    <th>Age</th>
-                                                    <th>Code</th>
-                                                    <th>Guardian</th>
-                                                    <th>Residence</th>
-                                                    <th>Entry date</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {records.map(student => (
-                                                    <tr key={student.id}>
-                                                        <td>{student.full_name}</td>
-                                                        <td>{student.sex || 'N/A'}</td>
-                                                        <td>{student.date_of_birth || 'N/A'}</td>
-                                                        <td>{student.age ?? 'N/A'}</td>
-                                                        <td>{student.student_code || 'N/A'}</td>
-                                                        <td>{student.guardian_name || 'N/A'}</td>
-                                                        <td>{student.residence || 'N/A'}</td>
-                                                        <td>{student.first_entry_date || 'N/A'}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </article>
-                            )
-                        })}
+                                <div className={workspaceStyles.panelGrid}>
+                                    {school.classes.map(group => (
+                                        <article
+                                            key={`${school.key}-${group.key}`}
+                                            className={workspaceStyles.panel}>
+                                            <div className={workspaceStyles.panelHeader}>
+                                                <div>
+                                                    <p className={workspaceStyles.panelEyebrow}>
+                                                        {options?.schoolTracks?.[
+                                                            group.school_track
+                                                        ] ?? group.school_track}
+                                                    </p>
+                                                    <h2 className={workspaceStyles.panelTitle}>
+                                                        {group.class_name}
+                                                    </h2>
+                                                </div>
+                                                <span className={workspaceStyles.badge}>
+                                                    {group.students.length} student
+                                                    {group.students.length === 1
+                                                        ? ''
+                                                        : 's'}
+                                                </span>
+                                            </div>
+
+                                            <div className={workspaceStyles.tableWrap}>
+                                                <table className={workspaceStyles.table}>
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Full name</th>
+                                                            <th>Sex</th>
+                                                            <th>DOB</th>
+                                                            <th>Age</th>
+                                                            <th>Code</th>
+                                                            <th>Guardian</th>
+                                                            <th>Residence</th>
+                                                            <th>Entry date</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {group.students.map(student => (
+                                                            <tr key={student.id}>
+                                                                <td>{student.full_name}</td>
+                                                                <td>{student.sex || 'N/A'}</td>
+                                                                <td>
+                                                                    {student.date_of_birth ||
+                                                                        'N/A'}
+                                                                </td>
+                                                                <td>
+                                                                    {student.age ?? 'N/A'}
+                                                                </td>
+                                                                <td>
+                                                                    {student.student_code ||
+                                                                        'N/A'}
+                                                                </td>
+                                                                <td>
+                                                                    {student.guardian_name ||
+                                                                        'N/A'}
+                                                                </td>
+                                                                <td>
+                                                                    {student.residence || 'N/A'}
+                                                                </td>
+                                                                <td>
+                                                                    {student.first_entry_date ||
+                                                                        'N/A'}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </article>
+                                    ))}
+                                </div>
+                            </article>
+                        ))}
                     </div>
                 )}
             </section>

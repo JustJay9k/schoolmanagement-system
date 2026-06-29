@@ -33,6 +33,7 @@ export const isAccountantUser = user => normalizeRole(user?.role) === 'accountan
 export const isGuardianUser = user => normalizeRole(user?.role) === 'guardian'
 export const canManageSystem = user => isAdminUser(user)
 export const canManageManagementWorkspace = user => isManagementUser(user)
+export const canManageStudentRecords = user => isManagementUser(user)
 export const canManageFinanceWorkspace = user => isAccountantUser(user)
 export const canManageGradebook = user =>
     isTeacherUser(user) || isManagementUser(user)
