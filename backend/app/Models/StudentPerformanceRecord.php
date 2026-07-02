@@ -11,8 +11,16 @@ class StudentPerformanceRecord extends Model
         'student_record_id',
         'teacher_id',
         'grade',
+        'subject_grades',
         'comment',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'subject_grades' => 'array',
+        ];
+    }
 
     public function student(): BelongsTo
     {

@@ -14,6 +14,27 @@ const formatTimestamp = value => {
     return new Date(value).toLocaleString()
 }
 
+const renderSubjectGrades = record => {
+    const subjectGrades = record?.subject_grades ?? []
+
+    if (subjectGrades.length === 0) {
+        return record?.grade_summary ?? record?.grade ?? 'Pending'
+    }
+
+    return (
+        <div className={styles.subjectGradeSummary}>
+            {subjectGrades.map(subjectGrade => (
+                <div
+                    key={`${record.id}-${subjectGrade.subject_id}`}
+                    className={styles.subjectGradeSummaryItem}>
+                    <span>{subjectGrade.subject_name}</span>
+                    <strong>{subjectGrade.grade}</strong>
+                </div>
+            ))}
+        </div>
+    )
+}
+
 const GuardianDashboard = ({ user }) => {
     const { data, isLoading } = useSWR(user ? '/api/guardian/child' : null, fetcher)
 
@@ -50,9 +71,9 @@ const GuardianDashboard = ({ user }) => {
                 </div>
 
                 <div className={styles.managementCard}>
-                    <p className={styles.metricLabel}>Latest grade</p>
+                    <p className={styles.metricLabel}>Latest grade update</p>
                     <p className={styles.managementValue}>
-                        {child.latest_grade ?? 'Pending'}
+                        {child.latest_grade_summary ?? child.latest_grade ?? 'Pending'}
                     </p>
                     <p className={styles.metricMeta}>
                         Updated {formatTimestamp(child.latest_updated_at)}
@@ -173,7 +194,7 @@ const GuardianDashboard = ({ user }) => {
                         <thead>
                             <tr>
                                 <th>Teacher</th>
-                                <th>Grade</th>
+                                <th>Subjects and grades</th>
                                 <th>Comment</th>
                                 <th>Updated</th>
                             </tr>
@@ -190,7 +211,7 @@ const GuardianDashboard = ({ user }) => {
                                 performanceRecords.map(record => (
                                     <tr key={record.id}>
                                         <td>{record.teacher_name}</td>
-                                        <td>{record.grade}</td>
+                                        <td>{renderSubjectGrades(record)}</td>
                                         <td>{record.comment || 'No comment added.'}</td>
                                         <td>{formatTimestamp(record.updated_at)}</td>
                                     </tr>

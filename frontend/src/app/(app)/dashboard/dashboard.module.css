@@ -855,6 +855,34 @@
     color: var(--muted);
 }
 
+.subjectGradeSummary {
+    display: grid;
+    gap: 0.45rem;
+    min-width: 13rem;
+}
+
+.subjectGradeSummaryItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 0.9rem;
+    background: var(--surface-field);
+    padding: 0.55rem 0.7rem;
+}
+
+.subjectGradeSummaryItem span {
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.subjectGradeSummaryItem strong {
+    color: var(--ink);
+    font-size: 0.84rem;
+}
+
 .compactTable tbody tr:last-child td,
 .table tbody tr:last-child td {
     border-bottom: 0;

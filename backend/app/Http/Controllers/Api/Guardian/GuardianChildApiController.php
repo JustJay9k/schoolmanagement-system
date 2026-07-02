@@ -60,6 +60,8 @@ class GuardianChildApiController extends Controller
                 'id' => $record->id,
                 'teacher_name' => $record->teacher?->name ?? 'Teacher',
                 'grade' => $record->grade,
+                'grade_summary' => $record->grade,
+                'subject_grades' => $record->subject_grades ?? [],
                 'comment' => $record->comment,
                 'updated_at' => $record->updated_at?->toIso8601String(),
             ])
@@ -80,6 +82,8 @@ class GuardianChildApiController extends Controller
             'first_entry_date' => $student->first_entry_date?->format('Y-m-d'),
             'school_name' => $student->school?->name,
             'latest_grade' => $performanceRecords[0]['grade'] ?? null,
+            'latest_grade_summary' => $performanceRecords[0]['grade_summary'] ?? null,
+            'latest_subject_grades' => $performanceRecords[0]['subject_grades'] ?? [],
             'latest_comment' => $performanceRecords[0]['comment'] ?? null,
             'latest_updated_at' => $performanceRecords[0]['updated_at'] ?? null,
             'performance_records' => $performanceRecords,

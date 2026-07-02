@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api\Teacher;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Teacher\UpsertStudentPerformanceRequest;
+use App\Models\SchoolSubject;
 use App\Models\StudentPerformanceRecord;
 use App\Models\StudentRecord;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use App\Support\SchoolContextOptions;
 use App\Support\UserNotificationCenter;
 use Illuminate\Http\JsonResponse;
@@ -40,17 +42,37 @@ class TeacherGradebookApiController extends Controller
             fn (StudentRecord $student): array => $this->serializeStudent($student),
         )->values();
 
+        $subjectsByTrack = SchoolSubject::query()
+            ->orderBy('school_track')
+            ->orderBy('name')
+            ->get(['id', 'name', 'code', 'school_track'])
+            ->groupBy('school_track')
+            ->map(
+                fn (Collection $subjects) => $subjects->map(
+                    fn (SchoolSubject $subject): array => [
+                        'id' => $subject->id,
+                        'name' => $subject->name,
+                        'code' => $subject->code,
+                    ],
+                )->values(),
+            );
+
         return response()->json([
             'students' => $serialized,
             'stats' => [
                 'total_students' => $students->count(),
-                'graded_students' => $serialized->whereNotNull('performance.grade')->count(),
-                'pending_students' => $serialized->whereNull('performance.grade')->count(),
+                'graded_students' => $serialized->filter(
+                    fn (array $student): bool => $this->studentHasSavedGrades($student),
+                )->count(),
+                'pending_students' => $serialized->reject(
+                    fn (array $student): bool => $this->studentHasSavedGrades($student),
+                )->count(),
             ],
             'scope' => $scope,
             'options' => [
                 'schoolTracks' => SchoolContextOptions::tracks(),
                 'classesByTrack' => SchoolContextOptions::classesByTrack(),
+                'subjectsByTrack' => $subjectsByTrack,
             ],
         ]);
     }
@@ -67,12 +89,22 @@ class TeacherGradebookApiController extends Controller
             abort(404);
         }
 
+        $validated = $request->validated();
+        $subjectGrades = $this->normalizeSubjectGrades(
+            $validated['subject_grades'] ?? [],
+            $student->school_track,
+        );
+
         $record = StudentPerformanceRecord::query()->updateOrCreate(
             [
                 'student_record_id' => $student->id,
                 'teacher_id' => $actor->id,
             ],
-            $request->validated(),
+            [
+                'grade' => $this->buildGradeSummary($subjectGrades),
+                'subject_grades' => $subjectGrades,
+                'comment' => $validated['comment'] ?? null,
+            ],
         );
 
         $student->loadMissing('guardians');
@@ -81,7 +113,7 @@ class TeacherGradebookApiController extends Controller
             UserNotificationCenter::createForUser(
                 $guardian,
                 'New learner update available',
-                "{$actor->name} uploaded a grade update for {$student->full_name}. Open your dashboard to review the latest comment and grade.",
+                "{$actor->name} uploaded subject grades for {$student->full_name}. Open your dashboard to review the latest comment and scores.",
                 'info',
                 '/dashboard',
             );
@@ -99,6 +131,8 @@ class TeacherGradebookApiController extends Controller
             'performance' => [
                 'id' => $record->id,
                 'grade' => $record->grade,
+                'grade_summary' => $record->grade,
+                'subject_grades' => $record->subject_grades ?? [],
                 'comment' => $record->comment,
                 'updated_at' => $record->updated_at?->toIso8601String(),
             ],
@@ -181,9 +215,84 @@ class TeacherGradebookApiController extends Controller
                 'id' => $performance->id,
                 'teacher_name' => $performance->teacher?->name ?? 'Teacher',
                 'grade' => $performance->grade,
+                'grade_summary' => $performance->grade,
+                'subject_grades' => $performance->subject_grades ?? [],
                 'comment' => $performance->comment,
                 'updated_at' => $performance->updated_at?->toIso8601String(),
             ] : null,
         ];
+    }
+
+    private function studentHasSavedGrades(array $student): bool
+    {
+        $performance = $student['performance'] ?? null;
+
+        if (! is_array($performance)) {
+            return false;
+        }
+
+        $subjectGrades = $performance['subject_grades'] ?? [];
+
+        return (is_array($subjectGrades) && count($subjectGrades) > 0)
+            || filled($performance['grade'] ?? null);
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $submittedSubjectGrades
+     * @return array<int, array<string, mixed>>
+     */
+    private function normalizeSubjectGrades(
+        array $submittedSubjectGrades,
+        string $schoolTrack,
+    ): array {
+        $gradesBySubjectId = collect($submittedSubjectGrades)
+            ->keyBy(fn (array $entry): int => (int) $entry['subject_id']);
+
+        return SchoolSubject::query()
+            ->where('school_track', $schoolTrack)
+            ->orderBy('name')
+            ->get(['id', 'name', 'code'])
+            ->map(function (SchoolSubject $subject) use ($gradesBySubjectId): array {
+                $submittedGrade = $gradesBySubjectId->get($subject->id);
+
+                return [
+                    'subject_id' => $subject->id,
+                    'subject_name' => $subject->name,
+                    'subject_code' => $subject->code,
+                    'grade' => is_array($submittedGrade)
+                        ? trim((string) ($submittedGrade['grade'] ?? ''))
+                        : '',
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $subjectGrades
+     */
+    private function buildGradeSummary(array $subjectGrades): string
+    {
+        if (count($subjectGrades) === 0) {
+            return 'No subject grades saved';
+        }
+
+        $segments = collect($subjectGrades)
+            ->take(2)
+            ->map(function (array $subjectGrade): string {
+                $name = trim((string) ($subjectGrade['subject_name'] ?? 'Subject'));
+                $grade = trim((string) ($subjectGrade['grade'] ?? ''));
+
+                return "{$name}: {$grade}";
+            })
+            ->values();
+
+        $remaining = count($subjectGrades) - $segments->count();
+
+        if ($remaining > 0) {
+            $segments->push("+{$remaining} more");
+        }
+
+        return $segments->implode('; ');
     }
 }

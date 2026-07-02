@@ -36,7 +36,21 @@ class GuardianPortalTest extends TestCase
         StudentPerformanceRecord::query()->create([
             'student_record_id' => $student->id,
             'teacher_id' => $teacher->id,
-            'grade' => 'A',
+            'grade' => 'English: A; Mathematics: 78%',
+            'subject_grades' => [
+                [
+                    'subject_id' => 11,
+                    'subject_name' => 'English',
+                    'subject_code' => 'ENG',
+                    'grade' => 'A',
+                ],
+                [
+                    'subject_id' => 12,
+                    'subject_name' => 'Mathematics',
+                    'subject_code' => 'MTH',
+                    'grade' => '78%',
+                ],
+            ],
             'comment' => 'Consistent work across the term.',
         ]);
 
@@ -49,7 +63,18 @@ class GuardianPortalTest extends TestCase
             ->getJson('/api/guardian/child')
             ->assertOk()
             ->assertJsonPath('child.full_name', 'Brian Chirwa')
-            ->assertJsonPath('child.performance_records.0.grade', 'A')
+            ->assertJsonPath(
+                'child.performance_records.0.grade_summary',
+                'English: A; Mathematics: 78%',
+            )
+            ->assertJsonPath(
+                'child.performance_records.0.subject_grades.0.subject_name',
+                'English',
+            )
+            ->assertJsonPath(
+                'child.performance_records.0.subject_grades.0.grade',
+                'A',
+            )
             ->assertJsonPath(
                 'child.performance_records.0.comment',
                 'Consistent work across the term.',

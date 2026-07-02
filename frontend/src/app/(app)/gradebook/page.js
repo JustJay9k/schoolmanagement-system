@@ -10,16 +10,29 @@ import { useAuth } from '@/hooks/auth'
 import { canManageGradebook, formatRoleLabel } from '@/lib/userAccess'
 import styles from './gradebook.module.css'
 
+const createSubjectGradeMap = subjectGrades =>
+    Object.fromEntries(
+        (subjectGrades ?? []).map(subjectGrade => [
+            String(subjectGrade.subject_id),
+            subjectGrade.grade ?? '',
+        ]),
+    )
+
 const createDrafts = students =>
     Object.fromEntries(
         students.map(student => [
             student.id,
             {
-                grade: student.performance?.grade ?? '',
+                subjectGrades: createSubjectGradeMap(
+                    student.performance?.subject_grades ?? [],
+                ),
                 comment: student.performance?.comment ?? '',
             },
         ]),
     )
+
+const getTrackSubjects = (options, schoolTrack) =>
+    schoolTrack ? options?.subjectsByTrack?.[schoolTrack] ?? [] : []
 
 export default function GradebookPage() {
     const { user } = useAuth({ middleware: 'auth' })
@@ -104,26 +117,68 @@ export default function GradebookPage() {
         }))
     }
 
+    const updateSubjectGradeDraft = (studentId, subjectId, value) => {
+        setDrafts(current => ({
+            ...current,
+            [studentId]: {
+                ...current[studentId],
+                subjectGrades: {
+                    ...(current[studentId]?.subjectGrades ?? {}),
+                    [String(subjectId)]: value,
+                },
+            },
+        }))
+    }
+
     const hasDraftChanged = student => {
         const draft = drafts[student.id]
+        const trackSubjects = getTrackSubjects(options, student.school_track)
 
         if (!draft) {
             return false
         }
 
+        const savedSubjectGrades = createSubjectGradeMap(
+            student.performance?.subject_grades ?? [],
+        )
+
         return (
-            draft.grade !== (student.performance?.grade ?? '') ||
-            draft.comment !== (student.performance?.comment ?? '')
+            draft.comment !== (student.performance?.comment ?? '') ||
+            trackSubjects.some(
+                subject =>
+                    (draft.subjectGrades?.[String(subject.id)] ?? '') !==
+                    (savedSubjectGrades[String(subject.id)] ?? ''),
+            )
         )
     }
 
     const savePerformance = async studentId => {
         const draft = drafts[studentId]
+        const student = students.find(item => item.id === studentId)
+        const trackSubjects = getTrackSubjects(options, student?.school_track)
 
-        if (!draft || draft.grade.trim() === '') {
+        if (!student || !draft) {
+            return
+        }
+
+        if (trackSubjects.length === 0) {
             setPageStatus({
                 type: 'error',
                 message: 'Enter a grade before saving this learner record.',
+            })
+            return
+        }
+
+        const subjectGradesPayload = trackSubjects.map(subject => ({
+            subject_id: subject.id,
+            grade: draft.subjectGrades?.[String(subject.id)]?.trim() ?? '',
+        }))
+
+        if (subjectGradesPayload.some(subjectGrade => subjectGrade.grade === '')) {
+            setPageStatus({
+                type: 'error',
+                message:
+                    'Enter a grade for every subject configured for this learner before saving.',
             })
             return
         }
@@ -134,7 +189,7 @@ export default function GradebookPage() {
             const response = await axios.put(
                 `/api/teacher/gradebook/students/${studentId}/performance`,
                 {
-                    grade: draft.grade,
+                    subject_grades: subjectGradesPayload,
                     comment: draft.comment,
                 },
             )
@@ -151,10 +206,15 @@ export default function GradebookPage() {
                         ? {
                               ...currentStats,
                               graded_students: nextStudents.filter(student =>
-                                  Boolean(student.performance?.grade),
+                                  Boolean(
+                                      student.performance?.subject_grades?.length ||
+                                          student.performance?.grade,
+                                  ),
                               ).length,
                               pending_students: nextStudents.filter(
-                                  student => !student.performance?.grade,
+                                  student =>
+                                      !student.performance?.subject_grades?.length &&
+                                      !student.performance?.grade,
                               ).length,
                           }
                         : currentStats,
@@ -165,7 +225,9 @@ export default function GradebookPage() {
             setDrafts(current => ({
                 ...current,
                 [studentId]: {
-                    grade: updatedStudent?.performance?.grade ?? '',
+                    subjectGrades: createSubjectGradeMap(
+                        updatedStudent?.performance?.subject_grades ?? [],
+                    ),
                     comment: updatedStudent?.performance?.comment ?? '',
                 },
             }))
@@ -213,7 +275,7 @@ export default function GradebookPage() {
         <WorkspacePageShell
             eyebrow="Academic Records"
             title="Learner gradebook"
-            description="Upload a consolidated grade and teacher comment for each learner. Guardians linked to that learner will see the latest record in their dashboard."
+            description="Upload subject-by-subject grades and a teacher comment for each learner. Guardians linked to that learner will see the latest academic update in their dashboard."
             actions={pageActions}>
             <section className={styles.stack}>
                 <section className={workspaceStyles.statGrid}>
@@ -229,8 +291,8 @@ export default function GradebookPage() {
                                 {label === 'Students in view'
                                     ? 'The learner list is limited by your class or the selected filters.'
                                     : label === 'Updated records'
-                                      ? 'These learners already have a saved grade record from your account.'
-                                      : 'These learners still need a grade or comment from your account.'}
+                                      ? 'These learners already have a saved subject-grade record from your account.'
+                                      : 'These learners still need subject grades or a comment from your account.'}
                             </p>
                         </article>
                     ))}
@@ -340,7 +402,7 @@ export default function GradebookPage() {
                             <thead>
                                 <tr>
                                     <th>Learner</th>
-                                    <th>Grade</th>
+                                    <th>Subject grades</th>
                                     <th>Comment</th>
                                     <th>Last update</th>
                                     <th>Action</th>
@@ -362,9 +424,13 @@ export default function GradebookPage() {
                                 ) : (
                                     students.map(student => {
                                         const draft = drafts[student.id] ?? {
-                                            grade: '',
+                                            subjectGrades: {},
                                             comment: '',
                                         }
+                                        const trackSubjects = getTrackSubjects(
+                                            options,
+                                            student.school_track,
+                                        )
 
                                         return (
                                             <tr key={student.id}>
@@ -381,18 +447,52 @@ export default function GradebookPage() {
                                                     </small>
                                                 </td>
                                                 <td>
-                                                    <Input
-                                                        value={draft.grade}
-                                                        onChange={event =>
-                                                            updateDraft(
-                                                                student.id,
-                                                                'grade',
-                                                                event.target.value,
-                                                            )
-                                                        }
-                                                        placeholder="e.g. A, 78%, Good"
-                                                        className={styles.tableField}
-                                                    />
+                                                    {trackSubjects.length === 0 ? (
+                                                        <div className={styles.subjectGradeEmpty}>
+                                                            No subjects are configured for{' '}
+                                                            {student.school_track_label}.
+                                                        </div>
+                                                    ) : (
+                                                        <div className={styles.subjectGradeList}>
+                                                            {trackSubjects.map(subject => (
+                                                                <label
+                                                                    key={`${student.id}-${subject.id}`}
+                                                                    className={
+                                                                        styles.subjectGradeItem
+                                                                    }>
+                                                                    <span
+                                                                        className={
+                                                                            styles.subjectGradeLabel
+                                                                        }>
+                                                                        {subject.code
+                                                                            ? `${subject.name} (${subject.code})`
+                                                                            : subject.name}
+                                                                    </span>
+                                                                    <Input
+                                                                        value={
+                                                                            draft
+                                                                                .subjectGrades?.[
+                                                                                String(
+                                                                                    subject.id,
+                                                                                )
+                                                                            ] ?? ''
+                                                                        }
+                                                                        onChange={event =>
+                                                                            updateSubjectGradeDraft(
+                                                                                student.id,
+                                                                                subject.id,
+                                                                                event.target.value,
+                                                                            )
+                                                                        }
+                                                                        placeholder="Grade"
+                                                                        className={
+                                                                            styles.tableField
+                                                                        }
+                                                                    />
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td>
                                                     <textarea
@@ -423,6 +523,7 @@ export default function GradebookPage() {
                                                         }
                                                         disabled={
                                                             savingId === student.id ||
+                                                            trackSubjects.length === 0 ||
                                                             !hasDraftChanged(student)
                                                         }
                                                         className={workspaceStyles.button}>
