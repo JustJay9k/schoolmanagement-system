@@ -335,9 +335,50 @@ export default function StudentsPage() {
 
     const submitManualStudent = async event => {
         event.preventDefault()
-        setManualSaving(true)
+
+        const validationErrors = {}
+
+        if (manualForm.full_name.trim() === '') {
+            validationErrors.full_name = ['Full name is required.']
+        }
+
+        if (manualForm.date_of_birth === '') {
+            validationErrors.date_of_birth = [
+                'Date of birth is required to calculate age.',
+            ]
+        }
+
+        if (manualForm.age === '') {
+            validationErrors.age = ['Age is required. Add the date of birth to calculate it.']
+        }
+
+        if (manualForm.student_code.trim() === '') {
+            validationErrors.student_code = ['Student code is required.']
+        }
+
+        if (manualForm.guardian_name.trim() === '') {
+            validationErrors.guardian_name = ['Parent / guardian is required.']
+        }
+
+        if (
+            manualForm.has_disability === 'yes' &&
+            manualForm.disability_name.trim() === ''
+        ) {
+            validationErrors.disability_name = ['Name of disability is required.']
+        }
+
+        if (Object.keys(validationErrors).length > 0) {
+            setManualErrors(validationErrors)
+            setPageStatus({
+                type: 'error',
+                message: 'Please complete all required student fields before saving.',
+            })
+            return
+        }
+
         setManualErrors({})
         setPageStatus(null)
+        setManualSaving(true)
 
         try {
             const { has_disability, ...manualPayload } = manualForm
@@ -519,7 +560,10 @@ export default function StudentsPage() {
                             </label>
 
                             <label className={`${managementStyles.field} ${managementStyles.fullWidth}`}>
-                                <span className={managementStyles.fieldLabel}>Full name</span>
+                                <span className={managementStyles.fieldLabel}>
+                                    Full name
+                                    <span className={managementStyles.requiredMark}>*</span>
+                                </span>
                                 <Input
                                     value={manualForm.full_name}
                                     onChange={event =>
@@ -556,7 +600,10 @@ export default function StudentsPage() {
                             </label>
 
                             <label className={managementStyles.field}>
-                                <span className={managementStyles.fieldLabel}>Date of birth</span>
+                                <span className={managementStyles.fieldLabel}>
+                                    Date of birth
+                                    <span className={managementStyles.requiredMark}>*</span>
+                                </span>
                                 <Input
                                     type="date"
                                     value={manualForm.date_of_birth}
@@ -567,12 +614,16 @@ export default function StudentsPage() {
                                             age: getAgeFromDateOfBirth(event.target.value),
                                         }))
                                     }
+                                    required
                                 />
                                 <InputError messages={manualErrors.date_of_birth} />
                             </label>
 
                             <label className={managementStyles.field}>
-                                <span className={managementStyles.fieldLabel}>Age</span>
+                                <span className={managementStyles.fieldLabel}>
+                                    Age
+                                    <span className={managementStyles.requiredMark}>*</span>
+                                </span>
                                 <Input
                                     type="number"
                                     min="0"
@@ -585,7 +636,10 @@ export default function StudentsPage() {
                             </label>
 
                             <label className={managementStyles.field}>
-                                <span className={managementStyles.fieldLabel}>Code</span>
+                                <span className={managementStyles.fieldLabel}>
+                                    Code
+                                    <span className={managementStyles.requiredMark}>*</span>
+                                </span>
                                 <Input
                                     value={manualForm.student_code}
                                     onChange={event =>
@@ -595,6 +649,7 @@ export default function StudentsPage() {
                                         }))
                                     }
                                     placeholder="20212862526"
+                                    required
                                 />
                                 <InputError messages={manualErrors.student_code} />
                             </label>
@@ -661,7 +716,10 @@ export default function StudentsPage() {
                             ) : null}
 
                             <label className={managementStyles.field}>
-                                <span className={managementStyles.fieldLabel}>Parent / guardian</span>
+                                <span className={managementStyles.fieldLabel}>
+                                    Parent / guardian
+                                    <span className={managementStyles.requiredMark}>*</span>
+                                </span>
                                 <Input
                                     value={manualForm.guardian_name}
                                     onChange={event =>
@@ -670,6 +728,7 @@ export default function StudentsPage() {
                                             guardian_name: event.target.value,
                                         }))
                                     }
+                                    required
                                 />
                                 <InputError messages={manualErrors.guardian_name} />
                             </label>

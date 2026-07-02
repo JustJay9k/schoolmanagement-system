@@ -48,6 +48,33 @@
     color: var(--muted);
 }
 
+.inputActionRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.65rem;
+    align-items: center;
+}
+
+.visibilityToggle {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-card-soft);
+    color: var(--ink);
+    padding: 0.72rem 0.95rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+    transition:
+        transform 140ms ease,
+        border-color 140ms ease,
+        background-color 140ms ease,
+        color 140ms ease,
+        box-shadow 140ms ease;
+}
+
+.visibilityToggle:hover {
+    transform: translateY(-1px);
+}
+
 .select,
 .textarea {
     width: 100%;
