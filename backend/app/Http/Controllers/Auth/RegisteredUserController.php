@@ -28,6 +28,10 @@ class RegisteredUserController extends Controller
         $schools = School::query()
             ->orderBy('name')
             ->get(['id', 'name']);
+        $students = StudentRecord::query()
+            ->orderBy('school_id')
+            ->orderBy('full_name')
+            ->get(['id', 'school_id', 'full_name', 'class_name', 'school_track', 'student_code']);
 
         return response()->json([
             'tracks' => SchoolContextOptions::tracks(),
@@ -42,6 +46,16 @@ class RegisteredUserController extends Controller
                 ->mapWithKeys(fn (School $school): array => [
                     (string) $school->id => SchoolContextOptions::takenClassesByTrackForSchool($school->id),
                 ]),
+            'studentsBySchool' => $students
+                ->groupBy('school_id')
+                ->map(fn ($items) => $items->map(fn (StudentRecord $student): array => [
+                    'value' => (string) $student->id,
+                    'label' => $student->full_name,
+                    'class_name' => $student->class_name,
+                    'school_track' => $student->school_track,
+                    'student_code' => $student->student_code,
+                ])->values())
+                ->toArray(),
         ]);
     }
 
@@ -60,6 +74,7 @@ class RegisteredUserController extends Controller
             'school_name' => ['nullable', 'string', 'max:180'],
             'school_track' => ['nullable', 'string', 'in:'.implode(',', SchoolContextOptions::trackValues())],
             'assigned_class_name' => ['nullable', 'string', 'in:'.implode(',', SchoolContextOptions::allClasses())],
+            'child_id' => ['nullable', 'integer', 'exists:student_records,id'],
             'child_name' => ['nullable', 'string', 'max:255'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
@@ -69,6 +84,7 @@ class RegisteredUserController extends Controller
             $schoolId = $this->resolveSchoolIdFromRequest($request);
             $track = $request->string('school_track')->toString();
             $className = $request->string('assigned_class_name')->toString();
+            $childId = $request->integer('child_id');
             $childName = Str::squish($request->string('child_name')->toString());
 
             if (! $request->input('school_id') && Str::squish($request->string('school_name')->toString()) === '') {
@@ -80,12 +96,18 @@ class RegisteredUserController extends Controller
                     $validator->errors()->add('school_id', 'Guardians must choose the school already linked to the learner record.');
                 }
 
-                if ($childName === '') {
-                    $validator->errors()->add('child_name', 'Enter the learner name exactly as saved by the school.');
+                if (! $childId && $childName === '') {
+                    $validator->errors()->add('child_id', 'Choose the learner from the school record list.');
                 }
 
-                if ($schoolId !== null && $childName !== '' && ! $this->resolveLinkedStudentRecord($schoolId, $childName)) {
-                    $validator->errors()->add('child_name', 'No learner with that name was found in the selected school.');
+                if (
+                    $schoolId !== null &&
+                    ! $this->resolveLinkedStudentRecord($schoolId, $childName, $childId)
+                ) {
+                    $validator->errors()->add(
+                        $childId ? 'child_id' : 'child_name',
+                        'No learner matching that selection was found in the selected school.',
+                    );
                 }
 
                 return;
@@ -123,7 +145,11 @@ class RegisteredUserController extends Controller
         $accountType = $validated['account_type'];
         $school = $this->resolveSchoolFromRequest($request, $accountType === 'teacher');
         $linkedStudent = $accountType === 'guardian' && $school
-            ? $this->resolveLinkedStudentRecord($school->id, $validated['child_name'] ?? '')
+            ? $this->resolveLinkedStudentRecord(
+                $school->id,
+                $validated['child_name'] ?? '',
+                isset($validated['child_id']) ? (int) $validated['child_id'] : null,
+            )
             : null;
 
         $user = User::create([
@@ -195,11 +221,26 @@ class RegisteredUserController extends Controller
             : null;
     }
 
-    private function resolveLinkedStudentRecord(?int $schoolId, string $childName): ?StudentRecord
+    private function resolveLinkedStudentRecord(
+        ?int $schoolId,
+        string $childName,
+        ?int $childId = null,
+    ): ?StudentRecord
     {
         $childName = Str::squish($childName);
 
-        if ($schoolId === null || $childName === '') {
+        if ($schoolId === null) {
+            return null;
+        }
+
+        if ($childId) {
+            return StudentRecord::query()
+                ->whereKey($childId)
+                ->where('school_id', $schoolId)
+                ->first();
+        }
+
+        if ($childName === '') {
             return null;
         }
 

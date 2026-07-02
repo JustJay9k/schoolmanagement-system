@@ -4,6 +4,7 @@ import Button from '@/components/Button'
 import Input from '@/components/Input'
 import InputError from '@/components/InputError'
 import Label from '@/components/Label'
+import PasswordInput from '@/components/PasswordInput'
 import { useAuth } from '@/hooks/auth'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -62,9 +63,8 @@ const PasswordReset = () => {
                 {/* Password */}
                 <div className="mt-4">
                     <Label htmlFor="password">Password</Label>
-                    <Input
+                    <PasswordInput
                         id="password"
-                        type="password"
                         value={password}
                         className="block mt-1 w-full"
                         onChange={event => setPassword(event.target.value)}
@@ -83,9 +83,8 @@ const PasswordReset = () => {
                         Confirm Password
                     </Label>
 
-                    <Input
+                    <PasswordInput
                         id="passwordConfirmation"
-                        type="password"
                         value={passwordConfirmation}
                         className="block mt-1 w-full"
                         onChange={event =>

@@ -102,7 +102,7 @@ class RegistrationTest extends TestCase
             'name' => 'Zomba Academy',
         ]);
 
-        StudentRecord::query()->create([
+        $student = StudentRecord::query()->create([
             'school_id' => $school->id,
             'school_track' => 'primary',
             'class_name' => 'Standard 3',
@@ -114,7 +114,7 @@ class RegistrationTest extends TestCase
             'name' => 'Mrs Kalua',
             'email' => 'guardian@example.com',
             'school_id' => $school->id,
-            'child_name' => 'Martha Kalua',
+            'child_id' => $student->id,
             'password' => 'password',
             'password_confirmation' => 'password',
         ]);
@@ -125,6 +125,28 @@ class RegistrationTest extends TestCase
             'email' => 'guardian@example.com',
             'role' => UserRole::Guardian->value,
             'school_id' => $school->id,
+            'linked_student_record_id' => $student->id,
         ]);
+    }
+
+    public function test_registration_options_include_students_grouped_by_school(): void
+    {
+        $school = School::query()->create([
+            'name' => 'Zomba Academy',
+        ]);
+
+        StudentRecord::query()->create([
+            'school_id' => $school->id,
+            'school_track' => 'primary',
+            'class_name' => 'Standard 3',
+            'full_name' => 'Martha Kalua',
+            'student_code' => 'STU-33',
+        ]);
+
+        $this->getJson('/register/options')
+            ->assertOk()
+            ->assertJsonPath("studentsBySchool.{$school->id}.0.label", 'Martha Kalua')
+            ->assertJsonPath("studentsBySchool.{$school->id}.0.class_name", 'Standard 3')
+            ->assertJsonPath("studentsBySchool.{$school->id}.0.student_code", 'STU-33');
     }
 }

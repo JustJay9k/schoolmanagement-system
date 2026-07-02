@@ -14,6 +14,7 @@ import {
 import Button from '@/components/Button'
 import Input from '@/components/Input'
 import InputError from '@/components/InputError'
+import PasswordInput from '@/components/PasswordInput'
 import axios from '@/lib/axios'
 import { formatRoleLabel, isAdminUser } from '@/lib/userAccess'
 import { useAuth } from '@/hooks/auth'
@@ -104,10 +105,6 @@ export default function AdminUsersPage() {
     const [formErrors, setFormErrors] = useState({})
     const [pageStatus, setPageStatus] = useState(null)
     const [saving, setSaving] = useState(false)
-    const [passwordVisibility, setPasswordVisibility] = useState({
-        password: false,
-        password_confirmation: false,
-    })
 
     const loadUsers = async () => {
         setLoading(true)
@@ -204,10 +201,6 @@ export default function AdminUsersPage() {
         setEditingUserId(null)
         setForm(createEmptyForm())
         setFormErrors({})
-        setPasswordVisibility({
-            password: false,
-            password_confirmation: false,
-        })
     }
 
     const startCreate = () => {
@@ -289,13 +282,6 @@ export default function AdminUsersPage() {
 
             return next
         })
-    }
-
-    const togglePasswordVisibility = field => {
-        setPasswordVisibility(current => ({
-            ...current,
-            [field]: !current[field],
-        }))
     }
 
     const submitForm = async event => {
@@ -1000,31 +986,16 @@ export default function AdminUsersPage() {
                                     <span className={adminStyles.fieldLabel}>
                                         Password
                                     </span>
-                                    <div className={adminStyles.inputActionRow}>
-                                        <Input
-                                            type={
-                                                passwordVisibility.password
-                                                    ? 'text'
-                                                    : 'password'
-                                            }
-                                            value={form.password}
-                                            onChange={event =>
-                                                handleFieldChange(
-                                                    'password',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            required={editorMode === 'create'}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                togglePasswordVisibility('password')
-                                            }
-                                            className={adminStyles.visibilityToggle}>
-                                            {passwordVisibility.password ? 'Hide' : 'Show'}
-                                        </button>
-                                    </div>
+                                    <PasswordInput
+                                        value={form.password}
+                                        onChange={event =>
+                                            handleFieldChange(
+                                                'password',
+                                                event.target.value,
+                                            )
+                                        }
+                                        required={editorMode === 'create'}
+                                    />
                                     <span className={adminStyles.fieldHint}>
                                         {editorMode === 'edit'
                                             ? 'Leave blank to keep the current password.'
@@ -1037,35 +1008,16 @@ export default function AdminUsersPage() {
                                     <span className={adminStyles.fieldLabel}>
                                         Confirm password
                                     </span>
-                                    <div className={adminStyles.inputActionRow}>
-                                        <Input
-                                            type={
-                                                passwordVisibility.password_confirmation
-                                                    ? 'text'
-                                                    : 'password'
-                                            }
-                                            value={form.password_confirmation}
-                                            onChange={event =>
-                                                handleFieldChange(
-                                                    'password_confirmation',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            required={editorMode === 'create'}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                togglePasswordVisibility(
-                                                    'password_confirmation',
-                                                )
-                                            }
-                                            className={adminStyles.visibilityToggle}>
-                                            {passwordVisibility.password_confirmation
-                                                ? 'Hide'
-                                                : 'Show'}
-                                        </button>
-                                    </div>
+                                    <PasswordInput
+                                        value={form.password_confirmation}
+                                        onChange={event =>
+                                            handleFieldChange(
+                                                'password_confirmation',
+                                                event.target.value,
+                                            )
+                                        }
+                                        required={editorMode === 'create'}
+                                    />
                                     <InputError
                                         messages={
                                             formErrors.password_confirmation
