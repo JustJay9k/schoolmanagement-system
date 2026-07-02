@@ -21,6 +21,7 @@ const createManualForm = () => ({
     age: '',
     student_code: '',
     orphan_status: '',
+    has_disability: '',
     disability_name: '',
     guardian_name: '',
     residence: '',
@@ -101,6 +102,31 @@ const toIsoDate = value => {
     const parsed = new Date(raw)
 
     return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString().slice(0, 10)
+}
+
+const getAgeFromDateOfBirth = value => {
+    if (!value) {
+        return ''
+    }
+
+    const birthDate = new Date(`${value}T00:00:00`)
+
+    if (Number.isNaN(birthDate.getTime())) {
+        return ''
+    }
+
+    const today = new Date()
+    let age = today.getFullYear() - birthDate.getFullYear()
+    const monthDifference = today.getMonth() - birthDate.getMonth()
+
+    if (
+        monthDifference < 0 ||
+        (monthDifference === 0 && today.getDate() < birthDate.getDate())
+    ) {
+        age -= 1
+    }
+
+    return age >= 0 ? String(age) : ''
 }
 
 const normalizeSex = value => {
@@ -314,9 +340,13 @@ export default function StudentsPage() {
         setPageStatus(null)
 
         try {
+            const { has_disability, ...manualPayload } = manualForm
+
             await axios.post('/api/management/students', {
-                ...manualForm,
-                age: manualForm.age === '' ? null : Number(manualForm.age),
+                ...manualPayload,
+                age: manualPayload.age === '' ? null : Number(manualPayload.age),
+                disability_name:
+                    has_disability === 'yes' ? manualPayload.disability_name : '',
             })
 
             setManualForm(createManualForm())
@@ -534,6 +564,7 @@ export default function StudentsPage() {
                                         setManualForm(current => ({
                                             ...current,
                                             date_of_birth: event.target.value,
+                                            age: getAgeFromDateOfBirth(event.target.value),
                                         }))
                                     }
                                 />
@@ -546,12 +577,9 @@ export default function StudentsPage() {
                                     type="number"
                                     min="0"
                                     value={manualForm.age}
-                                    onChange={event =>
-                                        setManualForm(current => ({
-                                            ...current,
-                                            age: event.target.value,
-                                        }))
-                                    }
+                                    disabled
+                                    readOnly
+                                    placeholder="Auto-calculated"
                                 />
                                 <InputError messages={manualErrors.age} />
                             </label>
@@ -573,7 +601,7 @@ export default function StudentsPage() {
 
                             <label className={managementStyles.field}>
                                 <span className={managementStyles.fieldLabel}>Orphan</span>
-                                <Input
+                                <select
                                     value={manualForm.orphan_status}
                                     onChange={event =>
                                         setManualForm(current => ({
@@ -581,25 +609,56 @@ export default function StudentsPage() {
                                             orphan_status: event.target.value,
                                         }))
                                     }
-                                    placeholder="N/A"
-                                />
+                                    className={managementStyles.select}>
+                                    <option value="">Select an option</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
                                 <InputError messages={manualErrors.orphan_status} />
                             </label>
 
                             <label className={managementStyles.field}>
-                                <span className={managementStyles.fieldLabel}>Name of disability</span>
-                                <Input
-                                    value={manualForm.disability_name}
+                                <span className={managementStyles.fieldLabel}>
+                                    Has disability
+                                </span>
+                                <select
+                                    value={manualForm.has_disability}
                                     onChange={event =>
                                         setManualForm(current => ({
                                             ...current,
-                                            disability_name: event.target.value,
+                                            has_disability: event.target.value,
+                                            disability_name:
+                                                event.target.value === 'yes'
+                                                    ? current.disability_name
+                                                    : '',
                                         }))
                                     }
-                                    placeholder="N/A"
-                                />
-                                <InputError messages={manualErrors.disability_name} />
+                                    className={managementStyles.select}>
+                                    <option value="">Select an option</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
                             </label>
+
+                            {manualForm.has_disability === 'yes' ? (
+                                <label className={managementStyles.field}>
+                                    <span className={managementStyles.fieldLabel}>
+                                        Name of disability
+                                    </span>
+                                    <Input
+                                        value={manualForm.disability_name}
+                                        onChange={event =>
+                                            setManualForm(current => ({
+                                                ...current,
+                                                disability_name: event.target.value,
+                                            }))
+                                        }
+                                        placeholder="Type the disability"
+                                        required
+                                    />
+                                    <InputError messages={manualErrors.disability_name} />
+                                </label>
+                            ) : null}
 
                             <label className={managementStyles.field}>
                                 <span className={managementStyles.fieldLabel}>Parent / guardian</span>
@@ -838,6 +897,7 @@ export default function StudentsPage() {
                                                             <th>DOB</th>
                                                             <th>Age</th>
                                                             <th>Code</th>
+                                                            <th>Disability</th>
                                                             <th>Guardian</th>
                                                             <th>Residence</th>
                                                             <th>Entry date</th>
@@ -857,6 +917,10 @@ export default function StudentsPage() {
                                                                 </td>
                                                                 <td>
                                                                     {student.student_code ||
+                                                                        'N/A'}
+                                                                </td>
+                                                                <td>
+                                                                    {student.disability_name ||
                                                                         'N/A'}
                                                                 </td>
                                                                 <td>
