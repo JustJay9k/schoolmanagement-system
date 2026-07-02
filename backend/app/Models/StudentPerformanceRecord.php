@@ -10,6 +10,7 @@ class StudentPerformanceRecord extends Model
     protected $fillable = [
         'student_record_id',
         'teacher_id',
+        'assessment_period_id',
         'grade',
         'subject_grades',
         'comment',
@@ -30,5 +31,10 @@ class StudentPerformanceRecord extends Model
     public function teacher(): BelongsTo
     {
         return $this->belongsTo(User::class, 'teacher_id');
+    }
+
+    public function assessmentPeriod(): BelongsTo
+    {
+        return $this->belongsTo(GradeAssessmentPeriod::class, 'assessment_period_id');
     }
 }

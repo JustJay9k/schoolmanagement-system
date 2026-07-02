@@ -20,7 +20,10 @@ class GuardianChildApiController extends Controller
             ->with([
                 'school:id,name',
                 'performanceRecords' => fn ($query) => $query
-                    ->with('teacher:id,name')
+                    ->with([
+                        'teacher:id,name',
+                        'assessmentPeriod:id,name,position',
+                    ])
                     ->latest(),
             ])
             ->first();
@@ -58,6 +61,8 @@ class GuardianChildApiController extends Controller
         $performanceRecords = $student->performanceRecords
             ->map(fn ($record): array => [
                 'id' => $record->id,
+                'assessment_period_id' => $record->assessment_period_id,
+                'assessment_period_name' => $record->assessmentPeriod?->name ?? 'General',
                 'teacher_name' => $record->teacher?->name ?? 'Teacher',
                 'grade' => $record->grade,
                 'grade_summary' => $record->grade,
@@ -83,6 +88,7 @@ class GuardianChildApiController extends Controller
             'school_name' => $student->school?->name,
             'latest_grade' => $performanceRecords[0]['grade'] ?? null,
             'latest_grade_summary' => $performanceRecords[0]['grade_summary'] ?? null,
+            'latest_assessment_period_name' => $performanceRecords[0]['assessment_period_name'] ?? null,
             'latest_subject_grades' => $performanceRecords[0]['subject_grades'] ?? [],
             'latest_comment' => $performanceRecords[0]['comment'] ?? null,
             'latest_updated_at' => $performanceRecords[0]['updated_at'] ?? null,

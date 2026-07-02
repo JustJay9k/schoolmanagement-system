@@ -76,6 +76,9 @@ const GuardianDashboard = ({ user }) => {
                         {child.latest_grade_summary ?? child.latest_grade ?? 'Pending'}
                     </p>
                     <p className={styles.metricMeta}>
+                        {child.latest_assessment_period_name
+                            ? `${child.latest_assessment_period_name} | `
+                            : ''}
                         Updated {formatTimestamp(child.latest_updated_at)}
                     </p>
                 </div>
@@ -193,6 +196,7 @@ const GuardianDashboard = ({ user }) => {
                     <table className={styles.compactTable}>
                         <thead>
                             <tr>
+                                <th>Assessment period</th>
                                 <th>Teacher</th>
                                 <th>Subjects and grades</th>
                                 <th>Comment</th>
@@ -202,7 +206,7 @@ const GuardianDashboard = ({ user }) => {
                         <tbody>
                             {performanceRecords.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4}>
+                                    <td colSpan={5}>
                                         No grades or teacher comments have been uploaded
                                         yet.
                                     </td>
@@ -210,6 +214,10 @@ const GuardianDashboard = ({ user }) => {
                             ) : (
                                 performanceRecords.map(record => (
                                     <tr key={record.id}>
+                                        <td>
+                                            {record.assessment_period_name ||
+                                                'General'}
+                                        </td>
                                         <td>{record.teacher_name}</td>
                                         <td>{renderSubjectGrades(record)}</td>
                                         <td>{record.comment || 'No comment added.'}</td>

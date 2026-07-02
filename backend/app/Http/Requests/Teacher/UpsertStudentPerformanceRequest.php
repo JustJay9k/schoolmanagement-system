@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Teacher;
 
+use App\Models\GradeAssessmentPeriod;
 use App\Models\SchoolSubject;
 use App\Models\StudentRecord;
 use Illuminate\Foundation\Http\FormRequest;
@@ -33,6 +34,7 @@ class UpsertStudentPerformanceRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'assessment_period_id' => ['required', 'integer', Rule::exists('grade_assessment_periods', 'id')],
             'subject_grades' => ['required', 'array', 'min:1'],
             'subject_grades.*.subject_id' => ['required', 'integer', 'distinct', Rule::exists('school_subjects', 'id')],
             'subject_grades.*.grade' => ['required', 'string', 'max:120'],
@@ -45,9 +47,25 @@ class UpsertStudentPerformanceRequest extends FormRequest
         $validator->after(function ($validator): void {
             /** @var StudentRecord|null $student */
             $student = $this->route('student');
+            $user = $this->user();
 
             if (! $student instanceof StudentRecord) {
                 return;
+            }
+
+            $assessmentPeriod = GradeAssessmentPeriod::query()->find(
+                (int) $this->input('assessment_period_id'),
+            );
+
+            if (
+                ! $assessmentPeriod ||
+                ! $user ||
+                $assessmentPeriod->school_id !== $user->school_id
+            ) {
+                $validator->errors()->add(
+                    'assessment_period_id',
+                    'Choose a grade criterion that belongs to your school.',
+                );
             }
 
             $subjects = SchoolSubject::query()

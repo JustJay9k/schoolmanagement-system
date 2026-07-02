@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Guardian;
 
+use App\Models\GradeAssessmentPeriod;
 use App\Models\School;
 use App\Models\StudentPerformanceRecord;
 use App\Models\StudentRecord;
@@ -33,9 +34,16 @@ class GuardianPortalTest extends TestCase
             'guardian_name' => 'Mr Chirwa',
         ]);
 
+        $period = GradeAssessmentPeriod::query()->create([
+            'school_id' => $school->id,
+            'name' => 'End of Term Results',
+            'position' => 1,
+        ]);
+
         StudentPerformanceRecord::query()->create([
             'student_record_id' => $student->id,
             'teacher_id' => $teacher->id,
+            'assessment_period_id' => $period->id,
             'grade' => 'English: A; Mathematics: 78%',
             'subject_grades' => [
                 [
@@ -63,6 +71,10 @@ class GuardianPortalTest extends TestCase
             ->getJson('/api/guardian/child')
             ->assertOk()
             ->assertJsonPath('child.full_name', 'Brian Chirwa')
+            ->assertJsonPath(
+                'child.performance_records.0.assessment_period_name',
+                'End of Term Results',
+            )
             ->assertJsonPath(
                 'child.performance_records.0.grade_summary',
                 'English: A; Mathematics: 78%',
