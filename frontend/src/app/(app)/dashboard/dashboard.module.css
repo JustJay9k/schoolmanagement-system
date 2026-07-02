@@ -580,6 +580,11 @@
     font-weight: 800;
 }
 
+.statusBadgeMuted {
+    background: var(--surface-card-strong);
+    color: var(--muted);
+}
+
 .present {
     background: var(--success-soft);
     color: var(--accent-strong);

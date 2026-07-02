@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import useSWR from 'swr'
 import { useAuth } from '@/hooks/auth'
+import axios from '@/lib/axios'
 import GuardianDashboard from './GuardianDashboard'
 import styles from './dashboard.module.css'
 
@@ -534,6 +536,8 @@ const formatCurrency = value =>
         maximumFractionDigits: 0,
     }).format(value)
 
+const teacherDashboardFetcher = url => axios.get(url).then(response => response.data)
+
 const getAgeFromBirthDate = value => {
     if (!value) {
         return 'Not recorded'
@@ -560,6 +564,12 @@ const getAgeFromBirthDate = value => {
 }
 
 const buildSessionStates = (student, track) => {
+    const sessionCount = sessionColumns[track]?.length ?? 0
+
+    if (!student.status) {
+        return Array.from({ length: sessionCount }, () => null)
+    }
+
     if (student.status === 'P') return ['P', 'P', 'P', 'P', 'P', 'P']
     if (student.status === 'A') return ['A', 'A', 'A', 'A', 'A', 'A']
     if (student.status === 'S') return ['S', 'S', 'S', 'S', 'S', 'S']
@@ -573,7 +583,10 @@ const buildSessionStates = (student, track) => {
 const getCounts = students =>
     students.reduce(
         (result, student) => {
-            result[student.status] += 1
+            if (statusMeta[student.status]) {
+                result[student.status] += 1
+            }
+
             return result
         },
         { P: 0, L: 0, S: 0, A: 0, E: 0 },
@@ -608,8 +621,37 @@ const buildClassSummaries = fixtures =>
         }
     })
 
+const createTeacherDashboardStudent = student => ({
+    id: student.id,
+    name: student.full_name,
+    tutorGroup: student.class_name || 'Assigned class',
+    birthDate: student.date_of_birth ?? '',
+    gender: student.sex ?? 'Not recorded',
+    ageLabel:
+        typeof student.age === 'number' && student.age >= 0
+            ? `${student.age} years`
+            : 'Not recorded',
+    counts: {
+        late: 0,
+        sick: 0,
+        absent: 0,
+    },
+    status: '',
+    note: student.performance?.comment ?? '',
+    studentCode: student.student_code ?? '',
+    guardianName: student.guardian_name ?? '',
+})
+
 const StatusCell = ({ status }) => {
     const meta = statusMeta[status]
+
+    if (!meta) {
+        return (
+            <span className={`${styles.statusBadge} ${styles.statusBadgeMuted}`}>
+                -
+            </span>
+        )
+    }
 
     return <span className={`${styles.statusBadge} ${meta.chipClass}`}>{meta.short}</span>
 }
@@ -683,6 +725,13 @@ const Dashboard = () => {
         method: 'Bank transfer',
     })
     const [paymentStatus, setPaymentStatus] = useState('No payment recorded in this session.')
+    const { data: teacherDashboardData, isLoading: teacherDashboardLoading } =
+        useSWR(
+            teacherOnlyView && assignedClassName !== ''
+                ? '/api/teacher/gradebook'
+                : null,
+            teacherDashboardFetcher,
+        )
 
     useEffect(() => {
         if (teacherOnlyView && userTrack) {
@@ -697,16 +746,37 @@ const Dashboard = () => {
         }))
     }, [activeTrack])
 
+    const resolvedAssignedClassName =
+        teacherDashboardData?.scope?.locked_class_name || assignedClassName
+    const teacherStudentsFromApi = useMemo(
+        () =>
+            (teacherDashboardData?.students ?? []).map(
+                createTeacherDashboardStudent,
+            ),
+        [teacherDashboardData],
+    )
+
     const assignedFixture = useMemo(() => {
-        if (!teacherOnlyView || !userTrack || assignedClassName === '') {
+        if (!teacherOnlyView || !userTrack || resolvedAssignedClassName === '') {
             return null
         }
 
-        return (
-            classFixtures[userTrack].find(fixture => fixture.className === assignedClassName) ??
-            createAssignedFixtureFallback(userTrack, assignedClassName)
+        return createAssignedFixtureFallback(
+            userTrack,
+            resolvedAssignedClassName,
         )
-    }, [assignedClassName, teacherOnlyView, userTrack])
+    }, [resolvedAssignedClassName, teacherOnlyView, userTrack])
+
+    useEffect(() => {
+        if (!teacherOnlyView || !assignedFixture) {
+            return
+        }
+
+        setRegisterState(current => ({
+            ...current,
+            [assignedFixture.id]: teacherStudentsFromApi,
+        }))
+    }, [assignedFixture, teacherOnlyView, teacherStudentsFromApi])
 
     const currentTeacherStudents = assignedFixture
         ? registerState[assignedFixture.id] ?? []
@@ -737,7 +807,9 @@ const Dashboard = () => {
               },
               {
                   label: 'Age',
-                  value: getAgeFromBirthDate(activeStudent.birthDate),
+                  value:
+                      activeStudent.ageLabel ||
+                      getAgeFromBirthDate(activeStudent.birthDate),
               },
           ]
         : []
@@ -1103,6 +1175,8 @@ const Dashboard = () => {
                     ? userTrack === 'secondary'
                         ? 'This secondary teacher account does not have a form class yet. Subject teaching can continue, and the Head Master can allocate a form class when needed.'
                         : 'This teacher account is not yet assigned to a class.'
+                    : teacherDashboardLoading
+                      ? 'Loading learner records from the school database...'
                     : currentTeacherStudents.length === 0
                       ? 'Your class assignment is already saved. Learner records for this class have not been loaded into the dashboard yet.'
                       : registerStatus.message}
@@ -1149,9 +1223,10 @@ const Dashboard = () => {
                                                 <span>
                                                     <strong>{student.name}</strong>
                                                     <small>
-                                                        Late: {student.counts.late} • Sick:{' '}
-                                                        {student.counts.sick} • Absent:{' '}
-                                                        {student.counts.absent}
+                                                        Code:{' '}
+                                                        {student.studentCode || 'N/A'} |{' '}
+                                                        {student.gender || 'N/A'} |{' '}
+                                                        {student.ageLabel || 'Not recorded'}
                                                     </small>
                                                 </span>
                                             </button>
@@ -1225,16 +1300,16 @@ const Dashboard = () => {
                         </div>
                         <div className={styles.profileStats}>
                             <div className={styles.profileStat}>
-                                <span>Late count</span>
-                                <strong>{String(activeStudent.counts.late).padStart(2, '0')}</strong>
+                                <span>Student code</span>
+                                <strong>{activeStudent.studentCode || 'N/A'}</strong>
                             </div>
                             <div className={styles.profileStat}>
-                                <span>Sick count</span>
-                                <strong>{String(activeStudent.counts.sick).padStart(2, '0')}</strong>
+                                <span>Sex</span>
+                                <strong>{activeStudent.gender || 'N/A'}</strong>
                             </div>
                             <div className={styles.profileStat}>
-                                <span>Absent count</span>
-                                <strong>{String(activeStudent.counts.absent).padStart(2, '0')}</strong>
+                                <span>Guardian</span>
+                                <strong>{activeStudent.guardianName || 'N/A'}</strong>
                             </div>
                         </div>
 
@@ -1248,9 +1323,14 @@ const Dashboard = () => {
                         </div>
 
                         <div className={styles.noteCard}>
-                            <span>Student note</span>
-                            <strong>{activeStudent.note?.trim() || 'No support note recorded.'}</strong>
-                            <small>Teachers can use this summary for quick profile context.</small>
+                            <span>Latest note</span>
+                            <strong>
+                                {activeStudent.note?.trim() ||
+                                    'No teacher note or comment is recorded for this learner yet.'}
+                            </strong>
+                            <small>
+                                This summary uses the latest saved teacher comment for the learner.
+                            </small>
                         </div>
                     </div>
 
@@ -1397,7 +1477,7 @@ const Dashboard = () => {
                                     <div>
                                         <strong>{slot[1]}</strong>
                                         <small>
-                                            {fixture.className} • {slot[2]}
+                                            {fixture.className} â€¢ {slot[2]}
                                         </small>
                                     </div>
                                     <span>{slot[0]}</span>
@@ -1859,3 +1939,4 @@ const Dashboard = () => {
 }
 
 export default Dashboard
+

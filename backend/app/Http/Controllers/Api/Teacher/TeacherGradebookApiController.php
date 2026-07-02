@@ -253,6 +253,7 @@ class TeacherGradebookApiController extends Controller
             'student_code' => $student->student_code,
             'guardian_name' => $student->guardian_name,
             'sex' => $student->sex,
+            'date_of_birth' => $student->date_of_birth?->format('Y-m-d'),
             'age' => $student->resolvedAge(),
             'performance' => $latestPerformance ? [
                 'id' => $latestPerformance->id,
