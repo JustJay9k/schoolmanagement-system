@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\Api\Admin\AdminSchoolStructureApiController;
 use App\Http\Controllers\Api\Admin\AdminUserApiController;
+use App\Http\Controllers\Api\Finance\FinanceMerchandiseApiController;
 use App\Http\Controllers\Api\Finance\FinanceStudentApiController;
 use App\Http\Controllers\Api\Guardian\GuardianChildApiController;
+use App\Http\Controllers\Api\Guardian\GuardianMerchandiseApiController;
 use App\Http\Controllers\Api\Management\ManagementFormTeacherApiController;
 use App\Http\Controllers\Api\Management\ManagementGradeAssessmentPeriodApiController;
 use App\Http\Controllers\Api\Management\ManagementSchoolSubjectApiController;
@@ -75,6 +77,10 @@ Route::middleware(['auth:sanctum', 'timetable-manager'])->prefix('management')->
 Route::middleware(['auth:sanctum', 'finance'])->prefix('finance')->group(function () {
     Route::get('/students', [FinanceStudentApiController::class, 'index']);
     Route::put('/students/{student}', [FinanceStudentApiController::class, 'update']);
+    Route::get('/merchandise', [FinanceMerchandiseApiController::class, 'index']);
+    Route::post('/merchandise', [FinanceMerchandiseApiController::class, 'store']);
+    Route::put('/merchandise/{item}', [FinanceMerchandiseApiController::class, 'update']);
+    Route::delete('/merchandise/{item}', [FinanceMerchandiseApiController::class, 'destroy']);
 });
 
 Route::middleware(['auth:sanctum', 'portal'])->prefix('teacher')->group(function () {
@@ -85,4 +91,5 @@ Route::middleware(['auth:sanctum', 'portal'])->prefix('teacher')->group(function
 
 Route::middleware(['auth:sanctum', 'portal'])->prefix('guardian')->group(function () {
     Route::get('/child', [GuardianChildApiController::class, 'show']);
+    Route::get('/merchandise', [GuardianMerchandiseApiController::class, 'index']);
 });

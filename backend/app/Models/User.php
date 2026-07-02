@@ -175,4 +175,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(StudentPerformanceRecord::class, 'teacher_id');
     }
+
+    public function merchandiseItemsCreated(): HasMany
+    {
+        return $this->hasMany(SchoolMerchandiseItem::class, 'created_by');
+    }
 }

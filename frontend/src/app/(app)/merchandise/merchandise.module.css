@@ -1,0 +1,119 @@
+.catalogGrid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 20rem));
+    justify-content: start;
+    align-items: start;
+}
+
+.catalogCard {
+    display: grid;
+    gap: 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--surface-card-muted);
+    padding: 0.9rem;
+    width: min(100%, 20rem);
+}
+
+.imageFrame,
+.imagePlaceholder {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 0.9rem;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--surface-field);
+}
+
+.image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.imagePlaceholder {
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    font-size: 0.82rem;
+    text-align: center;
+    padding: 1rem;
+}
+
+.cardHeader,
+.cardFooter {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.cardTitle {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--ink);
+}
+
+.category {
+    margin: 0.2rem 0 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+}
+
+.priceTag,
+.availabilityBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.priceTag {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+}
+
+.availabilityBadge {
+    border: 1px solid var(--line);
+    background: var(--surface-field);
+    color: var(--muted);
+}
+
+.available {
+    background: color-mix(in srgb, var(--success) 12%, var(--surface-field));
+    color: var(--success);
+    border-color: color-mix(in srgb, var(--success) 20%, var(--line));
+}
+
+.unavailable {
+    background: color-mix(in srgb, var(--danger) 10%, var(--surface-field));
+    color: var(--danger);
+    border-color: color-mix(in srgb, var(--danger) 18%, var(--line));
+}
+
+.description {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+.previewNote,
+.timestamp {
+    color: var(--muted);
+    font-size: 0.76rem;
+}
+
+.timestamp {
+    margin: 0;
+}
+
+.previewWrap {
+    display: grid;
+    gap: 0.5rem;
+}

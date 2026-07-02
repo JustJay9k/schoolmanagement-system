@@ -40,12 +40,14 @@ const financeNavItems = [
     { label: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
     { label: 'Notifications', href: '/notifications', icon: 'notifications' },
     { label: 'Finance', href: '/finance', icon: 'finance' },
+    { label: 'Merchandise', href: '/finance/merchandise', icon: 'merchandise' },
     { label: 'Settings', href: '/settings', icon: 'settings' },
 ]
 
 const guardianNavItems = [
     { label: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
     { label: 'Notifications', href: '/notifications', icon: 'notifications' },
+    { label: 'School Shop', href: '/guardian/merchandise', icon: 'merchandise' },
     { label: 'Settings', href: '/settings', icon: 'settings' },
 ]
 

@@ -16,4 +16,9 @@ class School extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    public function merchandiseItems(): HasMany
+    {
+        return $this->hasMany(SchoolMerchandiseItem::class);
+    }
 }

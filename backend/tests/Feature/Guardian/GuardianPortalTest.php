@@ -4,6 +4,7 @@ namespace Tests\Feature\Guardian;
 
 use App\Models\GradeAssessmentPeriod;
 use App\Models\School;
+use App\Models\SchoolMerchandiseItem;
 use App\Models\StudentPerformanceRecord;
 use App\Models\StudentRecord;
 use App\Models\User;
@@ -91,5 +92,50 @@ class GuardianPortalTest extends TestCase
                 'child.performance_records.0.comment',
                 'Consistent work across the term.',
             );
+    }
+
+    public function test_guardian_can_view_available_school_merchandise(): void
+    {
+        $school = School::query()->create([
+            'name' => 'Kasungu Academy',
+        ]);
+
+        $student = StudentRecord::query()->create([
+            'school_id' => $school->id,
+            'school_track' => 'primary',
+            'class_name' => 'Standard 5',
+            'full_name' => 'Martha Kalua',
+        ]);
+
+        SchoolMerchandiseItem::query()->create([
+            'school_id' => $school->id,
+            'name' => 'School Shirt',
+            'category' => 'Uniform',
+            'price' => 15000,
+            'description' => 'White branded school shirt.',
+            'is_available' => true,
+        ]);
+
+        SchoolMerchandiseItem::query()->create([
+            'school_id' => $school->id,
+            'name' => 'Archived Item',
+            'category' => 'Books',
+            'price' => 5000,
+            'is_available' => false,
+        ]);
+
+        $guardian = User::factory()->guardian()->create([
+            'school_id' => $school->id,
+            'linked_student_record_id' => $student->id,
+        ]);
+
+        $this->actingAs($guardian)
+            ->getJson('/api/guardian/merchandise')
+            ->assertOk()
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.name', 'School Shirt')
+            ->assertJsonPath('items.0.category', 'Uniform')
+            ->assertJsonPath('items.0.price', 15000)
+            ->assertJsonPath('items.0.description', 'White branded school shirt.');
     }
 }

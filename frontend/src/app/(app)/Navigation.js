@@ -271,6 +271,24 @@ const icons = {
             />
         </>
     ),
+    merchandise: (
+        <>
+            <path
+                d="M6 8.5h12l-1 10H7L6 8.5z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M9 8.5a3 3 0 0 1 6 0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
+        </>
+    ),
     notifications: (
         <>
             <path
@@ -310,9 +328,15 @@ const Navigation = ({ user, sidebarCollapsed }) => {
         url => axios.get(url).then(response => response.data),
     )
     const unreadNotifications = notificationsData?.summary?.unread ?? 0
-    const isItemActive = href =>
-        pathname === href || pathname.startsWith(`${href}/`)
-    const activeItem = navItems.find(item => isItemActive(item.href))
+    const activeHref = navItems
+        .filter(
+            item =>
+                pathname === item.href ||
+                pathname.startsWith(`${item.href}/`),
+        )
+        .sort((left, right) => right.href.length - left.href.length)[0]?.href
+    const isItemActive = href => href === activeHref
+    const activeItem = navItems.find(item => item.href === activeHref)
 
     const Sidebar = (
         <aside className={`${styles.sidebar} ${sidebarCollapsed ? styles.sidebarCollapsed : ''}`}>

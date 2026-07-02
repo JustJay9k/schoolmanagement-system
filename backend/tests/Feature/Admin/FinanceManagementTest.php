@@ -2,9 +2,13 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\School;
+use App\Models\SchoolMerchandiseItem;
 use App\Models\StudentRecord;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class FinanceManagementTest extends TestCase
@@ -70,6 +74,61 @@ class FinanceManagementTest extends TestCase
         ]);
     }
 
+    public function test_accountant_can_create_and_update_merchandise_items(): void
+    {
+        Storage::fake('public');
+
+        $school = School::query()->create([
+            'name' => 'Kasungu Academy',
+        ]);
+
+        $accountant = User::factory()->accountant()->create([
+            'school_id' => $school->id,
+        ]);
+
+        $createResponse = $this->actingAs($accountant)
+            ->postJson('/api/finance/merchandise', [
+                'name' => 'School Uniform',
+                'category' => 'Uniform',
+                'price' => 35000,
+                'description' => 'Full uniform set for new learners.',
+                'is_available' => true,
+                'image' => UploadedFile::fake()->image('uniform.jpg'),
+            ]);
+
+        $createResponse
+            ->assertCreated()
+            ->assertJsonPath('item.name', 'School Uniform')
+            ->assertJsonPath('item.category', 'Uniform')
+            ->assertJsonPath('item.price', 35000)
+            ->assertJsonPath('item.is_available', true);
+
+        $itemId = $createResponse->json('item.id');
+        $path = SchoolMerchandiseItem::query()->findOrFail($itemId)->image_path;
+
+        Storage::disk('public')->assertExists($path);
+
+        $this->actingAs($accountant)
+            ->putJson("/api/finance/merchandise/{$itemId}", [
+                'name' => 'School Uniform',
+                'category' => 'Uniform',
+                'price' => 40000,
+                'description' => 'Updated uniform pricing.',
+                'is_available' => false,
+            ])
+            ->assertOk()
+            ->assertJsonPath('item.price', 40000)
+            ->assertJsonPath('item.is_available', false);
+
+        $this->assertDatabaseHas('school_merchandise_items', [
+            'id' => $itemId,
+            'school_id' => $school->id,
+            'name' => 'School Uniform',
+            'price' => 40000,
+            'is_available' => false,
+        ]);
+    }
+
     public function test_non_finance_users_cannot_access_finance_endpoints(): void
     {
         $admin = User::factory()->admin()->create();
@@ -81,6 +140,10 @@ class FinanceManagementTest extends TestCase
 
         $this->actingAs($headTeacher)
             ->getJson('/api/finance/students')
+            ->assertForbidden();
+
+        $this->actingAs($admin)
+            ->getJson('/api/finance/merchandise')
             ->assertForbidden();
     }
 }
