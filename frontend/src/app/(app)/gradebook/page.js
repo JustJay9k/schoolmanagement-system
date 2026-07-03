@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react'
 import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import managementStyles from '@/app/(app)/management/management-tools.module.css'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import Input from '@/components/Input'
 import InputError from '@/components/InputError'
+import { useToast } from '@/components/ToastProvider'
 import axios from '@/lib/axios'
 import { useAuth } from '@/hooks/auth'
 import {
@@ -64,6 +66,7 @@ const studentHasSavedRecords = student => (student.performances ?? []).length > 
 
 export default function GradebookPage() {
     const { user } = useAuth({ middleware: 'auth' })
+    const { showToast } = useToast()
     const [filters, setFilters] = useState({
         school_track: '',
         class_name: '',
@@ -75,11 +78,12 @@ export default function GradebookPage() {
     const [drafts, setDrafts] = useState({})
     const [loading, setLoading] = useState(true)
     const [savingKey, setSavingKey] = useState(null)
-    const [pageStatus, setPageStatus] = useState(null)
+    const [loadError, setLoadError] = useState(null)
     const [assessmentForm, setAssessmentForm] = useState({ name: '' })
     const [assessmentErrors, setAssessmentErrors] = useState({})
     const [savingAssessment, setSavingAssessment] = useState(false)
     const [deletingAssessmentId, setDeletingAssessmentId] = useState(null)
+    const [confirmingAssessment, setConfirmingAssessment] = useState(null)
 
     const loadGradebook = async activeFilters => {
         setLoading(true)
@@ -99,7 +103,7 @@ export default function GradebookPage() {
             setScope(nextScope)
             setOptions(nextOptions)
             setDrafts(createDrafts(nextStudents, nextAssessmentPeriods))
-            setPageStatus(null)
+            setLoadError(null)
 
             if (nextScope) {
                 setFilters(current => {
@@ -116,12 +120,10 @@ export default function GradebookPage() {
                 })
             }
         } catch (error) {
-            setPageStatus({
-                type: 'error',
-                message:
-                    error?.response?.data?.message ??
+            setLoadError(
+                error?.response?.data?.message ??
                     'Unable to load learner grade records right now.',
-            })
+            )
         } finally {
             setLoading(false)
         }
@@ -205,7 +207,7 @@ export default function GradebookPage() {
         }
 
         if (assessmentPeriods.length === 0) {
-            setPageStatus({
+            showToast({
                 type: 'error',
                 message:
                     'No grade criteria have been configured yet. Ask the head teacher to add one first.',
@@ -214,7 +216,7 @@ export default function GradebookPage() {
         }
 
         if (trackSubjects.length === 0) {
-            setPageStatus({
+            showToast({
                 type: 'error',
                 message: `No subjects are configured for ${student.school_track_label} yet.`,
             })
@@ -227,7 +229,7 @@ export default function GradebookPage() {
         }))
 
         if (subjectGradesPayload.some(subjectGrade => subjectGrade.grade === '')) {
-            setPageStatus({
+            showToast({
                 type: 'error',
                 message:
                     'Enter a grade for every subject in this examination period before saving.',
@@ -278,14 +280,14 @@ export default function GradebookPage() {
                     ...createDrafts([updatedStudent], assessmentPeriods)[studentId],
                 },
             }))
-            setPageStatus({
+            showToast({
                 type: 'success',
                 message:
                     response.data?.message ??
                     'Learner grade record saved successfully.',
             })
         } catch (error) {
-            setPageStatus({
+            showToast({
                 type: 'error',
                 message:
                     error?.response?.data?.message ??
@@ -300,7 +302,6 @@ export default function GradebookPage() {
         event.preventDefault()
         setSavingAssessment(true)
         setAssessmentErrors({})
-        setPageStatus(null)
 
         try {
             const response = await axios.post(
@@ -309,7 +310,7 @@ export default function GradebookPage() {
             )
 
             setAssessmentForm({ name: '' })
-            setPageStatus({
+            showToast({
                 type: 'success',
                 message:
                     response.data?.message ?? 'Grade criterion saved successfully.',
@@ -317,7 +318,7 @@ export default function GradebookPage() {
             await loadGradebook(filters)
         } catch (error) {
             setAssessmentErrors(error?.response?.data?.errors ?? {})
-            setPageStatus({
+            showToast({
                 type: 'error',
                 message:
                     error?.response?.data?.message ??
@@ -329,20 +330,15 @@ export default function GradebookPage() {
     }
 
     const deleteAssessmentPeriod = async period => {
-        if (!window.confirm(`Delete ${period.name} from the grade criteria list?`)) {
-            return
-        }
-
         setDeletingAssessmentId(period.id)
         setAssessmentErrors({})
-        setPageStatus(null)
 
         try {
             const response = await axios.delete(
                 `/api/management/gradebook-assessment-periods/${period.id}`,
             )
 
-            setPageStatus({
+            showToast({
                 type: 'success',
                 message:
                     response.data?.message ??
@@ -351,7 +347,7 @@ export default function GradebookPage() {
             await loadGradebook(filters)
         } catch (error) {
             setAssessmentErrors(error?.response?.data?.errors ?? {})
-            setPageStatus({
+            showToast({
                 type: 'error',
                 message:
                     error?.response?.data?.message ??
@@ -359,6 +355,7 @@ export default function GradebookPage() {
             })
         } finally {
             setDeletingAssessmentId(null)
+            setConfirmingAssessment(null)
         }
     }
 
@@ -387,11 +384,12 @@ export default function GradebookPage() {
     }
 
     return (
-        <WorkspacePageShell
-            eyebrow="Academic Records"
-            title="Learner gradebook"
-            description="Head teachers can define examination periods and teachers can populate subject grades for each learner inside every configured period."
-            actions={pageActions}>
+        <>
+            <WorkspacePageShell
+                eyebrow="Academic Records"
+                title="Learner gradebook"
+                description="Head teachers can define examination periods and teachers can populate subject grades for each learner inside every configured period."
+                actions={pageActions}>
             <section className={styles.stack}>
                 <section className={workspaceStyles.statGrid}>
                     {[
@@ -503,7 +501,7 @@ export default function GradebookPage() {
                                             <button
                                                 type="button"
                                                 onClick={() =>
-                                                    deleteAssessmentPeriod(period)
+                                                    setConfirmingAssessment(period)
                                                 }
                                                 disabled={
                                                     deletingAssessmentId === period.id
@@ -601,12 +599,10 @@ export default function GradebookPage() {
                     </div>
                 </article>
 
-                {pageStatus ? (
+                {loadError ? (
                     <div
-                        className={`${styles.statusBar} ${
-                            pageStatus.type === 'error' ? styles.statusError : ''
-                        }`}>
-                        {pageStatus.message}
+                        className={`${styles.statusBar} ${styles.statusError}`}>
+                        {loadError}
                     </div>
                 ) : null}
 
@@ -843,6 +839,30 @@ export default function GradebookPage() {
                     </div>
                 </article>
             </section>
-        </WorkspacePageShell>
+            </WorkspacePageShell>
+            <ConfirmDialog
+                open={Boolean(confirmingAssessment)}
+                eyebrow="Delete criterion"
+                title="Remove grade criterion?"
+                message={
+                    confirmingAssessment
+                        ? `Delete ${confirmingAssessment.name} from the grade criteria list?`
+                        : ''
+                }
+                confirmLabel="Delete criterion"
+                busyLabel="Deleting..."
+                tone="danger"
+                busy={
+                    deletingAssessmentId != null &&
+                    deletingAssessmentId === confirmingAssessment?.id
+                }
+                onClose={() => setConfirmingAssessment(null)}
+                onConfirm={() => {
+                    if (confirmingAssessment) {
+                        deleteAssessmentPeriod(confirmingAssessment)
+                    }
+                }}
+            />
+        </>
     )
 }

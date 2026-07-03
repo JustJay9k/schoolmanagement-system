@@ -1,6 +1,7 @@
 import { Manrope, Space_Grotesk } from 'next/font/google'
 import '@/app/global.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import { ToastProvider } from '@/components/ToastProvider'
 
 const bodyFont = Manrope({
     subsets: ['latin'],
@@ -46,7 +47,9 @@ const RootLayout = ({ children }) => {
                 />
             </head>
             <body className="font-[var(--font-body)] antialiased text-[var(--ink)]">
-                <ThemeProvider>{children}</ThemeProvider>
+                <ThemeProvider>
+                    <ToastProvider>{children}</ToastProvider>
+                </ThemeProvider>
             </body>
         </html>
     )

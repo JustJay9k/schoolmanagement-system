@@ -12,9 +12,11 @@ import {
     StatusIcon,
 } from '@/app/(app)/admin/action-icons'
 import Button from '@/components/Button'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import Input from '@/components/Input'
 import InputError from '@/components/InputError'
 import PasswordInput from '@/components/PasswordInput'
+import { useToast } from '@/components/ToastProvider'
 import axios from '@/lib/axios'
 import { formatRoleLabel, isAdminUser } from '@/lib/userAccess'
 import { useAuth } from '@/hooks/auth'
@@ -87,6 +89,7 @@ const getTeacherAssignmentMeta = user => {
 
 export default function AdminUsersPage() {
     const { user } = useAuth({ middleware: 'auth' })
+    const { showToast } = useToast()
     const editorModalRef = useRef(null)
     const [users, setUsers] = useState([])
     const [stats, setStats] = useState(null)
@@ -103,8 +106,10 @@ export default function AdminUsersPage() {
     const [editorOpen, setEditorOpen] = useState(false)
     const [form, setForm] = useState(createEmptyForm())
     const [formErrors, setFormErrors] = useState({})
-    const [pageStatus, setPageStatus] = useState(null)
+    const [loadError, setLoadError] = useState(null)
     const [saving, setSaving] = useState(false)
+    const [deletingUserId, setDeletingUserId] = useState(null)
+    const [confirmingUser, setConfirmingUser] = useState(null)
 
     const loadUsers = async () => {
         setLoading(true)
@@ -115,13 +120,12 @@ export default function AdminUsersPage() {
             setUsers(response.data?.users ?? [])
             setStats(response.data?.stats ?? null)
             setOptions(response.data?.options ?? null)
+            setLoadError(null)
         } catch (error) {
-            setPageStatus({
-                type: 'error',
-                message:
-                    error?.response?.data?.message ??
+            setLoadError(
+                error?.response?.data?.message ??
                     'Unable to load user accounts right now.',
-            })
+            )
         } finally {
             setLoading(false)
         }
@@ -205,7 +209,6 @@ export default function AdminUsersPage() {
 
     const startCreate = () => {
         resetEditor()
-        setPageStatus(null)
         setEditorOpen(true)
     }
 
@@ -226,7 +229,6 @@ export default function AdminUsersPage() {
             email_verified: Boolean(selectedUser.email_verified_at),
         })
         setFormErrors({})
-        setPageStatus(null)
         setEditorOpen(true)
     }
 
@@ -288,19 +290,18 @@ export default function AdminUsersPage() {
         event.preventDefault()
         setSaving(true)
         setFormErrors({})
-        setPageStatus(null)
 
         try {
             if (editorMode === 'edit' && editingUserId) {
                 await axios.put(`/api/admin/users/${editingUserId}`, form)
-                setPageStatus({
+                showToast({
                     type: 'success',
                     message: 'User account updated successfully.',
                 })
                 closeEditor()
             } else {
                 await axios.post('/api/admin/users', form)
-                setPageStatus({
+                showToast({
                     type: 'success',
                     message: 'User account created successfully.',
                 })
@@ -310,7 +311,7 @@ export default function AdminUsersPage() {
             await loadUsers()
         } catch (error) {
             setFormErrors(error?.response?.data?.errors ?? {})
-            setPageStatus({
+            showToast({
                 type: 'error',
                 message:
                     error?.response?.data?.message ??
@@ -322,20 +323,18 @@ export default function AdminUsersPage() {
     }
 
     const toggleStatus = async selectedUser => {
-        setPageStatus(null)
-
         try {
             const response = await axios.patch(
                 `/api/admin/users/${selectedUser.id}/status`,
             )
 
-            setPageStatus({
+            showToast({
                 type: 'success',
                 message: response.data?.message ?? 'Account status updated.',
             })
             await loadUsers()
         } catch (error) {
-            setPageStatus({
+            showToast({
                 type: 'error',
                 message:
                     error?.response?.data?.errors?.status?.[0] ??
@@ -346,22 +345,14 @@ export default function AdminUsersPage() {
     }
 
     const deleteUser = async selectedUser => {
-        if (
-            !window.confirm(
-                `Delete ${selectedUser.name}'s account permanently?`,
-            )
-        ) {
-            return
-        }
-
-        setPageStatus(null)
+        setDeletingUserId(selectedUser.id)
 
         try {
             const response = await axios.delete(
                 `/api/admin/users/${selectedUser.id}`,
             )
 
-            setPageStatus({
+            showToast({
                 type: 'success',
                 message: response.data?.message ?? 'User deleted successfully.',
             })
@@ -372,13 +363,16 @@ export default function AdminUsersPage() {
 
             await loadUsers()
         } catch (error) {
-            setPageStatus({
+            showToast({
                 type: 'error',
                 message:
                     error?.response?.data?.errors?.delete?.[0] ??
                     error?.response?.data?.message ??
                     'Unable to delete this user.',
             })
+        } finally {
+            setDeletingUserId(null)
+            setConfirmingUser(null)
         }
     }
 
@@ -432,15 +426,13 @@ export default function AdminUsersPage() {
                     </div>
                 }
             >
-            {pageStatus ? (
+            {loadError ? (
                 <section className={workspaceStyles.panel}>
                     <p
                         className={`${adminStyles.message} ${
-                            pageStatus.type === 'error'
-                                ? adminStyles.dangerText
-                                : ''
+                            adminStyles.dangerText
                         }`}>
-                        {pageStatus.message}
+                        {loadError}
                     </p>
                 </section>
             ) : null}
@@ -678,7 +670,10 @@ export default function AdminUsersPage() {
                                                     <button
                                                         type="button"
                                                         onClick={() =>
-                                                            deleteUser(item)
+                                                            setConfirmingUser(item)
+                                                        }
+                                                        disabled={
+                                                            deletingUserId === item.id
                                                         }
                                                         aria-label={`Delete ${item.name}`}
                                                         title={`Delete ${item.name}`}
@@ -1069,6 +1064,26 @@ export default function AdminUsersPage() {
                     </div>
                 </div>
             ) : null}
+            <ConfirmDialog
+                open={Boolean(confirmingUser)}
+                eyebrow="Delete account"
+                title="Delete this user account?"
+                message={
+                    confirmingUser
+                        ? `Delete ${confirmingUser.name}'s account permanently?`
+                        : ''
+                }
+                confirmLabel="Delete account"
+                busyLabel="Deleting..."
+                tone="danger"
+                busy={deletingUserId != null && deletingUserId === confirmingUser?.id}
+                onClose={() => setConfirmingUser(null)}
+                onConfirm={() => {
+                    if (confirmingUser) {
+                        deleteUser(confirmingUser)
+                    }
+                }}
+            />
         </>
     )
 }

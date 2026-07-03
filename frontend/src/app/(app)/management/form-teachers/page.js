@@ -5,7 +5,9 @@ import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import managementStyles from '@/app/(app)/management/management-tools.module.css'
 import Button from '@/components/Button'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import InputError from '@/components/InputError'
+import { useToast } from '@/components/ToastProvider'
 import axios from '@/lib/axios'
 import { canManageManagementWorkspace, formatRoleLabel } from '@/lib/userAccess'
 import { useAuth } from '@/hooks/auth'
@@ -33,6 +35,7 @@ const getTeacherOptionLabel = teacher =>
 
 export default function ManagementFormTeachersPage() {
     const { user } = useAuth({ middleware: 'auth' })
+    const { showToast } = useToast()
     const [teachers, setTeachers] = useState([])
     const [formTeacherOptions, setFormTeacherOptions] = useState(null)
     const [subjectAssignments, setSubjectAssignments] = useState([])
@@ -50,7 +53,8 @@ export default function ManagementFormTeachersPage() {
     const [savingSubjectAssignment, setSavingSubjectAssignment] =
         useState(false)
     const [deletingAssignmentId, setDeletingAssignmentId] = useState(null)
-    const [pageStatus, setPageStatus] = useState(null)
+    const [loadError, setLoadError] = useState(null)
+    const [confirmingAssignment, setConfirmingAssignment] = useState(null)
 
     const loadData = async () => {
         setLoading(true)
@@ -73,13 +77,12 @@ export default function ManagementFormTeachersPage() {
             setSubjectAssignmentOptions(
                 subjectAssignmentsResponse.data?.options ?? null,
             )
+            setLoadError(null)
         } catch (error) {
-            setPageStatus({
-                type: 'error',
-                message:
-                    error?.response?.data?.message ??
+            setLoadError(
+                error?.response?.data?.message ??
                     'Unable to load teacher allocations.',
-            })
+            )
         } finally {
             setLoading(false)
         }
@@ -131,7 +134,6 @@ export default function ManagementFormTeachersPage() {
 
     const saveFormTeacherAllocation = async (teacherId, assignedClassName) => {
         setSavingTeacherId(teacherId)
-        setPageStatus(null)
 
         try {
             const response = await axios.put(
@@ -141,7 +143,7 @@ export default function ManagementFormTeachersPage() {
                 },
             )
 
-            setPageStatus({
+            showToast({
                 type: 'success',
                 message:
                     response.data?.message ??
@@ -157,7 +159,7 @@ export default function ManagementFormTeachersPage() {
                 ...current,
                 [teacherId]: error?.response?.data?.errors ?? {},
             }))
-            setPageStatus({
+            showToast({
                 type: 'error',
                 message:
                     error?.response?.data?.message ??
@@ -172,7 +174,6 @@ export default function ManagementFormTeachersPage() {
         event.preventDefault()
         setSavingSubjectAssignment(true)
         setSubjectAssignmentErrors({})
-        setPageStatus(null)
 
         try {
             const response = await axios.post(
@@ -180,7 +181,7 @@ export default function ManagementFormTeachersPage() {
                 subjectAssignmentForm,
             )
 
-            setPageStatus({
+            showToast({
                 type: 'success',
                 message:
                     response.data?.message ??
@@ -190,7 +191,7 @@ export default function ManagementFormTeachersPage() {
             await loadData()
         } catch (error) {
             setSubjectAssignmentErrors(error?.response?.data?.errors ?? {})
-            setPageStatus({
+            showToast({
                 type: 'error',
                 message:
                     error?.response?.data?.message ??
@@ -202,25 +203,14 @@ export default function ManagementFormTeachersPage() {
     }
 
     const deleteSubjectAssignment = async assignment => {
-        if (
-            !window.confirm(
-                `Remove ${assignment.subject?.name ?? 'this subject'} from ${
-                    assignment.teacher?.name ?? 'this teacher'
-                } in ${assignment.class_name}?`,
-            )
-        ) {
-            return
-        }
-
         setDeletingAssignmentId(assignment.id)
-        setPageStatus(null)
 
         try {
             const response = await axios.delete(
                 `/api/management/teacher-subject-assignments/${assignment.id}`,
             )
 
-            setPageStatus({
+            showToast({
                 type: 'success',
                 message:
                     response.data?.message ??
@@ -228,7 +218,7 @@ export default function ManagementFormTeachersPage() {
             })
             await loadData()
         } catch (error) {
-            setPageStatus({
+            showToast({
                 type: 'error',
                 message:
                     error?.response?.data?.message ??
@@ -236,6 +226,7 @@ export default function ManagementFormTeachersPage() {
             })
         } finally {
             setDeletingAssignmentId(null)
+            setConfirmingAssignment(null)
         }
     }
 
@@ -274,15 +265,13 @@ export default function ManagementFormTeachersPage() {
                     </button>
                 </div>
             }>
-            {pageStatus ? (
+            {loadError ? (
                 <section className={workspaceStyles.panel}>
                     <p
                         className={`${managementStyles.notice} ${
-                            pageStatus.type === 'error'
-                                ? managementStyles.dangerText
-                                : ''
+                            managementStyles.dangerText
                         }`}>
-                        {pageStatus.message}
+                        {loadError}
                     </p>
                 </section>
             ) : null}
@@ -566,7 +555,7 @@ export default function ManagementFormTeachersPage() {
                                                     <button
                                                         type="button"
                                                         onClick={() =>
-                                                            deleteSubjectAssignment(
+                                                            setConfirmingAssignment(
                                                                 assignment,
                                                             )
                                                         }
@@ -707,6 +696,31 @@ export default function ManagementFormTeachersPage() {
                     </form>
                 </article>
             </section>
+            <ConfirmDialog
+                open={Boolean(confirmingAssignment)}
+                eyebrow="Remove allocation"
+                title="Remove this subject allocation?"
+                message={
+                    confirmingAssignment
+                        ? `Remove ${confirmingAssignment.subject?.name ?? 'this subject'} from ${
+                              confirmingAssignment.teacher?.name ?? 'this teacher'
+                          } in ${confirmingAssignment.class_name}?`
+                        : ''
+                }
+                confirmLabel="Remove allocation"
+                busyLabel="Removing..."
+                tone="danger"
+                busy={
+                    deletingAssignmentId != null &&
+                    deletingAssignmentId === confirmingAssignment?.id
+                }
+                onClose={() => setConfirmingAssignment(null)}
+                onConfirm={() => {
+                    if (confirmingAssignment) {
+                        deleteSubjectAssignment(confirmingAssignment)
+                    }
+                }}
+            />
         </WorkspacePageShell>
     )
 }

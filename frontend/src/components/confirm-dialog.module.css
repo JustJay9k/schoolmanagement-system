@@ -1,0 +1,135 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 130;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgba(10, 16, 24, 0.48);
+    backdrop-filter: blur(8px);
+}
+
+.card {
+    width: min(100%, 34rem);
+    border: 1px solid var(--line);
+    border-radius: 1.3rem;
+    background: var(--panel-strong);
+    box-shadow: 0 28px 72px var(--shadow-strong);
+    padding: 1rem;
+}
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.85rem;
+}
+
+.headerCopy {
+    display: grid;
+    gap: 0.25rem;
+}
+
+.eyebrow {
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.message {
+    color: var(--muted);
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.secondaryButton,
+.confirmButton,
+.dangerButton,
+.closeButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0.72rem 1rem;
+    font-size: 0.84rem;
+    font-weight: 800;
+    transition:
+        transform 140ms ease,
+        border-color 140ms ease,
+        background-color 140ms ease,
+        color 140ms ease,
+        box-shadow 140ms ease;
+}
+
+.secondaryButton,
+.closeButton {
+    border: 1px solid var(--line);
+    background: var(--surface-card-soft);
+    color: var(--ink);
+}
+
+.confirmButton {
+    border: 1px solid transparent;
+    background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+    color: var(--accent-contrast);
+    box-shadow: 0 8px 20px var(--shadow-strong);
+}
+
+.dangerButton {
+    border: 1px solid color-mix(in srgb, var(--danger) 24%, transparent);
+    background: color-mix(in srgb, var(--danger) 10%, var(--surface-card-soft));
+    color: var(--danger);
+}
+
+.secondaryButton:hover,
+.confirmButton:hover,
+.dangerButton:hover,
+.closeButton:hover {
+    transform: translateY(-1px);
+}
+
+.secondaryButton:disabled,
+.confirmButton:disabled,
+.dangerButton:disabled,
+.closeButton:disabled {
+    transform: none;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+@media (max-width: 640px) {
+    .card {
+        padding: 0.95rem;
+    }
+
+    .header {
+        flex-direction: column;
+    }
+
+    .closeButton {
+        align-self: flex-end;
+    }
+
+    .actions {
+        justify-content: stretch;
+    }
+
+    .actions button {
+        flex: 1 1 10rem;
+    }
+}

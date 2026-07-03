@@ -7,7 +7,9 @@ import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import managementStyles from '@/app/(app)/management/management-tools.module.css'
 import merchandiseStyles from '@/app/(app)/merchandise/merchandise.module.css'
 import Button from '@/components/Button'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import Input from '@/components/Input'
+import { useToast } from '@/components/ToastProvider'
 import axios from '@/lib/axios'
 import { canManageFinanceWorkspace, formatRoleLabel } from '@/lib/userAccess'
 import { useAuth } from '@/hooks/auth'
@@ -39,13 +41,15 @@ const formatTimestamp = value => {
 
 export default function FinanceMerchandisePage() {
     const { user } = useAuth({ middleware: 'auth' })
+    const { showToast } = useToast()
     const [items, setItems] = useState([])
     const [draft, setDraft] = useState(createDraft())
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
     const [editingId, setEditingId] = useState(null)
     const [deletingId, setDeletingId] = useState(null)
-    const [pageStatus, setPageStatus] = useState(null)
+    const [loadError, setLoadError] = useState(null)
+    const [confirmingItem, setConfirmingItem] = useState(null)
 
     const loadItems = async () => {
         setLoading(true)
@@ -53,13 +57,12 @@ export default function FinanceMerchandisePage() {
         try {
             const response = await axios.get('/api/finance/merchandise')
             setItems(response.data?.items ?? [])
+            setLoadError(null)
         } catch (error) {
-            setPageStatus({
-                type: 'error',
-                message:
-                    error?.response?.data?.message ??
+            setLoadError(
+                error?.response?.data?.message ??
                     'Unable to load merchandise right now.',
-            })
+            )
         } finally {
             setLoading(false)
         }
@@ -103,7 +106,6 @@ export default function FinanceMerchandisePage() {
     const submitItem = async event => {
         event.preventDefault()
         setSubmitting(true)
-        setPageStatus(null)
 
         const formData = new FormData()
         formData.append('name', draft.name.trim())
@@ -124,7 +126,7 @@ export default function FinanceMerchandisePage() {
                   })())
                 : await axios.post('/api/finance/merchandise', formData)
 
-            setPageStatus({
+            showToast({
                 type: 'success',
                 message:
                     response.data?.message ??
@@ -133,7 +135,7 @@ export default function FinanceMerchandisePage() {
             resetDraft()
             await loadItems()
         } catch (error) {
-            setPageStatus({
+            showToast({
                 type: 'error',
                 message:
                     error?.response?.data?.errors?.name?.[0] ??
@@ -157,22 +159,16 @@ export default function FinanceMerchandisePage() {
             image: null,
             existing_image_url: item.image_url ?? null,
         })
-        setPageStatus(null)
     }
 
     const deleteItem = async item => {
-        if (!window.confirm(`Delete "${item.name}" from the school shop?`)) {
-            return
-        }
-
         setDeletingId(item.id)
-        setPageStatus(null)
 
         try {
             const response = await axios.delete(
                 `/api/finance/merchandise/${item.id}`,
             )
-            setPageStatus({
+            showToast({
                 type: 'success',
                 message:
                     response.data?.message ??
@@ -185,7 +181,7 @@ export default function FinanceMerchandisePage() {
 
             await loadItems()
         } catch (error) {
-            setPageStatus({
+            showToast({
                 type: 'error',
                 message:
                     error?.response?.data?.message ??
@@ -193,6 +189,7 @@ export default function FinanceMerchandisePage() {
             })
         } finally {
             setDeletingId(null)
+            setConfirmingItem(null)
         }
     }
 
@@ -228,15 +225,13 @@ export default function FinanceMerchandisePage() {
                     Refresh
                 </button>
             }>
-            {pageStatus ? (
+            {loadError ? (
                 <section className={workspaceStyles.panel}>
                     <p
                         className={`${managementStyles.notice} ${
-                            pageStatus.type === 'error'
-                                ? managementStyles.dangerText
-                                : ''
+                            managementStyles.dangerText
                         }`}>
-                        {pageStatus.message}
+                        {loadError}
                     </p>
                 </section>
             ) : null}
@@ -549,7 +544,7 @@ export default function FinanceMerchandisePage() {
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => deleteItem(item)}
+                                        onClick={() => setConfirmingItem(item)}
                                         disabled={deletingId === item.id}
                                         className={managementStyles.dangerButton}>
                                         {deletingId === item.id
@@ -562,6 +557,26 @@ export default function FinanceMerchandisePage() {
                     </div>
                 )}
             </section>
+            <ConfirmDialog
+                open={Boolean(confirmingItem)}
+                eyebrow="Delete merchandise"
+                title="Remove this merchandise item?"
+                message={
+                    confirmingItem
+                        ? `Delete "${confirmingItem.name}" from the school shop?`
+                        : ''
+                }
+                confirmLabel="Delete item"
+                busyLabel="Deleting..."
+                tone="danger"
+                busy={deletingId != null && deletingId === confirmingItem?.id}
+                onClose={() => setConfirmingItem(null)}
+                onConfirm={() => {
+                    if (confirmingItem) {
+                        deleteItem(confirmingItem)
+                    }
+                }}
+            />
         </WorkspacePageShell>
     )
 }

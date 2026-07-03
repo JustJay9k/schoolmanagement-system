@@ -5,8 +5,10 @@ import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import managementStyles from '@/app/(app)/management/management-tools.module.css'
 import Button from '@/components/Button'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import Input from '@/components/Input'
 import InputError from '@/components/InputError'
+import { useToast } from '@/components/ToastProvider'
 import axios from '@/lib/axios'
 import { canManageManagementWorkspace, formatRoleLabel } from '@/lib/userAccess'
 import { useAuth } from '@/hooks/auth'
@@ -32,18 +34,21 @@ const CloseIcon = () => (
 
 export default function ManagementSubjectsPage() {
     const { user } = useAuth({ middleware: 'auth' })
+    const { showToast } = useToast()
     const editorModalRef = useRef(null)
     const [subjects, setSubjects] = useState([])
     const [stats, setStats] = useState(null)
     const [options, setOptions] = useState(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [pageStatus, setPageStatus] = useState(null)
+    const [loadError, setLoadError] = useState(null)
     const [formErrors, setFormErrors] = useState({})
     const [form, setForm] = useState(emptyForm)
     const [editorMode, setEditorMode] = useState('create')
     const [editingSubjectId, setEditingSubjectId] = useState(null)
     const [editorOpen, setEditorOpen] = useState(false)
+    const [deletingSubjectId, setDeletingSubjectId] = useState(null)
+    const [confirmingSubject, setConfirmingSubject] = useState(null)
 
     const loadSubjects = async () => {
         setLoading(true)
@@ -54,13 +59,12 @@ export default function ManagementSubjectsPage() {
             setSubjects(response.data?.subjects ?? [])
             setStats(response.data?.stats ?? null)
             setOptions(response.data?.options ?? null)
+            setLoadError(null)
         } catch (error) {
-            setPageStatus({
-                type: 'error',
-                message:
-                    error?.response?.data?.message ??
+            setLoadError(
+                error?.response?.data?.message ??
                     'Unable to load school subjects right now.',
-            })
+            )
         } finally {
             setLoading(false)
         }
@@ -98,7 +102,6 @@ export default function ManagementSubjectsPage() {
 
     const startCreate = () => {
         resetEditor()
-        setPageStatus(null)
         setEditorOpen(true)
     }
 
@@ -111,7 +114,6 @@ export default function ManagementSubjectsPage() {
             school_track: subject.school_track ?? 'primary',
         })
         setFormErrors({})
-        setPageStatus(null)
         setEditorOpen(true)
     }
 
@@ -149,19 +151,18 @@ export default function ManagementSubjectsPage() {
         event.preventDefault()
         setSaving(true)
         setFormErrors({})
-        setPageStatus(null)
 
         try {
             if (editorMode === 'edit' && editingSubjectId) {
                 await axios.put(`/api/management/subjects/${editingSubjectId}`, form)
-                setPageStatus({
+                showToast({
                     type: 'success',
                     message: 'Subject updated successfully.',
                 })
                 closeEditor()
             } else {
                 await axios.post('/api/management/subjects', form)
-                setPageStatus({
+                showToast({
                     type: 'success',
                     message: 'Subject saved successfully.',
                 })
@@ -171,7 +172,7 @@ export default function ManagementSubjectsPage() {
             await loadSubjects()
         } catch (error) {
             setFormErrors(error?.response?.data?.errors ?? {})
-            setPageStatus({
+            showToast({
                 type: 'error',
                 message:
                     error?.response?.data?.message ??
@@ -183,11 +184,7 @@ export default function ManagementSubjectsPage() {
     }
 
     const deleteSubject = async subject => {
-        if (!window.confirm(`Delete ${subject.name} from the subject list?`)) {
-            return
-        }
-
-        setPageStatus(null)
+        setDeletingSubjectId(subject.id)
 
         try {
             const response = await axios.delete(`/api/management/subjects/${subject.id}`)
@@ -196,19 +193,22 @@ export default function ManagementSubjectsPage() {
                 closeEditor()
             }
 
-            setPageStatus({
+            showToast({
                 type: 'success',
                 message: response.data?.message ?? 'Subject deleted successfully.',
             })
             await loadSubjects()
         } catch (error) {
-            setPageStatus({
+            showToast({
                 type: 'error',
                 message:
                     error?.response?.data?.errors?.subject?.[0] ??
                     error?.response?.data?.message ??
                     'Unable to delete this subject.',
             })
+        } finally {
+            setDeletingSubjectId(null)
+            setConfirmingSubject(null)
         }
     }
 
@@ -253,13 +253,13 @@ export default function ManagementSubjectsPage() {
                     </button>
                 </div>
             }>
-            {pageStatus ? (
+            {loadError ? (
                 <section className={workspaceStyles.panel}>
                     <p
                         className={`${managementStyles.notice} ${
-                            pageStatus.type === 'error' ? managementStyles.dangerText : ''
+                            managementStyles.dangerText
                         }`}>
-                        {pageStatus.message}
+                        {loadError}
                     </p>
                 </section>
             ) : null}
@@ -333,9 +333,16 @@ export default function ManagementSubjectsPage() {
                                                         </button>
                                                         <button
                                                             type="button"
-                                                            onClick={() => deleteSubject(subject)}
+                                                            onClick={() =>
+                                                                setConfirmingSubject(subject)
+                                                            }
+                                                            disabled={
+                                                                deletingSubjectId === subject.id
+                                                            }
                                                             className={managementStyles.dangerButton}>
-                                                            Delete
+                                                            {deletingSubjectId === subject.id
+                                                                ? 'Deleting...'
+                                                                : 'Delete'}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -463,6 +470,29 @@ export default function ManagementSubjectsPage() {
                     </div>
                 </div>
             ) : null}
+            <ConfirmDialog
+                open={Boolean(confirmingSubject)}
+                eyebrow="Delete subject"
+                title="Remove this subject?"
+                message={
+                    confirmingSubject
+                        ? `Delete ${confirmingSubject.name} from the subject list?`
+                        : ''
+                }
+                confirmLabel="Delete subject"
+                busyLabel="Deleting..."
+                tone="danger"
+                busy={
+                    deletingSubjectId != null &&
+                    deletingSubjectId === confirmingSubject?.id
+                }
+                onClose={() => setConfirmingSubject(null)}
+                onConfirm={() => {
+                    if (confirmingSubject) {
+                        deleteSubject(confirmingSubject)
+                    }
+                }}
+            />
         </WorkspacePageShell>
     )
 }

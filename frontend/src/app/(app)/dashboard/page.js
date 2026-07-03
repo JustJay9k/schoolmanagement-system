@@ -56,300 +56,6 @@ const roleLabels = {
     guardian: 'Guardian',
 }
 
-const studentBioDirectory = {
-    1: { birthDate: '2014-02-18', gender: 'Female' },
-    2: { birthDate: '2013-09-07', gender: 'Male' },
-    3: { birthDate: '2014-05-29', gender: 'Female' },
-    4: { birthDate: '2014-11-13', gender: 'Female' },
-    5: { birthDate: '2013-03-22', gender: 'Female' },
-    6: { birthDate: '2014-07-05', gender: 'Male' },
-    101: { birthDate: '2012-06-14', gender: 'Male' },
-    102: { birthDate: '2012-10-03', gender: 'Female' },
-    103: { birthDate: '2012-01-26', gender: 'Female' },
-    104: { birthDate: '2011-12-19', gender: 'Female' },
-    105: { birthDate: '2012-08-11', gender: 'Male' },
-    106: { birthDate: '2011-04-30', gender: 'Female' },
-    201: { birthDate: '2011-09-09', gender: 'Male' },
-    202: { birthDate: '2011-02-21', gender: 'Female' },
-    203: { birthDate: '2011-06-16', gender: 'Male' },
-    204: { birthDate: '2011-01-08', gender: 'Female' },
-    205: { birthDate: '2010-11-27', gender: 'Female' },
-    206: { birthDate: '2011-05-12', gender: 'Male' },
-    207: { birthDate: '2010-08-04', gender: 'Female' },
-    208: { birthDate: '2011-03-17', gender: 'Male' },
-    301: { birthDate: '2010-10-24', gender: 'Female' },
-    302: { birthDate: '2010-07-15', gender: 'Male' },
-    303: { birthDate: '2010-12-06', gender: 'Female' },
-    304: { birthDate: '2010-04-09', gender: 'Male' },
-    305: { birthDate: '2010-09-28', gender: 'Female' },
-    306: { birthDate: '2010-02-13', gender: 'Male' },
-}
-
-const createStudents = (tutorGroup, rows) =>
-    rows.map((row, index) => {
-        const studentId = row.id ?? `${tutorGroup}-${index + 1}`
-
-        return {
-            id: studentId,
-            tutorGroup,
-            ...(studentBioDirectory[studentId] ?? {}),
-            ...row,
-        }
-    })
-
-const classFixtures = {
-    primary: [
-        {
-            id: 'standard-5-east',
-            className: 'Standard 5',
-            tutorGroup: '5E',
-            teacherLabel: 'Mrs Banda',
-            submissionLabel: 'AM register complete: 1/2 sessions',
-            upcomingLabel: 'PM literacy block starts at 13:10',
-            timetable: [
-                ['08:00', 'Morning Register', 'Class teacher'],
-                ['09:00', 'Mathematics', 'M. Banda'],
-                ['13:10', 'Literacy Block', 'L. Phiri'],
-                ['15:00', 'PM Register', 'Class teacher'],
-            ],
-            students: createStudents('5E', [
-                {
-                    id: 1,
-                    name: 'Martha Kalua',
-                    status: 'P',
-                    note: 'Breakfast voucher issued',
-                    counts: { late: 2, sick: 1, absent: 0 },
-                },
-                {
-                    id: 2,
-                    name: 'Samuel Nkhoma',
-                    status: 'L',
-                    note: 'Arrived after transport delay',
-                    counts: { late: 6, sick: 0, absent: 1 },
-                },
-                {
-                    id: 3,
-                    name: 'Fatsani Jere',
-                    status: 'S',
-                    note: 'Clinic note submitted',
-                    counts: { late: 0, sick: 3, absent: 1 },
-                },
-                {
-                    id: 4,
-                    name: 'Ruth Banda',
-                    status: 'P',
-                    note: '',
-                    counts: { late: 1, sick: 0, absent: 0 },
-                },
-                {
-                    id: 5,
-                    name: 'Thoko Zulu',
-                    status: 'E',
-                    note: 'District reading event',
-                    counts: { late: 0, sick: 0, absent: 1 },
-                },
-                {
-                    id: 6,
-                    name: 'Peter Mbewe',
-                    status: 'P',
-                    note: '',
-                    counts: { late: 1, sick: 0, absent: 0 },
-                },
-            ]),
-        },
-        {
-            id: 'standard-7-west',
-            className: 'Standard 7',
-            tutorGroup: '7W',
-            teacherLabel: 'Mr Tembo',
-            submissionLabel: 'AM register complete: 2/2 sessions',
-            upcomingLabel: 'Science block starts at 13:25',
-            timetable: [
-                ['08:00', 'Morning Register', 'Class teacher'],
-                ['09:15', 'English', 'R. Zulu'],
-                ['13:25', 'Science Block', 'P. Tembo'],
-                ['15:00', 'PM Register', 'Class teacher'],
-            ],
-            students: createStudents('7W', [
-                {
-                    id: 101,
-                    name: 'Mwai K.',
-                    status: 'P',
-                    note: 'Reading captain',
-                    counts: { late: 0, sick: 0, absent: 0 },
-                },
-                {
-                    id: 102,
-                    name: 'Chisomo Daka',
-                    status: 'P',
-                    note: '',
-                    counts: { late: 1, sick: 0, absent: 0 },
-                },
-                {
-                    id: 103,
-                    name: 'Lina Sande',
-                    status: 'L',
-                    note: 'Late due to clinic visit',
-                    counts: { late: 2, sick: 1, absent: 0 },
-                },
-                {
-                    id: 104,
-                    name: 'Hope Mwale',
-                    status: 'P',
-                    note: '',
-                    counts: { late: 0, sick: 0, absent: 0 },
-                },
-                {
-                    id: 105,
-                    name: 'Yusuf Ali',
-                    status: 'A',
-                    note: 'Guardian called before assembly',
-                    counts: { late: 0, sick: 0, absent: 2 },
-                },
-                {
-                    id: 106,
-                    name: 'Agnes Chirwa',
-                    status: 'P',
-                    note: '',
-                    counts: { late: 1, sick: 0, absent: 0 },
-                },
-            ]),
-        },
-    ],
-    secondary: [
-        {
-            id: 'form-1',
-            className: 'Form 1',
-            tutorGroup: 'F1',
-            teacherLabel: 'R. Mbewe',
-            submissionLabel: 'Register submissions complete: 2/6 periods',
-            upcomingLabel: 'Period 3 Chemistry starts at 10:40',
-            timetable: [
-                ['08:00', 'Period 1 English', 'R. Mbewe'],
-                ['09:20', 'Period 2 Mathematics', 'P. Moyo'],
-                ['10:40', 'Period 3 Chemistry', 'T. Mkandawire'],
-                ['14:00', 'Period 5 Geography', 'S. Zulu'],
-            ],
-            students: createStudents('F1', [
-                {
-                    id: 201,
-                    name: 'Prince Lungu',
-                    status: 'P',
-                    note: 'Present for double science block',
-                    counts: { late: 1, sick: 0, absent: 0 },
-                },
-                {
-                    id: 202,
-                    name: 'Tadala Soko',
-                    status: 'A',
-                    note: 'Guardian follow-up requested',
-                    counts: { late: 0, sick: 0, absent: 5 },
-                },
-                {
-                    id: 203,
-                    name: 'Yamikani Daka',
-                    status: 'E',
-                    note: 'On debate assignment',
-                    counts: { late: 3, sick: 0, absent: 0 },
-                },
-                {
-                    id: 204,
-                    name: 'Natasha Phiri',
-                    status: 'L',
-                    note: 'Late from assembly duty',
-                    counts: { late: 4, sick: 0, absent: 0 },
-                },
-                {
-                    id: 205,
-                    name: 'Aisha Moyo',
-                    status: 'P',
-                    note: '',
-                    counts: { late: 1, sick: 0, absent: 0 },
-                },
-                {
-                    id: 206,
-                    name: 'Brian Chirwa',
-                    status: 'P',
-                    note: '',
-                    counts: { late: 0, sick: 0, absent: 1 },
-                },
-                {
-                    id: 207,
-                    name: 'Esther Juma',
-                    status: 'L',
-                    note: 'Late to P2 (5 mins)',
-                    counts: { late: 5, sick: 0, absent: 0 },
-                },
-                {
-                    id: 208,
-                    name: 'Moses Tembo',
-                    status: 'P',
-                    note: '',
-                    counts: { late: 1, sick: 0, absent: 0 },
-                },
-            ]),
-        },
-        {
-            id: 'form-2',
-            className: 'Form 2',
-            tutorGroup: 'F2',
-            teacherLabel: 'C. Phiri',
-            submissionLabel: 'Register submissions complete: 5/6 periods',
-            upcomingLabel: 'Period 4 History starts at 13:15',
-            timetable: [
-                ['08:00', 'Period 1 Biology', 'C. Phiri'],
-                ['09:20', 'Period 2 Chichewa', 'N. Jere'],
-                ['11:15', 'Period 3 ICT', 'A. Phoso'],
-                ['13:15', 'Period 4 History', 'L. Banda'],
-            ],
-            students: createStudents('F2', [
-                {
-                    id: 301,
-                    name: 'Mary Nthenda',
-                    status: 'P',
-                    note: '',
-                    counts: { late: 0, sick: 0, absent: 0 },
-                },
-                {
-                    id: 302,
-                    name: 'John Chikopa',
-                    status: 'P',
-                    note: 'Recovered from last week illness',
-                    counts: { late: 1, sick: 1, absent: 0 },
-                },
-                {
-                    id: 303,
-                    name: 'Rebecca James',
-                    status: 'L',
-                    note: 'Arrived after bus delay',
-                    counts: { late: 2, sick: 0, absent: 0 },
-                },
-                {
-                    id: 304,
-                    name: 'Peter Soko',
-                    status: 'A',
-                    note: 'No explanation submitted',
-                    counts: { late: 0, sick: 0, absent: 3 },
-                },
-                {
-                    id: 305,
-                    name: 'Tiwonge Gondwe',
-                    status: 'P',
-                    note: '',
-                    counts: { late: 0, sick: 0, absent: 0 },
-                },
-                {
-                    id: 306,
-                    name: 'Gift Nkhata',
-                    status: 'S',
-                    note: 'School clinic referral',
-                    counts: { late: 0, sick: 2, absent: 0 },
-                },
-            ]),
-        },
-    ],
-}
-
 const createAssignedFixtureFallback = (track, className) => ({
     id: `${track}-${className}`.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
     className,
@@ -377,92 +83,6 @@ const sessionColumns = {
         { label: 'Period 2', sub: '10:00-11:00' },
         { label: 'Period 3', sub: '11:15-12:15' },
         { label: 'Period 4', sub: '13:15-14:15' },
-    ],
-}
-
-const managementAlerts = {
-    primary: [
-        {
-            title: 'Standard 7 flagged two persistent late arrivals',
-            detail: 'Pastoral follow-up is needed before Friday assembly and parent call slots.',
-            severity: 'Welfare',
-        },
-        {
-            title: 'Primary AM attendance dipped below 93%',
-            detail: 'Transport delays affected both upper section classes this morning.',
-            severity: 'Action now',
-        },
-        {
-            title: 'Meal support notes increased this week',
-            detail: 'Welfare support is now attached to four active primary learners.',
-            severity: 'Support',
-        },
-    ],
-    secondary: [
-        {
-            title: 'Form 2 missed Period 4 register yesterday',
-            detail: 'No submission posted between 13:00 and 13:25. Escalate to HOD Science.',
-            severity: 'Action now',
-        },
-        {
-            title: 'Three students reached chronic absence threshold',
-            detail: 'System logic engine flagged 10-day rolling attendance risk for welfare review.',
-            severity: 'Welfare',
-        },
-        {
-            title: 'Tuition balance variance increased this week',
-            detail: 'Senior classes account for 62% of unpaid balances above ageing threshold.',
-            severity: 'Finance',
-        },
-    ],
-}
-
-const ledgerRows = {
-    primary: [
-        {
-            student: 'Mwai K.',
-            className: 'Standard 7',
-            invoiced: 'MWK 280,000',
-            paid: 'MWK 280,000',
-            balance: 'MWK 0',
-        },
-        {
-            student: 'Martha Kalua',
-            className: 'Standard 5',
-            invoiced: 'MWK 260,000',
-            paid: 'MWK 200,000',
-            balance: 'MWK 60,000',
-        },
-        {
-            student: 'Yusuf Ali',
-            className: 'Standard 7',
-            invoiced: 'MWK 280,000',
-            paid: 'MWK 180,000',
-            balance: 'MWK 100,000',
-        },
-    ],
-    secondary: [
-        {
-            student: 'Chikondi M.',
-            className: 'Form 4',
-            invoiced: 'MWK 480,000',
-            paid: 'MWK 420,000',
-            balance: 'MWK 60,000',
-        },
-        {
-            student: 'Josephine T.',
-            className: 'Form 1',
-            invoiced: 'MWK 360,000',
-            paid: 'MWK 240,000',
-            balance: 'MWK 120,000',
-        },
-        {
-            student: 'Tadala Soko',
-            className: 'Form 1',
-            invoiced: 'MWK 420,000',
-            paid: 'MWK 210,000',
-            balance: 'MWK 210,000',
-        },
     ],
 }
 
@@ -526,16 +146,6 @@ const formatBirthDate = value => {
     }).format(birthDate)
 }
 
-const parseCurrencyAmount = value =>
-    Number(String(value ?? '').replace(/[^0-9.]/g, '')) || 0
-
-const formatCurrency = value =>
-    new Intl.NumberFormat('en-MW', {
-        style: 'currency',
-        currency: 'MWK',
-        maximumFractionDigits: 0,
-    }).format(value)
-
 const teacherDashboardFetcher = url => axios.get(url).then(response => response.data)
 
 const getAgeFromBirthDate = value => {
@@ -598,28 +208,6 @@ const getAttendanceRate = counts => {
 
     return total ? Math.round((attending / total) * 1000) / 10 : 0
 }
-
-const flattenTrackStudents = fixtures =>
-    fixtures.flatMap(fixture =>
-        fixture.students.map(student => ({
-            ...student,
-            className: fixture.className,
-            teacherLabel: fixture.teacherLabel,
-        })),
-    )
-
-const buildClassSummaries = fixtures =>
-    fixtures.map(fixture => {
-        const counts = getCounts(fixture.students)
-        return {
-            id: fixture.id,
-            className: fixture.className,
-            teacherLabel: fixture.teacherLabel,
-            learners: fixture.students.length,
-            attendanceRate: getAttendanceRate(counts),
-            pendingNotes: fixture.students.filter(student => student.note.trim() !== '').length,
-        }
-    })
 
 const createTeacherDashboardStudent = student => ({
     id: student.id,
@@ -702,13 +290,7 @@ const Dashboard = () => {
     )
 
     const [activeTrack, setActiveTrack] = useState(userTrack ?? 'secondary')
-    const [registerState, setRegisterState] = useState(() =>
-        Object.fromEntries(
-            Object.values(classFixtures)
-                .flat()
-                .map(fixture => [fixture.id, fixture.students]),
-        ),
-    )
+    const [registerState, setRegisterState] = useState({})
     const [selectedStudentId, setSelectedStudentId] = useState(null)
     const [registerStatus, setRegisterStatus] = useState({
         tone: 'idle',
@@ -719,12 +301,6 @@ const Dashboard = () => {
         note: '',
     })
     const [disciplineStatus, setDisciplineStatus] = useState('Awaiting teacher action.')
-    const [paymentEntry, setPaymentEntry] = useState({
-        student: ledgerRows[activeTrack][0].student,
-        amount: '60000',
-        method: 'Bank transfer',
-    })
-    const [paymentStatus, setPaymentStatus] = useState('No payment recorded in this session.')
     const { data: teacherDashboardData, isLoading: teacherDashboardLoading } =
         useSWR(
             teacherOnlyView && assignedClassName !== ''
@@ -732,19 +308,18 @@ const Dashboard = () => {
                 : null,
             teacherDashboardFetcher,
         )
+    const { data: dashboardNotifications } = useSWR(
+        user ? '/api/notifications' : null,
+        teacherDashboardFetcher,
+    )
+    const dashboardUnreadNotifications =
+        dashboardNotifications?.summary?.unread ?? 0
 
     useEffect(() => {
         if (teacherOnlyView && userTrack) {
             setActiveTrack(userTrack)
         }
     }, [teacherOnlyView, userTrack])
-
-    useEffect(() => {
-        setPaymentEntry(current => ({
-            ...current,
-            student: ledgerRows[activeTrack][0].student,
-        }))
-    }, [activeTrack])
 
     const resolvedAssignedClassName =
         teacherDashboardData?.scope?.locked_class_name || assignedClassName
@@ -843,113 +418,16 @@ const Dashboard = () => {
     ]
 
     const teacherAttendanceRate = getAttendanceRate(teacherCounts)
-    const managementFixtures = classFixtures[activeTrack]
-    const managementStudents = useMemo(
-        () => flattenTrackStudents(managementFixtures),
-        [managementFixtures],
-    )
-    const managementCounts = useMemo(
-        () => getCounts(managementStudents),
-        [managementStudents],
-    )
-    const managementAttendanceRate = getAttendanceRate(managementCounts)
-    const classSummaries = useMemo(
-        () => buildClassSummaries(managementFixtures),
-        [managementFixtures],
-    )
-
-    const managementMetrics = [
-        {
-            label: 'Classes in view',
-            value: String(managementFixtures.length).padStart(2, '0'),
-            note: `All ${trackLabels[activeTrack].toLowerCase()} class owners in the active dashboard view.`,
-        },
-        {
-            label: 'Learners tracked',
-            value: String(managementStudents.length).padStart(2, '0'),
-            note: 'Combined learner count visible across every class in the selected track.',
-        },
-        {
-            label: 'Attendance rate',
-            value: `${managementAttendanceRate}%`,
-            note: 'Live aggregate attendance across all visible classes.',
-        },
-        {
-            label: 'At-risk learners',
-            value: String(
-                managementStudents.filter(student => student.counts.absent >= 2).length,
-            ).padStart(2, '0'),
-            note: 'Students requiring follow-up because absence counts are already elevated.',
-        },
-    ]
-
-    const adminMetrics = [
-        {
-            label: 'Class tracks',
-            value: String(Object.keys(trackLabels).length).padStart(2, '0'),
-            note: 'Primary and secondary structures available in the system configuration.',
-        },
-        {
-            label: 'Teacher slots',
-            value: String(classSummaries.length).padStart(2, '0'),
-            note: 'Class ownership positions that administrators can supervise through account assignments.',
-        },
-        {
-            label: 'Management tools',
-            value: '02',
-            note: 'Subjects and timetables now live inside the management workspace, not the system dashboard.',
-        },
-        {
-            label: 'System controls',
-            value: '02',
-            note: 'User accounts and school structure remain administrator-only controls.',
-        },
-    ]
-
-    const financeOutstandingTotal = useMemo(
-        () =>
-            ledgerRows[activeTrack].reduce(
-                (total, row) => total + parseCurrencyAmount(row.balance),
-                0,
-            ),
-        [activeTrack],
-    )
-    const financeMetrics = [
-        {
-            label: 'Students in view',
-            value: String(managementStudents.length).padStart(2, '0'),
-            note: 'Learner records visible to the finance desk in the selected school track.',
-        },
-        {
-            label: 'Outstanding balances',
-            value: formatCurrency(financeOutstandingTotal),
-            note: 'Combined unpaid student balances currently visible in the dashboard snapshot.',
-        },
-        {
-            label: 'Accounts flagged',
-            value: String(
-                ledgerRows[activeTrack].filter(
-                    row => parseCurrencyAmount(row.balance) > 0,
-                ).length,
-            ).padStart(2, '0'),
-            note: 'Students who still need fee follow-up in this track snapshot.',
-        },
-        {
-            label: 'Track scope',
-            value: trackLabels[activeTrack],
-            note: 'Switch between primary and secondary to monitor student finance separately.',
-        },
-    ]
 
     const pageEyebrow = teacherOnlyView
         ? 'Assigned Class Register'
         : adminOnlyView
           ? 'System Administration'
           : financeView
-            ? 'Student Finance Desk'
+            ? 'Finance Workspace'
             : guardianView
               ? 'Parent / Guardian Portal'
-            : 'Management Dashboard'
+            : 'Management Workspace'
     const pageTitle = teacherOnlyView
         ? assignedFixture?.className ??
           (userTrack === 'secondary'
@@ -958,10 +436,10 @@ const Dashboard = () => {
         : adminOnlyView
           ? 'System Control Center'
           : financeView
-            ? `${trackLabels[activeTrack]} Student Accounts`
+            ? 'Finance Desk'
             : guardianView
               ? user?.linked_student_record?.full_name ?? 'Guardian Dashboard'
-            : `${trackLabels[activeTrack]} School Overview`
+            : 'Head Teacher Workspace'
     const pageRoleLabel = formatRoleLabel(userRole)
     const pageMeta = teacherOnlyView
         ? assignedFixture
@@ -972,10 +450,10 @@ const Dashboard = () => {
         : adminOnlyView
           ? 'Administrator workspace for access control, school structure, and system-level oversight.'
           : financeView
-            ? `${trackLabels[activeTrack]} student balances, books, uniform, and learner basics.`
+            ? 'Open the finance desk and school shop from this workspace.'
             : guardianView
               ? 'View the linked learner profile, teacher comments, uploaded grades, and account notices.'
-            : `${trackLabels[activeTrack]} overview across all assigned classes`
+            : 'Open operational management tools without relying on demo dashboard data.'
 
     const updateAttendance = (studentId, status) => {
         if (!assignedFixture) {
@@ -1108,21 +586,6 @@ const Dashboard = () => {
             `${activeStudent.name} logged for ${disciplineEntry.incident.toLowerCase()}. Detention workflow sent to the backend queue.`,
         )
         setDisciplineEntry(current => ({ ...current, note: '' }))
-    }
-
-    const submitPayment = async event => {
-        event.preventDefault()
-
-        if (!paymentEntry.amount.trim()) {
-            setPaymentStatus('Enter a payment amount before saving.')
-            return
-        }
-
-        setPaymentStatus('Recording payment...')
-        await simulateRequest(true)
-        setPaymentStatus(
-            `Payment of MWK ${Number(paymentEntry.amount).toLocaleString()} recorded for ${paymentEntry.student} via ${paymentEntry.method}.`,
-        )
     }
 
     const renderTeacherView = () => (
@@ -1394,215 +857,68 @@ const Dashboard = () => {
         </>
     )
 
-    const renderManagementView = () => (
+        const renderManagementView = () => (
         <div className={styles.managementStack}>
-            <section id="analytics" className={styles.managementCards}>
-                {managementMetrics.map(metric => (
-                    <div key={metric.label} className={styles.managementCard}>
-                        <p className={styles.metricLabel}>{metric.label}</p>
-                        <p className={styles.managementValue}>{metric.value}</p>
-                        <p className={styles.metricMeta}>{metric.note}</p>
-                    </div>
-                ))}
-            </section>
-
             <section className={styles.lowerGrid}>
                 <div className={styles.panel}>
                     <div className={styles.panelHeader}>
                         <div>
-                            <p className={styles.panelEyebrow}>Class Ownership</p>
-                            <h2 className={styles.panelTitle}>Teacher visibility map</h2>
-                        </div>
-                    </div>
-
-                    <div className={styles.tableWrap}>
-                        <table className={styles.compactTable}>
-                            <thead>
-                                <tr>
-                                    <th>Class</th>
-                                    <th>Teacher</th>
-                                    <th>Learners</th>
-                                    <th>Attendance</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {classSummaries.map(summary => (
-                                    <tr key={summary.id}>
-                                        <td>{summary.className}</td>
-                                        <td>{summary.teacherLabel}</td>
-                                        <td>{summary.learners}</td>
-                                        <td>{summary.attendanceRate}%</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div className={styles.panel}>
-                    <div className={styles.panelHeader}>
-                        <div>
-                            <p className={styles.panelEyebrow}>Alerts & Escalations</p>
-                            <h2 className={styles.panelTitle}>Critical follow-up</h2>
+                            <p className={styles.panelEyebrow}>Core Tools</p>
+                            <h2 className={styles.panelTitle}>Operational workspaces</h2>
                         </div>
                     </div>
 
                     <div className={styles.alertList}>
-                        {managementAlerts[activeTrack].map(alert => (
-                            <div key={alert.title} className={styles.alertCard}>
-                                <div>
-                                    <strong>{alert.title}</strong>
-                                    <p>{alert.detail}</p>
-                                </div>
-                                <span className={styles.alertTag}>{alert.severity}</span>
+                        <a href="/students" className={styles.alertCard}>
+                            <div>
+                                <strong>Students</strong>
+                                <p>Create, update, and review learner records.</p>
                             </div>
-                        ))}
+                            <span className={styles.alertTag}>Open</span>
+                        </a>
+
+                        <a href="/gradebook" className={styles.alertCard}>
+                            <div>
+                                <strong>Gradebook</strong>
+                                <p>Review assessment periods and subject grades.</p>
+                            </div>
+                            <span className={styles.alertTag}>Open</span>
+                        </a>
+
+                        <a href="/management/timetables" className={styles.alertCard}>
+                            <div>
+                                <strong>Timetables</strong>
+                                <p>Create and assign class timetables.</p>
+                            </div>
+                            <span className={styles.alertTag}>Open</span>
+                        </a>
                     </div>
-                </div>
-            </section>
-
-            <section className={styles.lowerGrid}>
-                <div id="timetable" className={styles.panel}>
-                    <div className={styles.panelHeader}>
-                        <div>
-                            <p className={styles.panelEyebrow}>Timetable Management</p>
-                            <h2 className={styles.panelTitle}>Class allocations</h2>
-                        </div>
-                    </div>
-
-                    <div className={styles.timetableCards}>
-                        {managementFixtures.flatMap(fixture =>
-                            fixture.timetable.map(slot => (
-                                <div key={`${fixture.id}-${slot.join('-')}`} className={styles.timetableCard}>
-                                    <div>
-                                        <strong>{slot[1]}</strong>
-                                        <small>
-                                            {fixture.className} â€¢ {slot[2]}
-                                        </small>
-                                    </div>
-                                    <span>{slot[0]}</span>
-                                </div>
-                            )),
-                        )}
-                    </div>
-                </div>
-
-                <div id="finance" className={styles.panel}>
-                    <div className={styles.panelHeader}>
-                        <div>
-                            <p className={styles.panelEyebrow}>Financial Ledger</p>
-                            <h2 className={styles.panelTitle}>Student accounts</h2>
-                        </div>
-                    </div>
-
-                    <div className={styles.tableWrap}>
-                        <table className={styles.compactTable}>
-                            <thead>
-                                <tr>
-                                    <th>Student</th>
-                                    <th>Class</th>
-                                    <th>Invoiced</th>
-                                    <th>Paid</th>
-                                    <th>Balance</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {ledgerRows[activeTrack].map(row => (
-                                    <tr key={row.student}>
-                                        <td>{row.student}</td>
-                                        <td>{row.className}</td>
-                                        <td>{row.invoiced}</td>
-                                        <td>{row.paid}</td>
-                                        <td className={styles.balanceCell}>{row.balance}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <section className={styles.lowerGrid}>
-                <div className={styles.panel}>
-                    <div className={styles.panelHeader}>
-                        <div>
-                            <p className={styles.panelEyebrow}>Payment Capture</p>
-                            <h2 className={styles.panelTitle}>Record a payment</h2>
-                        </div>
-                    </div>
-
-                    <form onSubmit={submitPayment} className={styles.formGrid}>
-                        <label className={styles.fieldLabel}>
-                            <span>Student</span>
-                            <select
-                                value={paymentEntry.student}
-                                onChange={event =>
-                                    setPaymentEntry(current => ({
-                                        ...current,
-                                        student: event.target.value,
-                                    }))
-                                }
-                                className={styles.selectField}>
-                                {ledgerRows[activeTrack].map(row => (
-                                    <option key={row.student}>{row.student}</option>
-                                ))}
-                            </select>
-                        </label>
-
-                        <label className={styles.fieldLabel}>
-                            <span>Amount received</span>
-                            <input
-                                value={paymentEntry.amount}
-                                onChange={event =>
-                                    setPaymentEntry(current => ({
-                                        ...current,
-                                        amount: event.target.value,
-                                    }))
-                                }
-                                className={styles.textField}
-                            />
-                        </label>
-
-                        <label className={styles.fieldLabel}>
-                            <span>Method</span>
-                            <select
-                                value={paymentEntry.method}
-                                onChange={event =>
-                                    setPaymentEntry(current => ({
-                                        ...current,
-                                        method: event.target.value,
-                                    }))
-                                }
-                                className={styles.selectField}>
-                                <option>Bank transfer</option>
-                                <option>Cash office</option>
-                                <option>Mobile money</option>
-                            </select>
-                        </label>
-
-                        <button type="submit" className={styles.primaryAction}>
-                            Record payment
-                        </button>
-                    </form>
-
-                    <p className={styles.helperMessage}>{paymentStatus}</p>
                 </div>
 
                 <div className={styles.panel}>
                     <div className={styles.panelHeader}>
                         <div>
-                            <p className={styles.panelEyebrow}>Register Snapshot</p>
-                            <h2 className={styles.panelTitle}>Cross-class attendance mix</h2>
+                            <p className={styles.panelEyebrow}>Setup</p>
+                            <h2 className={styles.panelTitle}>Structure and allocations</h2>
                         </div>
                     </div>
 
-                    <div className={styles.profileStats}>
-                        {attendanceOptions.map(option => (
-                            <div key={option} className={styles.profileStat}>
-                                <span>{statusMeta[option].label}</span>
-                                <strong>{managementCounts[option]}</strong>
+                    <div className={styles.alertList}>
+                        <a href="/management/subjects" className={styles.alertCard}>
+                            <div>
+                                <strong>Subjects</strong>
+                                <p>Maintain the subject list used across the school.</p>
                             </div>
-                        ))}
+                            <span className={styles.alertTag}>Setup</span>
+                        </a>
+
+                        <a href="/management/form-teachers" className={styles.alertCard}>
+                            <div>
+                                <strong>Teacher Allocations</strong>
+                                <p>Assign teachers to classes and subjects.</p>
+                            </div>
+                            <span className={styles.alertTag}>Setup</span>
+                        </a>
                     </div>
                 </div>
             </section>
@@ -1611,16 +927,6 @@ const Dashboard = () => {
 
     const renderAdminView = () => (
         <div className={styles.managementStack}>
-            <section className={styles.managementCards}>
-                {adminMetrics.map(metric => (
-                    <div key={metric.label} className={styles.managementCard}>
-                        <p className={styles.metricLabel}>{metric.label}</p>
-                        <p className={styles.managementValue}>{metric.value}</p>
-                        <p className={styles.metricMeta}>{metric.note}</p>
-                    </div>
-                ))}
-            </section>
-
             <section className={styles.lowerGrid}>
                 <div className={styles.panel}>
                     <div className={styles.panelHeader}>
@@ -1634,7 +940,7 @@ const Dashboard = () => {
                         <a href="/admin/users" className={styles.alertCard}>
                             <div>
                                 <strong>User Accounts</strong>
-                                <p>Create accounts, assign teachers to classes, and control access.</p>
+                                <p>Create accounts, assign roles, and control access.</p>
                             </div>
                             <span className={styles.alertTag}>Admin</span>
                         </a>
@@ -1642,45 +948,18 @@ const Dashboard = () => {
                         <a href="/admin/school-structure" className={styles.alertCard}>
                             <div>
                                 <strong>School Structure</strong>
-                                <p>Set the class lists that feed teacher assignment and school-wide visibility.</p>
+                                <p>Set up the class structure used across the portal.</p>
                             </div>
                             <span className={styles.alertTag}>Admin</span>
                         </a>
-                    </div>
-                </div>
 
-                <div className={styles.panel}>
-                    <div className={styles.panelHeader}>
-                        <div>
-                            <p className={styles.panelEyebrow}>Delegated Workspaces</p>
-                            <h2 className={styles.panelTitle}>Management-owned tools</h2>
-                        </div>
-                    </div>
-
-                    <div className={styles.alertList}>
-                        <div className={styles.alertCard}>
+                        <a href="/admin/settings" className={styles.alertCard}>
                             <div>
-                                <strong>Subjects</strong>
-                                <p>Head teachers maintain the school subject registry from the management workspace.</p>
+                                <strong>System Settings</strong>
+                                <p>Review platform-level settings and controls.</p>
                             </div>
-                            <span className={styles.alertTag}>Management</span>
-                        </div>
-
-                        <div className={styles.alertCard}>
-                            <div>
-                                <strong>Teacher Allocations</strong>
-                                <p>Head teachers allocate secondary form classes and assign the subjects each teacher handles across classes.</p>
-                            </div>
-                            <span className={styles.alertTag}>Management</span>
-                        </div>
-
-                        <div className={styles.alertCard}>
-                            <div>
-                                <strong>Timetables</strong>
-                                <p>Head teachers create primary or secondary timetables and assign them to teachers.</p>
-                            </div>
-                            <span className={styles.alertTag}>Management</span>
-                        </div>
+                            <span className={styles.alertTag}>Admin</span>
+                        </a>
                     </div>
                 </div>
             </section>
@@ -1689,79 +968,31 @@ const Dashboard = () => {
 
     const renderFinanceView = () => (
         <div className={styles.managementStack}>
-            <section className={styles.managementCards}>
-                {financeMetrics.map(metric => (
-                    <div key={metric.label} className={styles.managementCard}>
-                        <p className={styles.metricLabel}>{metric.label}</p>
-                        <p className={styles.managementValue}>{metric.value}</p>
-                        <p className={styles.metricMeta}>{metric.note}</p>
-                    </div>
-                ))}
-            </section>
-
             <section className={styles.lowerGrid}>
                 <div className={styles.panel}>
                     <div className={styles.panelHeader}>
                         <div>
                             <p className={styles.panelEyebrow}>Finance Workspace</p>
-                            <h2 className={styles.panelTitle}>Student account controls</h2>
+                            <h2 className={styles.panelTitle}>Accountant tools</h2>
                         </div>
                     </div>
 
                     <div className={styles.alertList}>
                         <a href="/finance" className={styles.alertCard}>
                             <div>
-                                <strong>Open finance desk</strong>
-                                <p>
-                                    Update student fee balances, book payments, uniform
-                                    payments, and learner basics from the dedicated
-                                    accountant workspace.
-                                </p>
+                                <strong>Student finance desk</strong>
+                                <p>Update balances, book payments, and uniform payments.</p>
                             </div>
                             <span className={styles.alertTag}>Finance</span>
                         </a>
 
-                        <div className={styles.alertCard}>
+                        <a href="/finance/merchandise" className={styles.alertCard}>
                             <div>
-                                <strong>Restricted scope</strong>
-                                <p>
-                                    This role does not manage system users or school
-                                    structure. Those controls remain in the administrator
-                                    workspace.
-                                </p>
+                                <strong>School merchandise</strong>
+                                <p>Manage uniforms, books, shirts, and other school items.</p>
                             </div>
-                            <span className={styles.alertTag}>Read only</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div className={styles.panel}>
-                    <div className={styles.panelHeader}>
-                        <div>
-                            <p className={styles.panelEyebrow}>Balance Snapshot</p>
-                            <h2 className={styles.panelTitle}>Students needing follow-up</h2>
-                        </div>
-                    </div>
-
-                    <div className={styles.tableWrap}>
-                        <table className={styles.compactTable}>
-                            <thead>
-                                <tr>
-                                    <th>Student</th>
-                                    <th>Class</th>
-                                    <th>Balance</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {ledgerRows[activeTrack].map(row => (
-                                    <tr key={row.student}>
-                                        <td>{row.student}</td>
-                                        <td>{row.className}</td>
-                                        <td className={styles.balanceCell}>{row.balance}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                            <span className={styles.alertTag}>Shop</span>
+                        </a>
                     </div>
                 </div>
             </section>
@@ -1810,10 +1041,12 @@ const Dashboard = () => {
                                 teacherOnlyView
                                     ? 'Search students in your class...'
                                     : financeView
-                                      ? 'Search student accounts...'
+                                      ? 'Search finance workspace...'
                                     : guardianView
                                       ? 'Search learner updates...'
-                                    : 'Search classes or students...'
+                                      : adminOnlyView
+                                        ? 'Search admin tools...'
+                                        : 'Search management tools...'
                             }
                         />
                     </div>
@@ -1829,7 +1062,11 @@ const Dashboard = () => {
                                 strokeLinejoin="round"
                             />
                         </svg>
-                        <span className={styles.bellDot}>3</span>
+                        {dashboardUnreadNotifications > 0 ? (
+                            <span className={styles.bellDot}>
+                                {dashboardUnreadNotifications}
+                            </span>
+                        ) : null}
                     </button>
 
                     <div className={styles.userMenu} tabIndex={-1}>
@@ -1870,26 +1107,21 @@ const Dashboard = () => {
                                 : adminOnlyView
                                   ? 'System administration'
                                   : financeView
-                                    ? `All ${trackLabels[activeTrack].toLowerCase()} student accounts`
+                                    ? 'Finance tools and merchandise'
                                   : guardianView
                                     ? user?.linked_student_record?.full_name ??
                                       'Awaiting learner link'
-                                  : `All ${trackLabels[activeTrack].toLowerCase()} classes`}
+                                  : 'Management tools and setup'}
                         </span>
                     </button>
 
-                    {adminOnlyView || guardianView ? null : (
+                    {teacherOnlyView ? (
                         <div className={styles.segmentedControl}>
                             {Object.entries(trackLabels).map(([value, label]) => (
                                 <button
                                     key={value}
                                     type="button"
-                                    onClick={() => {
-                                        if (!teacherOnlyView) {
-                                            setActiveTrack(value)
-                                        }
-                                    }}
-                                    disabled={teacherOnlyView}
+                                    onClick={() => setActiveTrack(value)}
                                     className={`${styles.segmentButton} ${
                                         activeTrack === value ? styles.segmentActive : ''
                                     }`}>
@@ -1897,7 +1129,7 @@ const Dashboard = () => {
                                 </button>
                             ))}
                         </div>
-                    )}
+                    ) : null}
                 </div>
 
                 <div className={styles.actionRow}>
@@ -1912,14 +1144,14 @@ const Dashboard = () => {
                         </>
                     ) : null}
 
-                    {guardianView ? null : (
+                    {teacherOnlyView ? (
                         <button
                             type="button"
                             onClick={exportRegister}
                             className={styles.secondaryAction}>
                             Export
                         </button>
-                    )}
+                    ) : null}
                 </div>
             </section>
 
@@ -1939,4 +1171,3 @@ const Dashboard = () => {
 }
 
 export default Dashboard
-

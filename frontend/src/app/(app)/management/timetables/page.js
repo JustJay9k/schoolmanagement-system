@@ -5,8 +5,10 @@ import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import managementStyles from '@/app/(app)/management/management-tools.module.css'
 import Button from '@/components/Button'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import Input from '@/components/Input'
 import InputError from '@/components/InputError'
+import { useToast } from '@/components/ToastProvider'
 import axios from '@/lib/axios'
 import { canManageManagementWorkspace, formatRoleLabel } from '@/lib/userAccess'
 import { useAuth } from '@/hooks/auth'
@@ -79,17 +81,20 @@ const CloseIcon = () => (
 
 export default function ManagementTimetablesPage() {
     const { user } = useAuth({ middleware: 'auth' })
+    const { showToast } = useToast()
     const editorModalRef = useRef(null)
     const [timetables, setTimetables] = useState([])
     const [options, setOptions] = useState(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [pageStatus, setPageStatus] = useState(null)
+    const [loadError, setLoadError] = useState(null)
     const [formErrors, setFormErrors] = useState({})
     const [form, setForm] = useState(createEmptyForm())
     const [editorMode, setEditorMode] = useState('create')
     const [editingTimetableId, setEditingTimetableId] = useState(null)
     const [editorOpen, setEditorOpen] = useState(false)
+    const [deletingTimetableId, setDeletingTimetableId] = useState(null)
+    const [confirmingTimetable, setConfirmingTimetable] = useState(null)
 
     const loadTimetables = async () => {
         setLoading(true)
@@ -99,13 +104,12 @@ export default function ManagementTimetablesPage() {
 
             setTimetables(response.data?.timetables ?? [])
             setOptions(response.data?.options ?? null)
+            setLoadError(null)
         } catch (error) {
-            setPageStatus({
-                type: 'error',
-                message:
-                    error?.response?.data?.message ??
+            setLoadError(
+                error?.response?.data?.message ??
                     'Unable to load timetables right now.',
-            })
+            )
         } finally {
             setLoading(false)
         }
@@ -146,7 +150,6 @@ export default function ManagementTimetablesPage() {
 
     const startCreate = () => {
         resetEditor()
-        setPageStatus(null)
         setEditorOpen(true)
     }
 
@@ -173,7 +176,6 @@ export default function ManagementTimetablesPage() {
                     : [createEmptyEntry()],
         })
         setFormErrors({})
-        setPageStatus(null)
         setEditorOpen(true)
     }
 
@@ -257,7 +259,6 @@ export default function ManagementTimetablesPage() {
         event.preventDefault()
         setSaving(true)
         setFormErrors({})
-        setPageStatus(null)
 
         try {
             if (editorMode === 'edit' && editingTimetableId) {
@@ -265,14 +266,14 @@ export default function ManagementTimetablesPage() {
                     `/api/management/timetables/${editingTimetableId}`,
                     form,
                 )
-                setPageStatus({
+                showToast({
                     type: 'success',
                     message: 'Timetable updated successfully.',
                 })
                 closeEditor()
             } else {
                 await axios.post('/api/management/timetables', form)
-                setPageStatus({
+                showToast({
                     type: 'success',
                     message: 'Timetable created successfully.',
                 })
@@ -282,7 +283,7 @@ export default function ManagementTimetablesPage() {
             await loadTimetables()
         } catch (error) {
             setFormErrors(error?.response?.data?.errors ?? {})
-            setPageStatus({
+            showToast({
                 type: 'error',
                 message:
                     error?.response?.data?.message ??
@@ -294,11 +295,7 @@ export default function ManagementTimetablesPage() {
     }
 
     const deleteTimetable = async timetable => {
-        if (!window.confirm(`Delete the timetable for ${timetable.class_name}?`)) {
-            return
-        }
-
-        setPageStatus(null)
+        setDeletingTimetableId(timetable.id)
 
         try {
             const response = await axios.delete(
@@ -309,18 +306,21 @@ export default function ManagementTimetablesPage() {
                 closeEditor()
             }
 
-            setPageStatus({
+            showToast({
                 type: 'success',
                 message: response.data?.message ?? 'Timetable deleted successfully.',
             })
             await loadTimetables()
         } catch (error) {
-            setPageStatus({
+            showToast({
                 type: 'error',
                 message:
                     error?.response?.data?.message ??
                     'Unable to delete this timetable.',
             })
+        } finally {
+            setDeletingTimetableId(null)
+            setConfirmingTimetable(null)
         }
     }
 
@@ -367,13 +367,13 @@ export default function ManagementTimetablesPage() {
                     </button>
                 </div>
             }>
-            {pageStatus ? (
+            {loadError ? (
                 <section className={workspaceStyles.panel}>
                     <p
                         className={`${managementStyles.notice} ${
-                            pageStatus.type === 'error' ? managementStyles.dangerText : ''
+                            managementStyles.dangerText
                         }`}>
-                        {pageStatus.message}
+                        {loadError}
                     </p>
                 </section>
             ) : null}
@@ -434,7 +434,12 @@ export default function ManagementTimetablesPage() {
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    onClick={() => deleteTimetable(timetable)}
+                                                    onClick={() =>
+                                                        setConfirmingTimetable(timetable)
+                                                    }
+                                                    disabled={
+                                                        deletingTimetableId === timetable.id
+                                                    }
                                                     className={managementStyles.dangerButton}>
                                                     Delete
                                                 </button>
@@ -883,6 +888,29 @@ export default function ManagementTimetablesPage() {
                     </div>
                 </div>
             ) : null}
+            <ConfirmDialog
+                open={Boolean(confirmingTimetable)}
+                eyebrow="Delete timetable"
+                title="Remove this timetable?"
+                message={
+                    confirmingTimetable
+                        ? `Delete the timetable for ${confirmingTimetable.class_name}?`
+                        : ''
+                }
+                confirmLabel="Delete timetable"
+                busyLabel="Deleting..."
+                tone="danger"
+                busy={
+                    deletingTimetableId != null &&
+                    deletingTimetableId === confirmingTimetable?.id
+                }
+                onClose={() => setConfirmingTimetable(null)}
+                onConfirm={() => {
+                    if (confirmingTimetable) {
+                        deleteTimetable(confirmingTimetable)
+                    }
+                }}
+            />
         </WorkspacePageShell>
     )
 }
