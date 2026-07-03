@@ -318,7 +318,15 @@ const NavIcon = ({ name }) => (
     </svg>
 )
 
-const Navigation = ({ user, sidebarCollapsed }) => {
+const SidebarToggleIcon = () => (
+    <>
+        <span />
+        <span />
+        <span />
+    </>
+)
+
+const Navigation = ({ user, sidebarCollapsed, onToggleSidebar }) => {
     const { logout } = useAuth()
     const pathname = usePathname()
     const [open, setOpen] = useState(false)
@@ -341,17 +349,42 @@ const Navigation = ({ user, sidebarCollapsed }) => {
     const Sidebar = (
         <aside className={`${styles.sidebar} ${sidebarCollapsed ? styles.sidebarCollapsed : ''}`}>
             <div className={styles.brand}>
-                <div className={styles.brandMark}>
-                    <ApplicationLogo className="h-8 w-8 fill-current" />
-                </div>
-                <div
-                    className={`${styles.brandCopy} ${
-                        sidebarCollapsed ? styles.brandCopyCollapsed : ''
-                    }`}>
-                    <div>
+                {sidebarCollapsed ? (
+                    <button
+                        type="button"
+                        onClick={onToggleSidebar}
+                        aria-label="Expand sidebar"
+                        title="Expand sidebar"
+                        className={`${styles.brandMark} ${styles.brandMarkButton}`}>
+                        <span className={styles.brandMarkGlyph}>
+                            <SidebarToggleIcon />
+                        </span>
+                    </button>
+                ) : (
+                    <div className={styles.brandMark}>
+                        <ApplicationLogo className="h-8 w-8 fill-current" />
+                    </div>
+                )}
+                <div className={styles.brandHeader}>
+                    <div
+                        className={`${styles.brandCopy} ${
+                            sidebarCollapsed ? styles.brandCopyCollapsed : ''
+                        }`}>
                         <p className={styles.schoolName}>PCMS</p>
                         <p className={styles.schoolMeta}>Phunziro Class Management System</p>
                     </div>
+                    {!sidebarCollapsed ? (
+                        <button
+                            type="button"
+                            onClick={onToggleSidebar}
+                            aria-label="Collapse sidebar"
+                            title="Collapse sidebar"
+                            className={styles.sidebarToggle}>
+                            <span className={styles.sidebarToggleGlyph}>
+                                <SidebarToggleIcon />
+                            </span>
+                        </button>
+                    ) : null}
                 </div>
             </div>
 

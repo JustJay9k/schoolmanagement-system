@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/auth'
 import Navigation from '@/app/(app)/Navigation'
 import Loading from '@/app/(app)/Loading'
@@ -18,6 +18,9 @@ const activityEvents = [
 const AppLayout = ({ children }) => {
     const { user, logout } = useAuth({ middleware: 'auth' })
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+    const toggleSidebar = useCallback(() => {
+        setSidebarCollapsed(current => !current)
+    }, [])
 
     useEffect(() => {
         const storedValue = localStorage.getItem('pcms-sidebar-collapsed')
@@ -26,16 +29,12 @@ const AppLayout = ({ children }) => {
     }, [])
 
     useEffect(() => {
-        const handleToggleSidebar = () => {
-            setSidebarCollapsed(current => !current)
-        }
-
-        window.addEventListener('pcms-toggle-sidebar', handleToggleSidebar)
+        window.addEventListener('pcms-toggle-sidebar', toggleSidebar)
 
         return () => {
-            window.removeEventListener('pcms-toggle-sidebar', handleToggleSidebar)
+            window.removeEventListener('pcms-toggle-sidebar', toggleSidebar)
         }
-    }, [])
+    }, [toggleSidebar])
 
     useEffect(() => {
         document.body.dataset.sidebarCollapsed = sidebarCollapsed ? 'true' : 'false'
@@ -95,6 +94,7 @@ const AppLayout = ({ children }) => {
             <Navigation
                 user={user}
                 sidebarCollapsed={sidebarCollapsed}
+                onToggleSidebar={toggleSidebar}
             />
 
             <main className="appShellMain pb-12">{children}</main>

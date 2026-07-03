@@ -180,6 +180,9 @@ body::before {
     width: 100%;
     min-width: 0;
     padding-left: 0;
+    transition:
+        width 240ms ease,
+        margin-left 240ms ease;
 }
 
 @media (min-width: 1024px) {

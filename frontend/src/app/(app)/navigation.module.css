@@ -19,6 +19,9 @@
     padding: 1rem 0.75rem;
     scrollbar-width: thin;
     scrollbar-color: rgba(var(--accent-rgb), 0.3) transparent;
+    transition:
+        gap 220ms ease,
+        padding 220ms ease;
 }
 
 .sidebarCollapsed {
@@ -32,6 +35,9 @@
     align-items: center;
     gap: 0.6rem;
     padding: 0 0.25rem;
+    transition:
+        gap 220ms ease,
+        padding 220ms ease;
 }
 
 .brandCopy,
@@ -48,6 +54,10 @@
     max-width: 16rem;
     opacity: 1;
     transform: translateX(0);
+    transition:
+        max-width 220ms ease,
+        opacity 180ms ease,
+        transform 220ms ease;
 }
 
 .brandCopyCollapsed,
@@ -65,6 +75,14 @@
     padding: 0;
 }
 
+.brandHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+    transition: gap 220ms ease;
+}
+
 .brandMark,
 .mobileBrandMark {
     display: grid;
@@ -73,11 +91,39 @@
     background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
     color: var(--accent-contrast);
     box-shadow: 0 14px 30px var(--shadow-soft);
+    transition:
+        transform 220ms ease,
+        border-radius 220ms ease,
+        box-shadow 220ms ease,
+        background 220ms ease,
+        color 220ms ease;
 }
 
 .brandMark {
     height: 2.35rem;
     width: 2.35rem;
+}
+
+.brandMarkButton {
+    border: 0;
+    padding: 0;
+}
+
+.brandMarkButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 36px var(--shadow-strong);
+}
+
+.brandMarkGlyph {
+    display: inline-grid;
+    gap: 0.28rem;
+}
+
+.brandMarkGlyph span {
+    width: 0.95rem;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
 }
 
 .schoolName {
@@ -91,6 +137,45 @@
     margin: 0.2rem 0 0;
     font-size: 0.68rem;
     color: var(--muted);
+}
+
+.sidebarToggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-card-strong);
+    width: 1.95rem;
+    height: 1.95rem;
+    padding: 0;
+    color: var(--ink);
+    transition:
+        transform 140ms ease,
+        border-color 140ms ease,
+        box-shadow 140ms ease,
+        color 140ms ease,
+        opacity 180ms ease;
+}
+
+.sidebarToggle:hover {
+    border-color: var(--accent);
+    color: var(--accent-strong);
+    box-shadow: 0 12px 24px var(--shadow-soft);
+}
+
+.sidebarToggleGlyph {
+    display: inline-grid;
+    gap: 0.28rem;
+    flex: 0 0 auto;
+}
+
+.sidebarToggleGlyph span {
+    width: 0.9rem;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
 }
 
 .navList {
@@ -108,6 +193,12 @@
     font-weight: 700;
     color: var(--ink);
     text-decoration: none;
+    transition:
+        transform 180ms ease,
+        background-color 180ms ease,
+        color 180ms ease,
+        padding 220ms ease,
+        gap 220ms ease;
 }
 
 .navIconWrap {
@@ -186,6 +277,11 @@
     border-radius: 0.9rem;
     background: var(--surface-tint);
     padding: 0.7rem;
+    transition:
+        gap 220ms ease,
+        padding 220ms ease,
+        transform 180ms ease,
+        background-color 180ms ease;
 }
 
 .profileCardCollapsed {
@@ -315,6 +411,7 @@
         inset: 0 auto 0 0;
         display: block;
         width: 14.75rem;
+        transition: width 240ms ease;
     }
 
     .desktopSidebarCollapsed {
