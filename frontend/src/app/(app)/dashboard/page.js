@@ -228,6 +228,10 @@ const createTeacherDashboardStudent = student => ({
     note: student.performance?.comment ?? '',
     studentCode: student.student_code ?? '',
     guardianName: student.guardian_name ?? '',
+    disabilityName:
+        typeof student.disability_name === 'string'
+            ? student.disability_name.trim()
+            : '',
 })
 
 const StatusCell = ({ status }) => {
@@ -385,6 +389,10 @@ const Dashboard = () => {
                   value:
                       activeStudent.ageLabel ||
                       getAgeFromBirthDate(activeStudent.birthDate),
+              },
+              {
+                  label: 'Disability',
+                  value: activeStudent.disabilityName || 'No disability',
               },
           ]
         : []

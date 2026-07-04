@@ -252,6 +252,7 @@ class TeacherGradebookApiController extends Controller
             'class_name' => $student->class_name,
             'student_code' => $student->student_code,
             'guardian_name' => $student->guardian_name,
+            'disability_name' => $student->disability_name,
             'sex' => $student->sex,
             'date_of_birth' => $student->date_of_birth?->format('Y-m-d'),
             'age' => $student->resolvedAge(),

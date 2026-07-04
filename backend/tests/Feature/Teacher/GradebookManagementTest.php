@@ -55,6 +55,7 @@ class GradebookManagementTest extends TestCase
             'full_name' => 'Agnes Chirwa',
             'sex' => 'Female',
             'date_of_birth' => '2014-05-02',
+            'disability_name' => 'Visual impairment',
         ]);
 
         $guardian->update([
@@ -67,6 +68,7 @@ class GradebookManagementTest extends TestCase
             ->assertJsonPath('students.0.full_name', 'Agnes Chirwa')
             ->assertJsonPath('students.0.sex', 'Female')
             ->assertJsonPath('students.0.date_of_birth', '2014-05-02')
+            ->assertJsonPath('students.0.disability_name', 'Visual impairment')
             ->assertJsonCount(2, 'options.subjectsByTrack.primary')
             ->assertJsonCount(1, 'options.assessmentPeriods');
 
