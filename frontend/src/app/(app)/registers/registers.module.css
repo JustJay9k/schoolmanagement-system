@@ -1,0 +1,102 @@
+.stack {
+    display: grid;
+    gap: 1rem;
+}
+
+.trackGrid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+}
+
+.trackPanel,
+.periodCard {
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--surface-card-muted);
+}
+
+.trackPanel {
+    display: grid;
+    gap: 0.9rem;
+    padding: 1rem;
+}
+
+.trackHeader,
+.periodCardHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.trackTitle {
+    margin: 0.2rem 0 0;
+    font-size: 1rem;
+    color: var(--ink);
+}
+
+.periodGrid {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.timeGrid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+.periodCard {
+    display: grid;
+    gap: 0.85rem;
+    padding: 0.9rem;
+}
+
+.periodInput {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--surface-field);
+    color: var(--ink);
+    padding: 0.9rem 1rem;
+    font-size: 0.92rem;
+    outline: none;
+    transition:
+        border-color 140ms ease,
+        box-shadow 140ms ease;
+}
+
+.periodInput:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.toggleRow {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--surface-field);
+    padding: 0.95rem 1rem;
+}
+
+.toggleRow strong {
+    display: block;
+    color: var(--ink);
+}
+
+.toggleRow small {
+    display: block;
+    margin-top: 0.18rem;
+    color: var(--muted);
+    line-height: 1.45;
+}
+
+.toggleInput {
+    margin-top: 0.2rem;
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--accent);
+}

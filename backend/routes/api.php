@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Guardian\GuardianChildApiController;
 use App\Http\Controllers\Api\Guardian\GuardianMerchandiseApiController;
 use App\Http\Controllers\Api\Management\ManagementFormTeacherApiController;
 use App\Http\Controllers\Api\Management\ManagementGradeAssessmentPeriodApiController;
+use App\Http\Controllers\Api\Management\ManagementRegisterScheduleApiController;
 use App\Http\Controllers\Api\Management\ManagementSchoolSubjectApiController;
 use App\Http\Controllers\Api\Management\ManagementStudentRecordApiController;
 use App\Http\Controllers\Api\Management\ManagementTeacherSubjectAssignmentApiController;
@@ -66,6 +67,9 @@ Route::middleware(['auth:sanctum', 'timetable-manager'])->prefix('management')->
     Route::get('/gradebook-assessment-periods', [ManagementGradeAssessmentPeriodApiController::class, 'index']);
     Route::post('/gradebook-assessment-periods', [ManagementGradeAssessmentPeriodApiController::class, 'store']);
     Route::delete('/gradebook-assessment-periods/{period}', [ManagementGradeAssessmentPeriodApiController::class, 'destroy']);
+
+    Route::get('/register-schedule', [ManagementRegisterScheduleApiController::class, 'show']);
+    Route::put('/register-schedule', [ManagementRegisterScheduleApiController::class, 'update']);
 
     Route::get('/timetables', [ManagementTimetableApiController::class, 'index']);
     Route::get('/timetables/{timetable}', [ManagementTimetableApiController::class, 'show']);

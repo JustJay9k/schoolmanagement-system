@@ -88,6 +88,7 @@ class TeacherGradebookApiController extends Controller
                 'classesByTrack' => SchoolContextOptions::classesByTrack(),
                 'subjectsByTrack' => $subjectsByTrack,
                 'assessmentPeriods' => $assessmentPeriods,
+                'registerScheduleByTrack' => SchoolContextOptions::registerScheduleByTrack(),
             ],
         ]);
     }

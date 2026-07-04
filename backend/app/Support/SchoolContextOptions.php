@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Schema;
 final class SchoolContextOptions
 {
     public const STRUCTURE_KEY = 'school_structure';
+    public const REGISTER_SCHEDULE_KEY = 'register_schedule';
 
     /**
      * @return array<string, string>
@@ -55,6 +56,66 @@ final class SchoolContextOptions
                 ),
             ],
         );
+    }
+
+    /**
+     * @return array<string, list<array{label: string, registration_enabled: bool, start_time: ?string, end_time: ?string}>>
+     */
+    public static function registerScheduleByTrack(): array
+    {
+        if (! Schema::hasTable('school_settings')) {
+            return self::defaultRegisterScheduleByTrack();
+        }
+
+        $storedValue = SchoolSetting::query()
+            ->where('key', self::REGISTER_SCHEDULE_KEY)
+            ->value('value');
+
+        return self::normalizeRegisterScheduleByTrack(
+            is_array($storedValue) ? $storedValue : null,
+            fallbackToDefaults: true,
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $scheduleByTrack
+     */
+    public static function saveRegisterScheduleByTrack(?array $scheduleByTrack): void
+    {
+        SchoolSetting::query()->updateOrCreate(
+            ['key' => self::REGISTER_SCHEDULE_KEY],
+            [
+                'value' => self::normalizeRegisterScheduleByTrack(
+                    $scheduleByTrack,
+                    fallbackToDefaults: false,
+                ),
+            ],
+        );
+    }
+
+    /**
+     * @return array<string, list<array{label: string, registration_enabled: bool, start_time: ?string, end_time: ?string}>>
+     */
+    public static function defaultRegisterScheduleByTrack(): array
+    {
+        return [
+            'primary' => [
+                ['label' => 'AM', 'registration_enabled' => true, 'start_time' => '07:30', 'end_time' => '08:00'],
+                ['label' => 'PM', 'registration_enabled' => true, 'start_time' => '13:00', 'end_time' => '13:15'],
+                ['label' => 'Block 1', 'registration_enabled' => true, 'start_time' => '08:15', 'end_time' => '09:00'],
+                ['label' => 'Block 2', 'registration_enabled' => false, 'start_time' => '09:15', 'end_time' => '10:00'],
+                ['label' => 'Block 3', 'registration_enabled' => false, 'start_time' => '10:30', 'end_time' => '11:15'],
+                ['label' => 'Block 4', 'registration_enabled' => false, 'start_time' => '11:30', 'end_time' => '12:15'],
+            ],
+            'secondary' => [
+                ['label' => 'AM', 'registration_enabled' => true, 'start_time' => '07:30', 'end_time' => '08:00'],
+                ['label' => 'PM', 'registration_enabled' => true, 'start_time' => '13:00', 'end_time' => '13:15'],
+                ['label' => 'Period 1', 'registration_enabled' => true, 'start_time' => '09:00', 'end_time' => '10:00'],
+                ['label' => 'Period 2', 'registration_enabled' => false, 'start_time' => '10:00', 'end_time' => '11:00'],
+                ['label' => 'Period 3', 'registration_enabled' => false, 'start_time' => '11:15', 'end_time' => '12:15'],
+                ['label' => 'Period 4', 'registration_enabled' => false, 'start_time' => '13:15', 'end_time' => '14:15'],
+            ],
+        ];
     }
 
     /**
@@ -205,6 +266,62 @@ final class SchoolContextOptions
         }
 
         return ! in_array($className, self::takenClassesByTrackForSchool($schoolId, $ignoreUser)[$track] ?? [], true);
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $scheduleByTrack
+     * @return array<string, list<array{label: string, registration_enabled: bool, start_time: ?string, end_time: ?string}>>
+     */
+    public static function normalizeRegisterScheduleByTrack(?array $scheduleByTrack, bool $fallbackToDefaults): array
+    {
+        $defaults = self::defaultRegisterScheduleByTrack();
+        $normalized = [];
+
+        foreach (self::trackValues() as $track) {
+            $candidate = $scheduleByTrack[$track] ?? null;
+            $periods = collect(is_array($candidate) ? $candidate : [])
+                ->map(function (mixed $entry): ?array {
+                    if (! is_array($entry)) {
+                        return null;
+                    }
+
+                    $label = trim((string) ($entry['label'] ?? ''));
+
+                    if ($label === '') {
+                        return null;
+                    }
+
+                    return [
+                        'label' => $label,
+                        'registration_enabled' => filter_var(
+                            $entry['registration_enabled'] ?? false,
+                            FILTER_VALIDATE_BOOL,
+                        ),
+                        'start_time' => self::normalizeScheduleTime($entry['start_time'] ?? null),
+                        'end_time' => self::normalizeScheduleTime($entry['end_time'] ?? null),
+                    ];
+                })
+                ->filter()
+                ->values()
+                ->all();
+
+            $normalized[$track] = $periods !== []
+                ? $periods
+                : ($fallbackToDefaults ? $defaults[$track] : []);
+        }
+
+        return $normalized;
+    }
+
+    private static function normalizeScheduleTime(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+
+        return preg_match('/^\d{2}:\d{2}$/', $trimmed) === 1 ? $trimmed : null;
     }
 
     /**

@@ -69,6 +69,7 @@ class GradebookManagementTest extends TestCase
             ->assertJsonPath('students.0.sex', 'Female')
             ->assertJsonPath('students.0.date_of_birth', '2014-05-02')
             ->assertJsonPath('students.0.disability_name', 'Visual impairment')
+            ->assertJsonPath('options.registerScheduleByTrack.primary.0.label', 'AM')
             ->assertJsonCount(2, 'options.subjectsByTrack.primary')
             ->assertJsonCount(1, 'options.assessmentPeriods');
 

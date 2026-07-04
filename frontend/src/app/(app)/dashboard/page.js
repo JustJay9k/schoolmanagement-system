@@ -67,22 +67,22 @@ const createAssignedFixtureFallback = (track, className) => ({
     students: [],
 })
 
-const sessionColumns = {
+const defaultRegisterScheduleByTrack = {
     primary: [
-        { label: 'AM' },
-        { label: 'PM' },
-        { label: 'Block 1', sub: 'Literacy' },
-        { label: 'Block 2', sub: 'Maths' },
-        { label: 'Block 3', sub: 'Health' },
-        { label: 'Block 4', sub: 'Games' },
+        { label: 'AM', registration_enabled: true },
+        { label: 'PM', registration_enabled: true },
+        { label: 'Block 1', registration_enabled: true },
+        { label: 'Block 2', registration_enabled: false },
+        { label: 'Block 3', registration_enabled: false },
+        { label: 'Block 4', registration_enabled: false },
     ],
     secondary: [
-        { label: 'AM' },
-        { label: 'PM' },
-        { label: 'Period 1', sub: '09:00-10:00' },
-        { label: 'Period 2', sub: '10:00-11:00' },
-        { label: 'Period 3', sub: '11:15-12:15' },
-        { label: 'Period 4', sub: '13:15-14:15' },
+        { label: 'AM', registration_enabled: true },
+        { label: 'PM', registration_enabled: true },
+        { label: 'Period 1', registration_enabled: true },
+        { label: 'Period 2', registration_enabled: false },
+        { label: 'Period 3', registration_enabled: false },
+        { label: 'Period 4', registration_enabled: false },
     ],
 }
 
@@ -173,21 +173,52 @@ const getAgeFromBirthDate = value => {
     return age >= 0 ? `${age} years` : 'Not recorded'
 }
 
-const buildSessionStates = (student, track) => {
-    const sessionCount = sessionColumns[track]?.length ?? 0
+const getRegisterColumns = (options, track) => {
+    const configuredPeriods =
+        options?.registerScheduleByTrack?.[track] ??
+        defaultRegisterScheduleByTrack[track] ??
+        []
+
+    return configuredPeriods.filter(period => period.registration_enabled)
+}
+
+const formatPeriodTime = period => {
+    const startTime = period?.start_time ?? ''
+    const endTime = period?.end_time ?? ''
+
+    if (!startTime || !endTime) {
+        return ''
+    }
+
+    return `${startTime}-${endTime}`
+}
+
+const buildSessionStates = (student, track, sessionCount) => {
+    if (sessionCount === 0) {
+        return []
+    }
 
     if (!student.status) {
         return Array.from({ length: sessionCount }, () => null)
     }
 
-    if (student.status === 'P') return ['P', 'P', 'P', 'P', 'P', 'P']
-    if (student.status === 'A') return ['A', 'A', 'A', 'A', 'A', 'A']
-    if (student.status === 'S') return ['S', 'S', 'S', 'S', 'S', 'S']
-    if (student.status === 'E') return ['P', 'P', 'P', 'P', 'E', 'P']
+    if (student.status === 'P' || student.status === 'A' || student.status === 'S') {
+        return Array.from({ length: sessionCount }, () => student.status)
+    }
 
-    return track === 'secondary'
-        ? ['P', 'P', 'P', 'L', 'P', 'P']
-        : ['L', 'P', 'P', 'P', 'P', 'P']
+    if (student.status === 'E') {
+        return Array.from({ length: sessionCount }, (_, index) =>
+            index === sessionCount - 1 ? 'E' : 'P',
+        )
+    }
+
+    return Array.from({ length: sessionCount }, (_, index) => {
+        if (track === 'secondary') {
+            return index === Math.min(2, sessionCount - 1) ? 'L' : 'P'
+        }
+
+        return index === 0 ? 'L' : 'P'
+    })
 }
 
 const getCounts = students =>
@@ -360,6 +391,7 @@ const Dashboard = () => {
     const currentTeacherStudents = assignedFixture
         ? registerState[assignedFixture.id] ?? []
         : []
+    const registerColumns = getRegisterColumns(teacherDashboardData?.options, activeTrack)
 
     useEffect(() => {
         setSelectedStudentId(currentTeacherStudents[0]?.id ?? null)
@@ -514,6 +546,15 @@ const Dashboard = () => {
             return
         }
 
+        if (registerColumns.length === 0) {
+            setRegisterStatus({
+                tone: 'error',
+                message:
+                    'No registration periods are enabled for this track. Ask the head teacher to configure the daily register schedule first.',
+            })
+            return
+        }
+
         setRegisterStatus({
             tone: 'loading',
             message: 'Submitting register payload to the system logic engine...',
@@ -534,9 +575,7 @@ const Dashboard = () => {
         setRegisterStatus({
             tone: 'success',
             message:
-                activeTrack === 'primary'
-                    ? `${assignedFixture.className} AM register posted successfully.`
-                    : `${assignedFixture.className} period register posted successfully.`,
+                `${assignedFixture.className} ${registerColumns[0]?.label ?? 'register'} posted successfully.`,
         })
     }
 
@@ -648,6 +687,8 @@ const Dashboard = () => {
                         : 'This teacher account is not yet assigned to a class.'
                     : teacherDashboardLoading
                       ? 'Loading learner records from the school database...'
+                    : registerColumns.length === 0
+                      ? 'No registration periods are enabled for this class track. Head teacher accounts can configure the daily register schedule from the register centre.'
                     : currentTeacherStudents.length === 0
                       ? 'Your class assignment is already saved. Learner records for this class have not been loaded into the dashboard yet.'
                       : registerStatus.message}
@@ -662,20 +703,32 @@ const Dashboard = () => {
                                 <th>Student Name</th>
                                 <th>Tutor Group</th>
                                 <th>Quick Status</th>
-                                {sessionColumns[activeTrack].map(column => (
-                                    <th key={column.label}>
-                                        <div className={styles.columnHeading}>
-                                            <span>{column.label}</span>
-                                            {column.sub ? <small>{column.sub}</small> : null}
-                                        </div>
-                                    </th>
-                                ))}
+                                {registerColumns.length > 0 ? (
+                                    registerColumns.map(column => (
+                                        <th key={column.label}>
+                                            <div className={styles.columnHeading}>
+                                                <span>{column.label}</span>
+                                                {formatPeriodTime(column) ? (
+                                                    <small>
+                                                        {formatPeriodTime(column)}
+                                                    </small>
+                                                ) : null}
+                                            </div>
+                                        </th>
+                                    ))
+                                ) : (
+                                    <th>Registration setup</th>
+                                )}
                                 <th>Notes</th>
                             </tr>
                         </thead>
                         <tbody>
                             {currentTeacherStudents.map((student, index) => {
-                                const sessions = buildSessionStates(student, activeTrack)
+                                const sessions = buildSessionStates(
+                                    student,
+                                    activeTrack,
+                                    registerColumns.length,
+                                )
                                 const isSelected = activeStudent?.id === student.id
 
                                 return (
@@ -720,11 +773,20 @@ const Dashboard = () => {
                                                 ))}
                                             </div>
                                         </td>
-                                        {sessions.map((status, sessionIndex) => (
-                                            <td key={`${student.id}-${sessionIndex}`}>
-                                                <StatusCell status={status} />
+                                        {registerColumns.length > 0 ? (
+                                            sessions.map((status, sessionIndex) => (
+                                                <td key={`${student.id}-${sessionIndex}`}>
+                                                    <StatusCell status={status} />
+                                                </td>
+                                            ))
+                                        ) : (
+                                            <td>
+                                                <small>
+                                                    Registration is not enabled for any
+                                                    period in this track.
+                                                </small>
                                             </td>
-                                        ))}
+                                        )}
                                         <td>
                                             <input
                                                 className={styles.noteInput}
@@ -1143,10 +1205,18 @@ const Dashboard = () => {
                 <div className={styles.actionRow}>
                     {teacherOnlyView ? (
                         <>
-                            <button type="button" onClick={markAllPresent} className={styles.primaryAction}>
+                            <button
+                                type="button"
+                                onClick={markAllPresent}
+                                disabled={!assignedFixture || registerColumns.length === 0}
+                                className={styles.primaryAction}>
                                 Mark All
                             </button>
-                            <button type="button" onClick={submitRegister} className={styles.primaryGhost}>
+                            <button
+                                type="button"
+                                onClick={submitRegister}
+                                disabled={!assignedFixture || registerColumns.length === 0}
+                                className={styles.primaryGhost}>
                                 Submit Register
                             </button>
                         </>
