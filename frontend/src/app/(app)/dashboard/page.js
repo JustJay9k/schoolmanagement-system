@@ -1279,21 +1279,6 @@ const Dashboard = () => {
                         </span>
                     </button>
 
-                    {teacherOnlyView ? (
-                        <div className={styles.segmentedControl}>
-                            {Object.entries(trackLabels).map(([value, label]) => (
-                                <button
-                                    key={value}
-                                    type="button"
-                                    onClick={() => setActiveTrack(value)}
-                                    className={`${styles.segmentButton} ${
-                                        activeTrack === value ? styles.segmentActive : ''
-                                    }`}>
-                                    {label}
-                                </button>
-                            ))}
-                        </div>
-                    ) : null}
                 </div>
 
                 <div className={styles.actionRow}>

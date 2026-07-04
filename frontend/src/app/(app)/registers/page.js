@@ -463,6 +463,171 @@ export default function RegistersPage() {
                             <div className={workspaceStyles.panelHeader}>
                                 <div>
                                     <p className={workspaceStyles.panelEyebrow}>
+                                        School Inbox
+                                    </p>
+                                    <h2 className={workspaceStyles.panelTitle}>
+                                        Teacher register reports
+                                    </h2>
+                                </div>
+                                <span className={workspaceStyles.badge}>
+                                    {managementTeachers.length} teachers
+                                </span>
+                            </div>
+
+                            {managementReportsError ? (
+                                <p
+                                    className={`${managementStyles.notice} ${managementStyles.dangerText}`}>
+                                    {managementReportsError}
+                                </p>
+                            ) : managementReportsLoading ? (
+                                <p className={managementStyles.muted}>
+                                    Loading school register reports...
+                                </p>
+                            ) : managementReports.length === 0 ? (
+                                <p className={managementStyles.muted}>
+                                    No register reports have been submitted or saved in this school yet.
+                                </p>
+                            ) : (
+                                <div className={registerStyles.reportLayout}>
+                                    <div className={registerStyles.reportList}>
+                                        {managementReports.map(report => (
+                                            <button
+                                                key={report.id}
+                                                type="button"
+                                                onClick={() =>
+                                                    setSelectedManagementReportId(report.id)
+                                                }
+                                                className={`${registerStyles.reportListButton} ${
+                                                    selectedManagementReportId === report.id
+                                                        ? registerStyles.reportListButtonActive
+                                                        : ''
+                                                }`}>
+                                                <div className={registerStyles.reportListTop}>
+                                                    <strong>{report.teacher_name}</strong>
+                                                    <span className={workspaceStyles.badge}>
+                                                        {report.status}
+                                                    </span>
+                                                </div>
+                                                <p>
+                                                    {report.class_name} •{' '}
+                                                    {report.school_track}
+                                                </p>
+                                                <small>
+                                                    {formatReportDate(report.report_date)}
+                                                </small>
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {selectedManagementReport ? (
+                                        <div className={registerStyles.reportDetail}>
+                                            <div className={registerStyles.reportSummaryGrid}>
+                                                {attendanceOptions.map(option => (
+                                                    <div
+                                                        key={option}
+                                                        className={registerStyles.reportSummaryCard}>
+                                                        <span>{attendanceLabels[option]}</span>
+                                                        <strong>
+                                                            {getStatusCount(
+                                                                selectedManagementReport.summary,
+                                                                option,
+                                                            )}
+                                                        </strong>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <div className={workspaceStyles.list}>
+                                                <div className={workspaceStyles.listItem}>
+                                                    <div>
+                                                        <strong>Teacher</strong>
+                                                        <p>{selectedManagementReport.teacher_name}</p>
+                                                    </div>
+                                                </div>
+                                                <div className={workspaceStyles.listItem}>
+                                                    <div>
+                                                        <strong>Class</strong>
+                                                        <p>
+                                                            {selectedManagementReport.class_name} •{' '}
+                                                            {selectedManagementReport.school_track}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className={workspaceStyles.listItem}>
+                                                    <div>
+                                                        <strong>Submitted</strong>
+                                                        <p>
+                                                            {selectedManagementReport.submitted_at
+                                                                ? new Date(
+                                                                      selectedManagementReport.submitted_at,
+                                                                  ).toLocaleString()
+                                                                : 'Draft only'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className={registerStyles.periodPills}>
+                                                {(selectedManagementReport.periods ?? []).map(
+                                                    (period, index) => (
+                                                        <div
+                                                            key={`${period.label}-${index}`}
+                                                            className={registerStyles.periodPill}>
+                                                            <strong>{period.label}</strong>
+                                                            <small>
+                                                                {formatPeriodWindow(period)}
+                                                            </small>
+                                                        </div>
+                                                    ),
+                                                )}
+                                            </div>
+
+                                            <div className={registerStyles.entriesTableWrap}>
+                                                <table className={workspaceStyles.table}>
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Learner</th>
+                                                            <th>Code</th>
+                                                            <th>Status</th>
+                                                            <th>Note</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {(selectedManagementReport.entries ?? []).map(
+                                                            entry => (
+                                                                <tr key={entry.student_id}>
+                                                                    <td>{entry.student_name}</td>
+                                                                    <td>
+                                                                        {entry.student_code ||
+                                                                            'N/A'}
+                                                                    </td>
+                                                                    <td>
+                                                                        {
+                                                                            attendanceLabels[
+                                                                                entry.status
+                                                                            ]
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {entry.note?.trim() ||
+                                                                            'No note'}
+                                                                    </td>
+                                                                </tr>
+                                                            ),
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    ) : null}
+                                </div>
+                            )}
+                        </article>
+
+                        <article className={workspaceStyles.fullPanel}>
+                            <div className={workspaceStyles.panelHeader}>
+                                <div>
+                                    <p className={workspaceStyles.panelEyebrow}>
                                         Management
                                     </p>
                                     <h2 className={workspaceStyles.panelTitle}>
@@ -698,171 +863,6 @@ export default function RegistersPage() {
                                     Refresh
                                 </button>
                             </div>
-                        </article>
-
-                        <article className={workspaceStyles.fullPanel}>
-                            <div className={workspaceStyles.panelHeader}>
-                                <div>
-                                    <p className={workspaceStyles.panelEyebrow}>
-                                        School Inbox
-                                    </p>
-                                    <h2 className={workspaceStyles.panelTitle}>
-                                        Teacher register reports
-                                    </h2>
-                                </div>
-                                <span className={workspaceStyles.badge}>
-                                    {managementTeachers.length} teachers
-                                </span>
-                            </div>
-
-                            {managementReportsError ? (
-                                <p
-                                    className={`${managementStyles.notice} ${managementStyles.dangerText}`}>
-                                    {managementReportsError}
-                                </p>
-                            ) : managementReportsLoading ? (
-                                <p className={managementStyles.muted}>
-                                    Loading school register reports...
-                                </p>
-                            ) : managementReports.length === 0 ? (
-                                <p className={managementStyles.muted}>
-                                    No register reports have been submitted or saved in this school yet.
-                                </p>
-                            ) : (
-                                <div className={registerStyles.reportLayout}>
-                                    <div className={registerStyles.reportList}>
-                                        {managementReports.map(report => (
-                                            <button
-                                                key={report.id}
-                                                type="button"
-                                                onClick={() =>
-                                                    setSelectedManagementReportId(report.id)
-                                                }
-                                                className={`${registerStyles.reportListButton} ${
-                                                    selectedManagementReportId === report.id
-                                                        ? registerStyles.reportListButtonActive
-                                                        : ''
-                                                }`}>
-                                                <div className={registerStyles.reportListTop}>
-                                                    <strong>{report.teacher_name}</strong>
-                                                    <span className={workspaceStyles.badge}>
-                                                        {report.status}
-                                                    </span>
-                                                </div>
-                                                <p>
-                                                    {report.class_name} •{' '}
-                                                    {report.school_track}
-                                                </p>
-                                                <small>
-                                                    {formatReportDate(report.report_date)}
-                                                </small>
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    {selectedManagementReport ? (
-                                        <div className={registerStyles.reportDetail}>
-                                            <div className={registerStyles.reportSummaryGrid}>
-                                                {attendanceOptions.map(option => (
-                                                    <div
-                                                        key={option}
-                                                        className={registerStyles.reportSummaryCard}>
-                                                        <span>{attendanceLabels[option]}</span>
-                                                        <strong>
-                                                            {getStatusCount(
-                                                                selectedManagementReport.summary,
-                                                                option,
-                                                            )}
-                                                        </strong>
-                                                    </div>
-                                                ))}
-                                            </div>
-
-                                            <div className={workspaceStyles.list}>
-                                                <div className={workspaceStyles.listItem}>
-                                                    <div>
-                                                        <strong>Teacher</strong>
-                                                        <p>{selectedManagementReport.teacher_name}</p>
-                                                    </div>
-                                                </div>
-                                                <div className={workspaceStyles.listItem}>
-                                                    <div>
-                                                        <strong>Class</strong>
-                                                        <p>
-                                                            {selectedManagementReport.class_name} •{' '}
-                                                            {selectedManagementReport.school_track}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div className={workspaceStyles.listItem}>
-                                                    <div>
-                                                        <strong>Submitted</strong>
-                                                        <p>
-                                                            {selectedManagementReport.submitted_at
-                                                                ? new Date(
-                                                                      selectedManagementReport.submitted_at,
-                                                                  ).toLocaleString()
-                                                                : 'Draft only'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className={registerStyles.periodPills}>
-                                                {(selectedManagementReport.periods ?? []).map(
-                                                    (period, index) => (
-                                                        <div
-                                                            key={`${period.label}-${index}`}
-                                                            className={registerStyles.periodPill}>
-                                                            <strong>{period.label}</strong>
-                                                            <small>
-                                                                {formatPeriodWindow(period)}
-                                                            </small>
-                                                        </div>
-                                                    ),
-                                                )}
-                                            </div>
-
-                                            <div className={registerStyles.entriesTableWrap}>
-                                                <table className={workspaceStyles.table}>
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Learner</th>
-                                                            <th>Code</th>
-                                                            <th>Status</th>
-                                                            <th>Note</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {(selectedManagementReport.entries ?? []).map(
-                                                            entry => (
-                                                                <tr key={entry.student_id}>
-                                                                    <td>{entry.student_name}</td>
-                                                                    <td>
-                                                                        {entry.student_code ||
-                                                                            'N/A'}
-                                                                    </td>
-                                                                    <td>
-                                                                        {
-                                                                            attendanceLabels[
-                                                                                entry.status
-                                                                            ]
-                                                                        }
-                                                                    </td>
-                                                                    <td>
-                                                                        {entry.note?.trim() ||
-                                                                            'No note'}
-                                                                    </td>
-                                                                </tr>
-                                                            ),
-                                                        )}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    ) : null}
-                                </div>
-                            )}
                         </article>
                     </section>
                 </section>
