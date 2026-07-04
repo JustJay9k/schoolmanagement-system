@@ -153,8 +153,10 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
             await csrf()
             await axios.post('/login', props)
             await mutate()
+            return true
         } catch (error) {
             handleAuthError(error, setErrors, setStatus)
+            return false
         }
     }
 

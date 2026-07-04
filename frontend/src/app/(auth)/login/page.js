@@ -30,6 +30,7 @@ const LoginContent = () => {
     const [shouldRemember, setShouldRemember] = useState(false)
     const [errors, setErrors] = useState([])
     const [status, setStatus] = useState(null)
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     useEffect(() => {
         const resetStatus = searchParams.get('reset')
@@ -55,13 +56,19 @@ const LoginContent = () => {
     const submitForm = async event => {
         event.preventDefault()
 
-        login({
+        setIsSubmitting(true)
+
+        const loginSucceeded = await login({
             email,
             password,
             remember: shouldRemember,
             setErrors,
             setStatus,
         })
+
+        if (!loginSucceeded) {
+            setIsSubmitting(false)
+        }
     }
 
     const handleFormKeyDown = event => {
@@ -116,6 +123,7 @@ const LoginContent = () => {
                         placeholder="teacher@pcms.school"
                         required
                         autoFocus
+                        disabled={isSubmitting}
                     />
 
                     <InputError messages={errors.email} className="mt-2" />
@@ -138,6 +146,7 @@ const LoginContent = () => {
                             placeholder="Enter your password"
                             required
                             autoComplete="current-password"
+                            disabled={isSubmitting}
                         />
                     </div>
 
@@ -151,6 +160,7 @@ const LoginContent = () => {
                         name="remember"
                         className={styles.checkbox}
                         checked={shouldRemember}
+                        disabled={isSubmitting}
                         onChange={event =>
                             setShouldRemember(event.target.checked)
                         }
@@ -169,7 +179,20 @@ const LoginContent = () => {
                     </p>
 
                     <div className={styles.actionRow}>
-                        <Button className={styles.submitButton}>Enter workspace</Button>
+                        <Button
+                            disabled={isSubmitting}
+                            className={`${styles.submitButton} ${
+                                isSubmitting ? styles.submitButtonBusy : ''
+                            }`}>
+                            {isSubmitting ? (
+                                <span className={styles.buttonLoader}>
+                                    <span className={styles.loaderSpinner} />
+                                    <span>Signing you in...</span>
+                                </span>
+                            ) : (
+                                'Enter workspace'
+                            )}
+                        </Button>
                         <Link href="/register" className={styles.secondaryAction}>
                             Create account
                         </Link>
