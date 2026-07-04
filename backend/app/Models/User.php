@@ -180,4 +180,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(SchoolMerchandiseItem::class, 'created_by');
     }
+
+    public function registerReports(): HasMany
+    {
+        return $this->hasMany(RegisterReport::class, 'teacher_id');
+    }
 }

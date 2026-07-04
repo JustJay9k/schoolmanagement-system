@@ -3,6 +3,120 @@
     gap: 1rem;
 }
 
+.reportLayout {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
+    align-items: start;
+}
+
+.reportList {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.reportListButton {
+    display: grid;
+    gap: 0.22rem;
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--surface-card-muted);
+    padding: 0.9rem 1rem;
+    text-align: left;
+    color: var(--ink);
+    transition:
+        border-color 140ms ease,
+        transform 140ms ease,
+        box-shadow 140ms ease;
+}
+
+.reportListButton:hover,
+.reportListButtonActive {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: 0 12px 22px var(--shadow-soft);
+}
+
+.reportListButton p,
+.reportListButton small {
+    margin: 0;
+    color: var(--muted);
+}
+
+.reportListTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.reportDetail {
+    display: grid;
+    gap: 1rem;
+    min-width: 0;
+}
+
+.reportSummaryGrid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+}
+
+.reportSummaryCard,
+.periodPill {
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--surface-card-muted);
+    padding: 0.85rem 0.95rem;
+}
+
+.reportSummaryCard span,
+.periodPill small {
+    display: block;
+    color: var(--muted);
+}
+
+.reportSummaryCard strong,
+.periodPill strong {
+    display: block;
+    margin-top: 0.18rem;
+    color: var(--ink);
+}
+
+.periodPills {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+.entriesTableWrap {
+    overflow-x: auto;
+}
+
+.statusButtonRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.statusButton {
+    min-width: 2.2rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-field);
+    color: var(--ink);
+    padding: 0.35rem 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+.statusButtonActive {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+}
+
 .trackGrid {
     display: grid;
     gap: 1rem;
@@ -99,4 +213,10 @@
     width: 1rem;
     height: 1rem;
     accent-color: var(--accent);
+}
+
+@media (max-width: 900px) {
+    .reportLayout {
+        grid-template-columns: 1fr;
+    }
 }

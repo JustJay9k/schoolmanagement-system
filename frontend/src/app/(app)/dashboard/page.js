@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import useSWR from 'swr'
 import { useAuth } from '@/hooks/auth'
 import axios from '@/lib/axios'
@@ -265,6 +266,30 @@ const createTeacherDashboardStudent = student => ({
             : '',
 })
 
+const hydrateTeacherDashboardStudents = (students, registerReport) => {
+    if (!registerReport || !Array.isArray(registerReport.entries)) {
+        return students
+    }
+
+    const entryMap = new Map(
+        registerReport.entries.map(entry => [entry.student_id, entry]),
+    )
+
+    return students.map(student => {
+        const savedEntry = entryMap.get(student.id)
+
+        if (!savedEntry) {
+            return student
+        }
+
+        return {
+            ...student,
+            status: savedEntry.status ?? '',
+            note: savedEntry.note ?? '',
+        }
+    })
+}
+
 const StatusCell = ({ status }) => {
     const meta = statusMeta[status]
 
@@ -298,6 +323,7 @@ const toggleSidebar = () => {
 
 const Dashboard = () => {
     const { user } = useAuth({ middleware: 'auth' })
+    const router = useRouter()
     const userRole = normalizeRole(user?.role)
     const userTrack = normalizeTrack(user?.school_track)
     const assignedClassName =
@@ -336,12 +362,16 @@ const Dashboard = () => {
         note: '',
     })
     const [disciplineStatus, setDisciplineStatus] = useState('Awaiting teacher action.')
-    const { data: teacherDashboardData, isLoading: teacherDashboardLoading } =
+    const [submittingRegister, setSubmittingRegister] = useState(false)
+    const { data: teacherDashboardData, isLoading: teacherDashboardLoading, mutate: mutateTeacherDashboard } =
         useSWR(
             teacherOnlyView && assignedClassName !== ''
                 ? '/api/teacher/gradebook'
                 : null,
             teacherDashboardFetcher,
+            {
+                revalidateOnFocus: false,
+            },
         )
     const { data: dashboardNotifications } = useSWR(
         user ? '/api/notifications' : null,
@@ -365,6 +395,8 @@ const Dashboard = () => {
             ),
         [teacherDashboardData],
     )
+    const currentRegisterReport = teacherDashboardData?.registerReport ?? null
+    const registerLocked = currentRegisterReport?.status === 'submitted'
 
     const assignedFixture = useMemo(() => {
         if (!teacherOnlyView || !userTrack || resolvedAssignedClassName === '') {
@@ -384,14 +416,31 @@ const Dashboard = () => {
 
         setRegisterState(current => ({
             ...current,
-            [assignedFixture.id]: teacherStudentsFromApi,
+            [assignedFixture.id]: hydrateTeacherDashboardStudents(
+                teacherStudentsFromApi,
+                currentRegisterReport,
+            ),
         }))
-    }, [assignedFixture, teacherOnlyView, teacherStudentsFromApi])
+    }, [assignedFixture, currentRegisterReport, teacherOnlyView, teacherStudentsFromApi])
 
     const currentTeacherStudents = assignedFixture
         ? registerState[assignedFixture.id] ?? []
         : []
     const registerColumns = getRegisterColumns(teacherDashboardData?.options, activeTrack)
+
+    useEffect(() => {
+        if (!currentRegisterReport) {
+            return
+        }
+
+        setRegisterStatus({
+            tone: 'success',
+            message:
+                currentRegisterReport.status === 'submitted'
+                    ? 'Today’s register has already been sent to the head teacher. It is now locked for editing.'
+                    : 'A saved draft register was loaded. You can keep editing it before sending it to the head teacher.',
+        })
+    }, [currentRegisterReport?.id, currentRegisterReport?.status])
 
     useEffect(() => {
         setSelectedStudentId(currentTeacherStudents[0]?.id ?? null)
@@ -555,9 +604,17 @@ const Dashboard = () => {
             return
         }
 
+        if (registerLocked) {
+            setRegisterStatus({
+                tone: 'error',
+                message: 'This register has already been sent to the head teacher and cannot be edited again.',
+            })
+            return
+        }
+
         setRegisterStatus({
             tone: 'loading',
-            message: 'Submitting register payload to the system logic engine...',
+            message: 'Saving register draft for review...',
         })
 
         const missingStatus = currentTeacherStudents.some(student => !student.status)
@@ -570,13 +627,48 @@ const Dashboard = () => {
             return
         }
 
-        await simulateRequest(true)
+        setSubmittingRegister(true)
 
-        setRegisterStatus({
-            tone: 'success',
-            message:
-                `${assignedFixture.className} ${registerColumns[0]?.label ?? 'register'} posted successfully.`,
-        })
+        try {
+            const response = await axios.put('/api/teacher/register-reports/current', {
+                school_track: activeTrack,
+                class_name: assignedFixture.className,
+                periods: registerColumns.map(period => ({
+                    label: period.label,
+                    start_time: period.start_time ?? '',
+                    end_time: period.end_time ?? '',
+                })),
+                entries: currentTeacherStudents.map(student => ({
+                    student_id: student.id,
+                    status: student.status,
+                    note: student.note,
+                })),
+            })
+
+            setRegisterStatus({
+                tone: 'success',
+                message:
+                    response.data?.message ??
+                    'Register draft saved. Open Registers to review and send it to the head teacher.',
+            })
+
+            await mutateTeacherDashboard()
+
+            const reportId = response.data?.report?.id
+
+            if (reportId) {
+                router.push(`/registers?report=${reportId}`)
+            }
+        } catch (error) {
+            setRegisterStatus({
+                tone: 'error',
+                message:
+                    error?.response?.data?.message ??
+                    'Unable to save the register draft right now.',
+            })
+        } finally {
+            setSubmittingRegister(false)
+        }
     }
 
     const markAllPresent = () => {
@@ -763,6 +855,7 @@ const Dashboard = () => {
                                                         key={option}
                                                         type="button"
                                                         onClick={() => updateAttendance(student.id, option)}
+                                                        disabled={registerLocked}
                                                         className={`${styles.quickStatusButton} ${
                                                             student.status === option
                                                                 ? statusMeta[option].chipClass
@@ -794,6 +887,7 @@ const Dashboard = () => {
                                                 onChange={event =>
                                                     updateNote(student.id, event.target.value)
                                                 }
+                                                disabled={registerLocked}
                                                 placeholder="Add note"
                                             />
                                         </td>
@@ -1208,16 +1302,25 @@ const Dashboard = () => {
                             <button
                                 type="button"
                                 onClick={markAllPresent}
-                                disabled={!assignedFixture || registerColumns.length === 0}
+                                disabled={
+                                    !assignedFixture ||
+                                    registerColumns.length === 0 ||
+                                    registerLocked
+                                }
                                 className={styles.primaryAction}>
                                 Mark All
                             </button>
                             <button
                                 type="button"
                                 onClick={submitRegister}
-                                disabled={!assignedFixture || registerColumns.length === 0}
+                                disabled={
+                                    !assignedFixture ||
+                                    registerColumns.length === 0 ||
+                                    registerLocked ||
+                                    submittingRegister
+                                }
                                 className={styles.primaryGhost}>
-                                Submit Register
+                                {submittingRegister ? 'Saving...' : 'Submit Register'}
                             </button>
                         </>
                     ) : null}

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Teacher;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Teacher\UpsertStudentPerformanceRequest;
 use App\Models\GradeAssessmentPeriod;
+use App\Models\RegisterReport;
 use App\Models\SchoolSubject;
 use App\Models\StudentPerformanceRecord;
 use App\Models\StudentRecord;
@@ -71,6 +72,19 @@ class TeacherGradebookApiController extends Controller
             ])
             ->values();
 
+        $currentRegisterReport = null;
+
+        if ($actor->isTeacher() && $scope['school_track'] !== '' && $scope['class_name'] !== '') {
+            $currentRegisterReport = RegisterReport::query()
+                ->where('school_id', $actor->school_id)
+                ->where('teacher_id', $actor->id)
+                ->where('school_track', $scope['school_track'])
+                ->where('class_name', $scope['class_name'])
+                ->whereDate('report_date', now()->toDateString())
+                ->latest('updated_at')
+                ->first();
+        }
+
         return response()->json([
             'students' => $serialized,
             'stats' => [
@@ -90,6 +104,17 @@ class TeacherGradebookApiController extends Controller
                 'assessmentPeriods' => $assessmentPeriods,
                 'registerScheduleByTrack' => SchoolContextOptions::registerScheduleByTrack(),
             ],
+            'registerReport' => $currentRegisterReport ? [
+                'id' => $currentRegisterReport->id,
+                'school_track' => $currentRegisterReport->school_track,
+                'class_name' => $currentRegisterReport->class_name,
+                'report_date' => $currentRegisterReport->report_date?->toDateString(),
+                'status' => $currentRegisterReport->status,
+                'submitted_at' => $currentRegisterReport->submitted_at?->toIso8601String(),
+                'periods' => $currentRegisterReport->periods ?? [],
+                'entries' => $currentRegisterReport->entries ?? [],
+                'summary' => $currentRegisterReport->summary ?? null,
+            ] : null,
         ]);
     }
 

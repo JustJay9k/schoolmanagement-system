@@ -21,4 +21,9 @@ class School extends Model
     {
         return $this->hasMany(SchoolMerchandiseItem::class);
     }
+
+    public function registerReports(): HasMany
+    {
+        return $this->hasMany(RegisterReport::class);
+    }
 }
