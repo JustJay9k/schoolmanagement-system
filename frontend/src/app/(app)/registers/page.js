@@ -188,7 +188,7 @@ export default function RegistersPage() {
             {managementMode ? (
                 <section className={registerStyles.stack}>
                     {loadError ? (
-                        <article className={workspaceStyles.panel}>
+                        <article className={workspaceStyles.fullPanel}>
                             <p
                                 className={`${managementStyles.notice} ${managementStyles.dangerText}`}>
                                 {loadError}
@@ -447,51 +447,6 @@ export default function RegistersPage() {
                             </div>
                         </article>
 
-                        <article className={workspaceStyles.panel}>
-                            <div className={workspaceStyles.panelHeader}>
-                                <div>
-                                    <p className={workspaceStyles.panelEyebrow}>
-                                        Teacher impact
-                                    </p>
-                                    <h2 className={workspaceStyles.panelTitle}>
-                                        How this affects dashboards
-                                    </h2>
-                                </div>
-                            </div>
-
-                            <div className={workspaceStyles.list}>
-                                <div className={workspaceStyles.listItem}>
-                                    <div>
-                                        <strong>Period count is live</strong>
-                                        <p>
-                                            Adding or removing periods changes how
-                                            many attendance columns teachers see for
-                                            that track.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className={workspaceStyles.listItem}>
-                                    <div>
-                                        <strong>Registration toggles are enforced</strong>
-                                        <p>
-                                            Only periods marked for registration
-                                            appear in the teacher register workflow.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className={workspaceStyles.listItem}>
-                                    <div>
-                                        <strong>Primary and secondary stay separate</strong>
-                                        <p>
-                                            Configure each track independently if the
-                                            school day is structured differently.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </article>
                     </section>
                 </section>
             ) : (
