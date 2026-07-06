@@ -40,7 +40,7 @@ const Home = () => {
         <div className="relative overflow-hidden">
             <LoginLinks />
 
-            <div className="relative bg-cover bg-center" style={{ backgroundImage: "url('/images/classroom.jpg')" }}>
+            <div className="relative bg-cover bg-center" style={{ backgroundImage: "url('/images/schoolclassroom.jpg')" }}>
                 <div className="absolute inset-0 bg-black/50" />
                 <div className="mx-auto max-w-7xl px-4 pb-16 pt-24 sm:px-6 lg:px-8 lg:pt-28 relative z-10 text-white">
                 <section className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
@@ -71,7 +71,7 @@ const Home = () => {
                             <Link
                                 href="/dashboard"
                                 className="inline-flex items-center justify-center rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:border-[var(--accent)] hover:text-[var(--accent-strong)]">
-                                Preview workspace
+                                Get Started
                             </Link>
                         </div>
                     </div>

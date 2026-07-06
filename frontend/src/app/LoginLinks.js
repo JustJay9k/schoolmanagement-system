@@ -10,7 +10,7 @@ const LoginLinks = () => {
     const { user } = useAuth({ middleware: 'guest' })
 
     return (
-        <div className="fixed right-4 top-4 z-30 hidden items-center gap-3 sm:flex">
+        <div className="fixed right-4 top-4 z-30 flex items-center gap-2 sm:gap-3">
             {user ? (
                 <Link href="/dashboard" className={linkClassName}>
                     Open workspace
