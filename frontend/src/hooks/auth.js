@@ -8,10 +8,21 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
     const params = useParams()
     const isLoggingOutRef = useRef(false)
 
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '')
+
+    const apiUrl = path => {
+        if (!backendUrl) {
+            return path
+        }
+
+        return `${backendUrl}${path}`
+    }
+
     const createStatus = (message, type = 'error') => ({ message, type })
     const getResponseStatus = error => error?.response?.status
     const getValidationErrors = error => error?.response?.data?.errors ?? []
-    const getBackendUrl = () => axios.defaults.baseURL ?? 'the configured backend'
+    const getBackendUrl = () => backendUrl ?? axios.defaults.baseURL ?? 'the configured backend'
+
     const getFirstErrorMessage = validationErrors =>
         Object.values(validationErrors).flat()[0]
 
@@ -117,9 +128,16 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
         setStatus?.(createStatus(getAuthFailureMessage(error)))
     }
 
+    const requestConfig = {
+        withCredentials: true,
+        headers: {
+            Accept: 'application/json',
+        },
+    }
+
     const { data: user, error, mutate } = useSWR('/api/user', () =>
         axios
-            .get('/api/user')
+            .get(apiUrl('/api/user'), requestConfig)
             .then(res => res.data)
             .catch(error => {
                 if (getResponseStatus(error) !== 409) throw error
@@ -129,7 +147,7 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
     )
 
     const csrf = async () => {
-        await axios.get('/sanctum/csrf-cookie')
+        await axios.get(apiUrl('/sanctum/csrf-cookie'), requestConfig)
     }
 
     const register = async ({ setErrors, setStatus, ...props }) => {
@@ -138,7 +156,9 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
 
         try {
             await csrf()
-            await axios.post('/register', props)
+
+            await axios.post(apiUrl('/register'), props, requestConfig)
+
             await mutate()
         } catch (error) {
             handleAuthError(error, setErrors, setStatus)
@@ -151,8 +171,11 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
 
         try {
             await csrf()
-            await axios.post('/login', props)
+
+            await axios.post(apiUrl('/login'), props, requestConfig)
+
             await mutate()
+
             return true
         } catch (error) {
             handleAuthError(error, setErrors, setStatus)
@@ -166,7 +189,13 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
 
         try {
             await csrf()
-            const response = await axios.post('/forgot-password', { email })
+
+            const response = await axios.post(
+                apiUrl('/forgot-password'),
+                { email },
+                requestConfig,
+            )
+
             setStatus(response.data.status)
         } catch (error) {
             handleAuthError(error, setErrors, setStatus)
@@ -179,10 +208,15 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
 
         try {
             await csrf()
-            const response = await axios.post('/reset-password', {
-                token: params.token,
-                ...props,
-            })
+
+            const response = await axios.post(
+                apiUrl('/reset-password'),
+                {
+                    token: params.token,
+                    ...props,
+                },
+                requestConfig,
+            )
 
             router.push('/login?reset=' + btoa(response.data.status))
         } catch (error) {
@@ -192,8 +226,14 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
 
     const resendEmailVerification = ({ setStatus }) => {
         axios
-            .post('/email/verification-notification')
-            .then(response => setStatus(createStatus(response.data.status, 'success')))
+            .post(
+                apiUrl('/email/verification-notification'),
+                {},
+                requestConfig,
+            )
+            .then(response =>
+                setStatus(createStatus(response.data.status, 'success')),
+            )
     }
 
     const logout = async () => {
@@ -205,7 +245,7 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
 
         if (!error) {
             await axios
-                .post('/logout')
+                .post(apiUrl('/logout'), {}, requestConfig)
                 .then(() => mutate())
                 .catch(() => null)
         }
@@ -214,11 +254,13 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
     }
 
     useEffect(() => {
-        if (middleware === 'guest' && redirectIfAuthenticated && user)
+        if (middleware === 'guest' && redirectIfAuthenticated && user) {
             router.push(redirectIfAuthenticated)
+        }
 
-        if (middleware === 'auth' && user && !user.email_verified_at)
+        if (middleware === 'auth' && user && !user.email_verified_at) {
             router.push('/verify-email')
+        }
 
         if (
             window.location.pathname === '/verify-email' &&
@@ -227,7 +269,9 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
             router.push(redirectIfAuthenticated)
         }
 
-        if (middleware === 'auth' && error) logout()
+        if (middleware === 'auth' && error) {
+            logout()
+        }
     }, [user, error])
 
     return {
