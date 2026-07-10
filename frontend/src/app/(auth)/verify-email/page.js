@@ -14,7 +14,7 @@ const Page = () => {
 
     return (
         <>
-            <div className="mb-4 text-sm text-gray-600">
+            <div className="mb-4 text-sm text-[var(--muted)]">
                 Thanks for signing up! Before getting started, could you verify
                 your email address by clicking on the link we just
                 emailed to you? If you didn't receive the email, we will gladly
@@ -22,7 +22,7 @@ const Page = () => {
             </div>
 
             {status === 'verification-link-sent' && (
-                <div className="mb-4 font-medium text-sm text-green-600">
+                <div className="mb-4 rounded-xl border border-[var(--status-success-border)] bg-[var(--status-success-bg)] px-4 py-3 text-sm font-medium text-[var(--status-success-ink)]">
                     A new verification link has been sent to the email address
                     you provided during registration.
                 </div>
@@ -35,7 +35,7 @@ const Page = () => {
 
                 <button
                     type="button"
-                    className="underline text-sm text-gray-600 hover:text-gray-900"
+                    className="underline text-sm text-[var(--muted)] transition hover:text-[var(--ink)]"
                     onClick={logout}>
                     Logout
                 </button>

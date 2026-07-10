@@ -38,6 +38,10 @@
     --surface-hero: rgba(255, 252, 246, 0.68);
     --surface-sheen: rgba(255, 255, 255, 0.2);
     --surface-inverse: #ffffff;
+    --auth-hero-shell: rgba(255, 252, 246, 0.18);
+    --auth-hero-card: rgba(255, 252, 246, 0.72);
+    --auth-hero-ink: #ffffff;
+    --auth-hero-muted: rgba(255, 255, 255, 0.8);
     --shadow-soft: rgba(18, 50, 57, 0.08);
     --shadow-strong: rgba(18, 50, 57, 0.14);
     --focus-ring: rgba(var(--accent-rgb), 0.18);
@@ -57,6 +61,15 @@
     --info-soft: rgba(236, 227, 255, 0.94);
     --info-grad-start: rgba(236, 227, 255, 0.74);
     --info-grad-end: rgba(255, 250, 255, 0.96);
+    --status-error-border: rgba(220, 38, 38, 0.18);
+    --status-error-bg: rgba(254, 242, 242, 0.9);
+    --status-error-ink: #b91c1c;
+    --status-success-border: rgba(5, 150, 105, 0.2);
+    --status-success-bg: rgba(236, 253, 245, 0.92);
+    --status-success-ink: #047857;
+    --status-info-border: rgba(14, 165, 233, 0.22);
+    --status-info-bg: rgba(240, 249, 255, 0.92);
+    --status-info-ink: #0369a1;
     color-scheme: light;
 }
 
@@ -91,6 +104,10 @@
     --surface-hero: rgba(14, 20, 29, 0.82);
     --surface-sheen: rgba(255, 255, 255, 0.04);
     --surface-inverse: #0f1720;
+    --auth-hero-shell: rgba(10, 15, 22, 0.72);
+    --auth-hero-card: rgba(15, 23, 32, 0.86);
+    --auth-hero-ink: #f8fbff;
+    --auth-hero-muted: rgba(229, 238, 244, 0.82);
     --shadow-soft: rgba(0, 0, 0, 0.22);
     --shadow-strong: rgba(0, 0, 0, 0.4);
     --focus-ring: rgba(var(--accent-rgb), 0.22);
@@ -110,6 +127,15 @@
     --info-soft: rgba(71, 60, 120, 0.45);
     --info-grad-start: rgba(71, 60, 120, 0.46);
     --info-grad-end: rgba(19, 28, 37, 0.92);
+    --status-error-border: rgba(248, 113, 113, 0.28);
+    --status-error-bg: rgba(120, 44, 56, 0.36);
+    --status-error-ink: #fecaca;
+    --status-success-border: rgba(52, 211, 153, 0.3);
+    --status-success-bg: rgba(22, 68, 61, 0.4);
+    --status-success-ink: #bbf7d0;
+    --status-info-border: rgba(96, 165, 250, 0.3);
+    --status-info-bg: rgba(30, 64, 175, 0.28);
+    --status-info-ink: #bfdbfe;
     color-scheme: dark;
 }
 

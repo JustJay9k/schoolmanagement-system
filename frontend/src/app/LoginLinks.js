@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import ThemeToggleButton from '@/components/ThemeToggleButton'
 import { useAuth } from '@/hooks/auth'
 
 const linkClassName =
@@ -11,6 +12,8 @@ const LoginLinks = () => {
 
     return (
         <div className="fixed right-4 top-4 z-30 flex items-center gap-2 sm:gap-3">
+            <ThemeToggleButton />
+
             {user ? (
                 <Link href="/dashboard" className={linkClassName}>
                     Open workspace
