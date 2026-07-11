@@ -3,7 +3,7 @@ import Axios from 'axios'
 const localHosts = new Set(['localhost', '127.0.0.1'])
 
 const resolveBackendUrl = () => {
-    const configuredUrl = process.env.NEXT_PUBLIC_BACKEND_URL
+    const configuredUrl = process.env.NEXT_PUBLIC_API_URL
 
     if (!configuredUrl) {
         return undefined
@@ -30,11 +30,7 @@ const axios = Axios.create({
     baseURL: resolveBackendUrl(),
     headers: {
         Accept: 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
     },
-    withCredentials: true,
-    xsrfCookieName: 'XSRF-TOKEN',
-    xsrfHeaderName: 'X-XSRF-TOKEN',
 })
 
 export default axios
