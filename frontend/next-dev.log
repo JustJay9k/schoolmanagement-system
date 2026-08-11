@@ -8,21 +8,29 @@
   - Environments: .env.local
 
  ✓ Starting...
-Attention: Next.js now collects completely anonymous telemetry regarding usage.
-This information is used to shape Next.js' roadmap and prioritize features.
-You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
-https://nextjs.org/telemetry
-
- ✓ Ready in 15.7s
- ○ Compiling / ...
- ✓ Compiled / in 46.6s (636 modules)
- GET / 200 in 77ms
- GET / 200 in 177ms
+ ✓ Ready in 10.4s
  ○ Compiling /login ...
- ✓ Compiled /login in 2.4s (646 modules)
- GET /login 200 in 242ms
- GET /login 200 in 186ms
+ ✓ Compiled /login in 16.8s (664 modules)
+ GET /login 200 in 17521ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1231ms (621 modules)
+ GET / 200 in 1727ms
+ GET / 200 in 99ms
+ ✓ Compiled /login in 194ms (320 modules)
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 2.6s (624 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 3223ms
+ GET /login 200 in 207ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 139ms
  ○ Compiling /dashboard ...
- ✓ Compiled /dashboard in 4.1s (715 modules)
- ○ Compiling /settings ...
- ✓ Compiled /settings in 893ms (729 modules)
+ ✓ Compiled /dashboard in 3.6s (703 modules)
+ ✓ Compiled in 2.8s (697 modules)
+ GET /dashboard 200 in 220ms
+ GET /dashboard 200 in 95ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 633ms (352 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 937ms
+ ○ Compiling /notifications ...
+ ✓ Compiled /notifications in 1272ms (717 modules)
+ GET /login 200 in 234ms
+ GET /login 200 in 171ms

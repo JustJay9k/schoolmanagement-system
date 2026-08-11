@@ -31,7 +31,9 @@ return [
 
     'allowed_origins' => $allowedOrigins,
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        '#^https://[a-z0-9-]+\.vercel\.app$#i',
+    ],
 
     'allowed_headers' => ['*'],
 

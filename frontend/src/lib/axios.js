@@ -33,4 +33,18 @@ const axios = Axios.create({
     },
 })
 
+axios.interceptors.request.use(config => {
+    if (typeof window === 'undefined') {
+        return config
+    }
+
+    const token = localStorage.getItem('auth_token')
+
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+    }
+
+    return config
+})
+
 export default axios
