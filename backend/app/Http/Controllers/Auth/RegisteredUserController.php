@@ -64,7 +64,7 @@ class RegisteredUserController extends Controller
      *
      * @throws ValidationException
      */
-    public function store(Request $request): Response
+    public function store(Request $request): JsonResponse|Response
     {
         $validator = Validator::make($request->all(), [
             'account_type' => ['required', 'string', 'in:teacher,guardian'],
@@ -172,6 +172,12 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         Auth::login($user);
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json([
+                'token' => $user->createToken('frontend')->plainTextToken,
+            ], 201);
+        }
 
         return response()->noContent();
     }

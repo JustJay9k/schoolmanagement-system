@@ -1,0 +1,28 @@
+
+> breeze-next@0.1.0 dev
+> next dev --hostname 127.0.0.1 --port 3000
+
+  ▲ Next.js 14.2.35
+  - Local:        http://127.0.0.1:3000
+  - Network:      http://127.0.0.1:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+ ✓ Ready in 15.7s
+ ○ Compiling / ...
+ ✓ Compiled / in 46.6s (636 modules)
+ GET / 200 in 77ms
+ GET / 200 in 177ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 2.4s (646 modules)
+ GET /login 200 in 242ms
+ GET /login 200 in 186ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 4.1s (715 modules)
+ ○ Compiling /settings ...
+ ✓ Compiled /settings in 893ms (729 modules)
