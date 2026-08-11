@@ -161,6 +161,10 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
 
             await mutate()
 
+            if (redirectIfAuthenticated) {
+                router.replace(redirectIfAuthenticated)
+            }
+
             return true
         } catch (error) {
             handleAuthError(error, setErrors, setStatus)
@@ -182,6 +186,10 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
             setToken(response.data.token)
 
             await mutate()
+
+            if (redirectIfAuthenticated) {
+                router.replace(redirectIfAuthenticated)
+            }
 
             return true
         } catch (error) {
