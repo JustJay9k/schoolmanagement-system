@@ -25,6 +25,8 @@ class StoreStudentRecordRequest extends FormRequest
             'orphan_status' => $this->cleanString($this->input('orphan_status')),
             'disability_name' => $this->cleanString($this->input('disability_name')),
             'guardian_name' => $this->cleanString($this->input('guardian_name')),
+            'guardian_phone' => $this->cleanString($this->input('guardian_phone')),
+            'guardian_email' => $this->cleanString($this->input('guardian_email')),
             'residence' => $this->cleanString($this->input('residence')),
             'first_entry_date' => $this->cleanString($this->input('first_entry_date')),
         ]);
@@ -49,6 +51,8 @@ class StoreStudentRecordRequest extends FormRequest
             'orphan_status' => ['nullable', 'string', 'max:100'],
             'disability_name' => ['nullable', 'string', 'max:255'],
             'guardian_name' => ['nullable', 'string', 'max:255'],
+            'guardian_phone' => ['nullable', 'string', 'max:50'],
+            'guardian_email' => ['nullable', 'email', 'max:255'],
             'residence' => ['nullable', 'string', 'max:255'],
             'first_entry_date' => ['nullable', 'date'],
         ];

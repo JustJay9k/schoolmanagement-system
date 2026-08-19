@@ -27,6 +27,8 @@ class StudentManagementTest extends TestCase
                 'orphan_status' => 'N/A',
                 'disability_name' => 'N/A',
                 'guardian_name' => 'Mr Nawanga',
+                'guardian_phone' => '+265999000111',
+                'guardian_email' => 'nawanga@example.com',
                 'residence' => 'Machinjiri area 6',
                 'first_entry_date' => '2025-10-20',
             ])
@@ -35,12 +37,16 @@ class StudentManagementTest extends TestCase
                 'full_name' => 'Nathaniel Vincent',
                 'class_name' => 'Standard 1',
                 'student_code' => '20212862526',
+                'guardian_phone' => '+265999000111',
+                'guardian_email' => 'nawanga@example.com',
             ]);
 
         $this->assertDatabaseHas('student_records', [
             'full_name' => 'Nathaniel Vincent',
             'school_track' => 'primary',
             'class_name' => 'Standard 1',
+            'guardian_phone' => '+265999000111',
+            'guardian_email' => 'nawanga@example.com',
         ]);
     }
 
@@ -62,6 +68,8 @@ class StudentManagementTest extends TestCase
                         'orphan_status' => 'N/A',
                         'disability_name' => 'N/A',
                         'guardian_name' => 'Mrs Kalua',
+                        'guardian_phone' => '+265999000222',
+                        'guardian_email' => 'kalua@example.com',
                         'residence' => 'Ndirande',
                         'first_entry_date' => '2025-01-10',
                     ],
@@ -74,6 +82,8 @@ class StudentManagementTest extends TestCase
                         'orphan_status' => 'Single parent',
                         'disability_name' => 'N/A',
                         'guardian_name' => 'Mr Chirwa',
+                        'guardian_phone' => '+265999000333',
+                        'guardian_email' => 'chirwa@example.com',
                         'residence' => 'Limbe',
                         'first_entry_date' => '2025-01-10',
                     ],
@@ -99,6 +109,8 @@ class StudentManagementTest extends TestCase
                         'orphan_status' => 'N/A',
                         'disability_name' => 'Visual support',
                         'guardian_name' => 'Mrs Kalua',
+                        'guardian_phone' => '+265999000444',
+                        'guardian_email' => 'updated-kalua@example.com',
                         'residence' => 'Ndirande',
                         'first_entry_date' => '2025-01-10',
                     ],
@@ -111,6 +123,8 @@ class StudentManagementTest extends TestCase
         $this->assertDatabaseHas('student_records', [
             'student_code' => 'F1-001',
             'disability_name' => 'Visual support',
+            'guardian_phone' => '+265999000444',
+            'guardian_email' => 'updated-kalua@example.com',
         ]);
     }
 

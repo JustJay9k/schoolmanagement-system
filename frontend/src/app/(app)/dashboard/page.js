@@ -317,10 +317,6 @@ const UserIcon = () => (
     </svg>
 )
 
-const toggleSidebar = () => {
-    window.dispatchEvent(new Event('pcms-toggle-sidebar'))
-}
-
 const Dashboard = () => {
     const { user } = useAuth({ middleware: 'auth' })
     const router = useRouter()
@@ -376,6 +372,16 @@ const Dashboard = () => {
     const { data: dashboardNotifications } = useSWR(
         user ? '/api/notifications' : null,
         teacherDashboardFetcher,
+    )
+    const {
+        data: managementDashboardData,
+        isLoading: managementDashboardLoading,
+    } = useSWR(
+        managementView ? '/api/management/dashboard' : null,
+        teacherDashboardFetcher,
+        {
+            revalidateOnFocus: false,
+        },
     )
     const dashboardUnreadNotifications =
         dashboardNotifications?.summary?.unread ?? 0
@@ -507,6 +513,48 @@ const Dashboard = () => {
     ]
 
     const teacherAttendanceRate = getAttendanceRate(teacherCounts)
+    const managementSummary = managementDashboardData?.summary ?? null
+    const managementSchoolName =
+        managementDashboardData?.school?.name ?? user?.school?.name ?? 'Your school'
+    const managementSummaryCards = useMemo(() => {
+        const students = managementSummary?.students ?? {}
+        const teachers = managementSummary?.teachers ?? {}
+        const classes = managementSummary?.classes ?? {}
+        const registers = managementSummary?.registers ?? {}
+
+        return [
+            {
+                label: 'Total students',
+                value: students.total ?? 0,
+                meta: `${students.primary ?? 0} primary | ${students.secondary ?? 0} secondary`,
+                accent: 'Learners',
+            },
+            {
+                label: 'Registered teachers',
+                value: teachers.total ?? 0,
+                meta: `${teachers.primary ?? 0} primary | ${teachers.secondary ?? 0} secondary`,
+                accent: 'Staff',
+            },
+            {
+                label: 'Active teachers',
+                value: teachers.active ?? 0,
+                meta: 'Teacher accounts currently active',
+                accent: 'Active',
+            },
+            {
+                label: 'Class coverage',
+                value: `${classes.with_assigned_teacher ?? 0}/${classes.configured ?? 0}`,
+                meta: `${classes.without_assigned_teacher ?? 0} classes without an assigned teacher`,
+                accent: 'Classes',
+            },
+            {
+                label: 'Registers today',
+                value: registers.submitted_today ?? 0,
+                meta: 'Submitted class registers for today',
+                accent: 'Today',
+            },
+        ]
+    }, [managementSummary])
 
     const pageEyebrow = teacherOnlyView
         ? 'Assigned Class Register'
@@ -1023,6 +1071,37 @@ const Dashboard = () => {
 
         const renderManagementView = () => (
         <div className={styles.managementStack}>
+            <section className={styles.managementSummaryPanel}>
+                <div className={styles.panelHeader}>
+                    <div>
+                        <p className={styles.panelEyebrow}>School Snapshot</p>
+                        <h2 className={styles.panelTitle}>{managementSchoolName}</h2>
+                    </div>
+                    <span className={styles.groupBadge}>
+                        {managementDashboardLoading ? 'Loading' : 'Live'}
+                    </span>
+                </div>
+
+                {managementDashboardData?.requiresSchoolAssignment ? (
+                    <div className={`${styles.statusNotice} ${styles.statusError}`}>
+                        Assign this head teacher account to a school before school totals can be shown.
+                    </div>
+                ) : null}
+
+                <div className={styles.managementSummaryGrid}>
+                    {managementSummaryCards.map(card => (
+                        <article key={card.label} className={styles.managementSummaryCard}>
+                            <span className={styles.managementSummaryAccent}>{card.accent}</span>
+                            <p className={styles.managementSummaryLabel}>{card.label}</p>
+                            <strong className={styles.managementSummaryValue}>
+                                {managementDashboardLoading ? '...' : card.value}
+                            </strong>
+                            <small>{card.meta}</small>
+                        </article>
+                    ))}
+                </div>
+            </section>
+
             <section className={styles.lowerGrid}>
                 <div className={styles.panel}>
                     <div className={styles.panelHeader}>
@@ -1173,15 +1252,6 @@ const Dashboard = () => {
         <div className={styles.page}>
             <header className={styles.topBar}>
                 <div className={styles.titleGroup}>
-                    <button
-                        type="button"
-                        className={styles.menuGlyph}
-                        onClick={toggleSidebar}
-                        aria-label="Toggle sidebar">
-                        <span />
-                        <span />
-                        <span />
-                    </button>
                     <div>
                         <p className={styles.pageEyebrow}>{pageEyebrow}</p>
                         <h1 className={styles.pageTitle}>{pageTitle}</h1>
@@ -1189,32 +1259,6 @@ const Dashboard = () => {
                 </div>
 
                 <div className={styles.topBarRight}>
-                    <div className={styles.searchBox}>
-                        <svg viewBox="0 0 24 24" className={styles.searchIcon} aria-hidden="true">
-                            <path
-                                d="M11 5a6 6 0 104.3 10.2l3.3 3.3 1.4-1.4-3.3-3.3A6 6 0 0011 5z"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1.8"
-                                strokeLinecap="round"
-                            />
-                        </svg>
-                        <input
-                            className={styles.searchInput}
-                            placeholder={
-                                teacherOnlyView
-                                    ? 'Search students in your class...'
-                                    : financeView
-                                      ? 'Search finance workspace...'
-                                    : guardianView
-                                      ? 'Search learner updates...'
-                                      : adminOnlyView
-                                        ? 'Search admin tools...'
-                                        : 'Search management tools...'
-                            }
-                        />
-                    </div>
-
                     <button className={styles.bellButton} aria-label="Notifications">
                         <svg viewBox="0 0 24 24" className={styles.searchIcon} aria-hidden="true">
                             <path

@@ -10,6 +10,7 @@
 .tableCard,
 .panel,
 .managementCard,
+.managementSummaryPanel,
 .statusNotice {
     border: 1px solid var(--line);
     background: var(--surface-card);
@@ -42,21 +43,6 @@
     gap: 0.9rem;
 }
 
-.menuGlyph {
-    display: inline-grid;
-    gap: 0.28rem;
-    border: 0;
-    background: transparent;
-    padding: 0;
-}
-
-.menuGlyph span {
-    width: 1.25rem;
-    height: 2px;
-    border-radius: 999px;
-    background: var(--ink);
-}
-
 .pageEyebrow {
     margin: 0;
     font-size: 0.76rem;
@@ -87,35 +73,11 @@
     flex: 0 0 auto;
 }
 
-.searchBox {
-    display: flex;
-    flex: 1 1 18rem;
-    align-items: center;
-    gap: 0.55rem;
-    min-width: 0;
-    width: 100%;
-    max-width: 22rem;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    background: var(--surface-field);
-    padding: 0.85rem 1rem;
-}
-
 .searchIcon {
     width: 1.1rem;
     height: 1.1rem;
     color: var(--muted);
     flex: 0 0 auto;
-}
-
-.searchInput {
-    min-width: 0;
-    width: 100%;
-    border: 0;
-    outline: 0;
-    background: transparent;
-    color: var(--ink);
-    font-size: 0.95rem;
 }
 
 .bellButton {
@@ -456,7 +418,8 @@
 
 .tableCard,
 .panel,
-.managementCard {
+.managementCard,
+.managementSummaryPanel {
     border-radius: 1.5rem;
 }
 
@@ -846,6 +809,61 @@
     padding: 1.2rem;
 }
 
+.managementSummaryPanel {
+    padding: 1.25rem;
+}
+
+.managementSummaryGrid {
+    display: grid;
+    gap: 0.9rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.managementSummaryCard {
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: 1.15rem;
+    background: var(--surface-field);
+    padding: 1rem;
+}
+
+.managementSummaryAccent {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.65rem;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    padding: 0.32rem 0.65rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.managementSummaryLabel {
+    margin: 0.85rem 0 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.managementSummaryValue {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--ink);
+    font-size: 2rem;
+    line-height: 1.05;
+}
+
+.managementSummaryCard small {
+    display: block;
+    margin-top: 0.45rem;
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
 .managementValue {
     font-size: 2rem;
 }
@@ -900,7 +918,8 @@
 
 @media (max-width: 1279px) {
     .metricsRow,
-    .managementCards {
+    .managementCards,
+    .managementSummaryGrid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
@@ -924,6 +943,7 @@
 
     .metricsRow,
     .managementCards,
+    .managementSummaryGrid,
     .lowerGrid,
     .profileStats,
     .bioDataGrid {
@@ -942,6 +962,7 @@
 
     .metricsRow,
     .managementCards,
+    .managementSummaryGrid,
     .lowerGrid,
     .profileStats,
     .bioDataGrid {
@@ -961,9 +982,5 @@
     .userPopover {
         width: 12.5rem;
         right: 0;
-    }
-
-    .searchBox {
-        max-width: none;
     }
 }

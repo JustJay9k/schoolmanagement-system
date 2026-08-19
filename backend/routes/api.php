@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Finance\FinanceStudentApiController;
 use App\Http\Controllers\Api\Guardian\GuardianChildApiController;
 use App\Http\Controllers\Api\Guardian\GuardianMerchandiseApiController;
 use App\Http\Controllers\Api\Management\ManagementFormTeacherApiController;
+use App\Http\Controllers\Api\Management\ManagementDashboardApiController;
 use App\Http\Controllers\Api\Management\ManagementGradeAssessmentPeriodApiController;
 use App\Http\Controllers\Api\Management\ManagementRegisterReportApiController;
 use App\Http\Controllers\Api\Management\ManagementRegisterScheduleApiController;
@@ -66,6 +67,8 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 });
 
 Route::middleware(['auth:sanctum', 'timetable-manager'])->prefix('management')->group(function () {
+    Route::get('/dashboard', [ManagementDashboardApiController::class, 'show']);
+
     Route::get('/school-structure', [AdminSchoolStructureApiController::class, 'show']);
     Route::put('/school-structure', [AdminSchoolStructureApiController::class, 'update']);
 

@@ -28,6 +28,8 @@ class ImportStudentRecordsRequest extends FormRequest
                     'orphan_status' => $this->cleanString($row['orphan_status'] ?? null),
                     'disability_name' => $this->cleanString($row['disability_name'] ?? null),
                     'guardian_name' => $this->cleanString($row['guardian_name'] ?? null),
+                    'guardian_phone' => $this->cleanString($row['guardian_phone'] ?? null),
+                    'guardian_email' => $this->cleanString($row['guardian_email'] ?? null),
                     'residence' => $this->cleanString($row['residence'] ?? null),
                     'first_entry_date' => $this->cleanString($row['first_entry_date'] ?? null),
                 ];
@@ -55,6 +57,8 @@ class ImportStudentRecordsRequest extends FormRequest
             'records.*.orphan_status' => ['nullable', 'string', 'max:100'],
             'records.*.disability_name' => ['nullable', 'string', 'max:255'],
             'records.*.guardian_name' => ['nullable', 'string', 'max:255'],
+            'records.*.guardian_phone' => ['nullable', 'string', 'max:50'],
+            'records.*.guardian_email' => ['nullable', 'email', 'max:255'],
             'records.*.residence' => ['nullable', 'string', 'max:255'],
             'records.*.first_entry_date' => ['nullable', 'date'],
         ];

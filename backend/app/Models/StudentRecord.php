@@ -21,6 +21,8 @@ class StudentRecord extends Model
         'orphan_status',
         'disability_name',
         'guardian_name',
+        'guardian_phone',
+        'guardian_email',
         'residence',
         'first_entry_date',
         'fees_balance',

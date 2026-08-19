@@ -24,6 +24,8 @@ const createManualForm = () => ({
     has_disability: '',
     disability_name: '',
     guardian_name: '',
+    guardian_phone: '',
+    guardian_email: '',
     residence: '',
     first_entry_date: '',
 })
@@ -52,6 +54,20 @@ const headerAliases = {
     parentsnameguardian: 'guardian_name',
     parentnameguardian: 'guardian_name',
     guardianname: 'guardian_name',
+    guardianphone: 'guardian_phone',
+    guardianphonenumber: 'guardian_phone',
+    parentphone: 'guardian_phone',
+    parentphonenumber: 'guardian_phone',
+    parentsphone: 'guardian_phone',
+    parentsphonenumber: 'guardian_phone',
+    guardiancontact: 'guardian_phone',
+    guardiancontactnumber: 'guardian_phone',
+    guardianemail: 'guardian_email',
+    guardianemailaddress: 'guardian_email',
+    parentemail: 'guardian_email',
+    parentemailaddress: 'guardian_email',
+    parentsemail: 'guardian_email',
+    parentsemailaddress: 'guardian_email',
     placeofresidence: 'residence',
     firstdateofentry: 'first_entry_date',
     firstdateofentery: 'first_entry_date',
@@ -159,6 +175,8 @@ const normalizeSpreadsheetRows = rows =>
                 orphan_status: '',
                 disability_name: '',
                 guardian_name: '',
+                guardian_phone: '',
+                guardian_email: '',
                 residence: '',
                 first_entry_date: '',
             }
@@ -734,6 +752,42 @@ export default function StudentsPage() {
                             </label>
 
                             <label className={managementStyles.field}>
+                                <span className={managementStyles.fieldLabel}>
+                                    Guardian phone number
+                                </span>
+                                <Input
+                                    type="tel"
+                                    value={manualForm.guardian_phone}
+                                    onChange={event =>
+                                        setManualForm(current => ({
+                                            ...current,
+                                            guardian_phone: event.target.value,
+                                        }))
+                                    }
+                                    placeholder="+265 999 000 000"
+                                />
+                                <InputError messages={manualErrors.guardian_phone} />
+                            </label>
+
+                            <label className={managementStyles.field}>
+                                <span className={managementStyles.fieldLabel}>
+                                    Guardian email
+                                </span>
+                                <Input
+                                    type="email"
+                                    value={manualForm.guardian_email}
+                                    onChange={event =>
+                                        setManualForm(current => ({
+                                            ...current,
+                                            guardian_email: event.target.value,
+                                        }))
+                                    }
+                                    placeholder="guardian@example.com"
+                                />
+                                <InputError messages={manualErrors.guardian_email} />
+                            </label>
+
+                            <label className={managementStyles.field}>
                                 <span className={managementStyles.fieldLabel}>Place of residence</span>
                                 <Input
                                     value={manualForm.residence}
@@ -835,8 +889,8 @@ export default function StudentsPage() {
                                 />
                                 <span className={managementStyles.fieldHint}>
                                     Expected columns: Full name, Sex, Date of Birth, Age, Code,
-                                    Opharn, Name of Disability, Parents Name/Guidian, Place of
-                                    Residence, 1st Date of Entery.
+                                    Opharn, Name of Disability, Parents Name/Guidian, Guardian
+                                    Phone, Guardian Email, Place of Residence, 1st Date of Entery.
                                 </span>
                                 <InputError messages={importErrors.records} />
                             </label>
@@ -860,6 +914,7 @@ export default function StudentsPage() {
                                             <th>Date of birth</th>
                                             <th>Code</th>
                                             <th>Guardian</th>
+                                            <th>Contact</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -870,6 +925,11 @@ export default function StudentsPage() {
                                                 <td>{record.date_of_birth || 'N/A'}</td>
                                                 <td>{record.student_code || 'N/A'}</td>
                                                 <td>{record.guardian_name || 'N/A'}</td>
+                                                <td>
+                                                    {record.guardian_phone ||
+                                                        record.guardian_email ||
+                                                        'N/A'}
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -958,6 +1018,8 @@ export default function StudentsPage() {
                                                             <th>Code</th>
                                                             <th>Disability</th>
                                                             <th>Guardian</th>
+                                                            <th>Guardian phone</th>
+                                                            <th>Guardian email</th>
                                                             <th>Residence</th>
                                                             <th>Entry date</th>
                                                         </tr>
@@ -984,6 +1046,14 @@ export default function StudentsPage() {
                                                                 </td>
                                                                 <td>
                                                                     {student.guardian_name ||
+                                                                        'N/A'}
+                                                                </td>
+                                                                <td>
+                                                                    {student.guardian_phone ||
+                                                                        'N/A'}
+                                                                </td>
+                                                                <td>
+                                                                    {student.guardian_email ||
                                                                         'N/A'}
                                                                 </td>
                                                                 <td>
