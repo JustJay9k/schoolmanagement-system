@@ -1,36 +1,20 @@
 
 > breeze-next@0.1.0 dev
-> next dev --hostname 127.0.0.1 --port 3000
+> next dev -p 3000
 
   ▲ Next.js 14.2.35
-  - Local:        http://127.0.0.1:3000
-  - Network:      http://127.0.0.1:3000
+  - Local:        http://localhost:3000
   - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 10.4s
- ○ Compiling /login ...
- ✓ Compiled /login in 16.8s (664 modules)
- GET /login 200 in 17521ms
+ ✓ Ready in 3.9s
  ○ Compiling / ...
- ✓ Compiled / in 1231ms (621 modules)
- GET / 200 in 1727ms
- GET / 200 in 99ms
- ✓ Compiled /login in 194ms (320 modules)
- ○ Compiling /_not-found ...
- ✓ Compiled /_not-found in 2.6s (624 modules)
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 3223ms
- GET /login 200 in 207ms
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 139ms
- ○ Compiling /dashboard ...
- ✓ Compiled /dashboard in 3.6s (703 modules)
- ✓ Compiled in 2.8s (697 modules)
- GET /dashboard 200 in 220ms
- GET /dashboard 200 in 95ms
- ○ Compiling /_not-found ...
- ✓ Compiled /_not-found in 633ms (352 modules)
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 937ms
- ○ Compiling /notifications ...
- ✓ Compiled /notifications in 1272ms (717 modules)
- GET /login 200 in 234ms
- GET /login 200 in 171ms
+ ✓ Compiled / in 6.7s (609 modules)
+ GET / 200 in 7268ms
+ ○ Compiling /management/school-structure ...
+ ✓ Compiled /management/school-structure in 2.9s (680 modules)
+ GET /management/school-structure 200 in 3280ms
+ ✓ Compiled /_not-found in 511ms (658 modules)
+ GET /_next/static/css/app/layout.css?v=1787146857705 404 in 709ms
+ GET /_next/static/chunks/main-app.js?v=1787146857705 404 in 556ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 54ms

@@ -1,3 +1,5 @@
+/* Hallmark - macrostructure: Workbench - tone: operational - anchor hue: teal */
+
 .toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -308,6 +310,282 @@
     color: var(--muted);
 }
 
+.statusBanner {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    padding: 0.9rem 1rem;
+    background: var(--surface-card-soft);
+}
+
+.statusBanner strong {
+    display: block;
+    color: var(--ink);
+}
+
+.statusBanner p {
+    margin: 0.18rem 0 0;
+    color: var(--muted);
+}
+
+.statusBannerSuccess {
+    border-color: var(--status-success-border);
+    background: var(--status-success-bg);
+}
+
+.statusBannerError {
+    border-color: var(--status-error-border);
+    background: var(--status-error-bg);
+}
+
+.statusBannerError strong,
+.statusBannerError p {
+    color: var(--status-error-ink);
+}
+
+.structureOverview {
+    display: grid;
+    gap: 1rem;
+}
+
+.structureSummary,
+.guidancePanel,
+.structureEditor,
+.trackEditorCard {
+    border: 1px solid var(--line);
+    border-radius: 1.05rem;
+    background: var(--panel);
+    backdrop-filter: blur(18px);
+}
+
+.structureSummary,
+.guidancePanel,
+.structureEditor {
+    padding: 1rem;
+}
+
+.structureSummaryHeader,
+.editorHeader,
+.trackEditorTop,
+.trackSummaryTop {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.structureTitle {
+    margin: 0.24rem 0 0;
+    color: var(--ink);
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+    line-height: 1.05;
+}
+
+.structureRoleBadge,
+.classCountBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface-card-soft);
+    color: var(--accent-strong);
+    padding: 0.36rem 0.68rem;
+    font-size: 0.74rem;
+    font-weight: 800;
+}
+
+.trackSummaryGrid,
+.trackEditorGrid {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.trackSummaryGrid {
+    margin-top: 1rem;
+}
+
+.trackSummaryCard {
+    display: grid;
+    gap: 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: 0.95rem;
+    background: var(--surface-card-muted);
+    padding: 0.9rem;
+}
+
+.trackSummaryTop {
+    justify-content: flex-start;
+}
+
+.trackSummaryTop h3,
+.trackEditorTop h3,
+.guidancePanel h2,
+.editorHeader h2 {
+    margin: 0;
+    color: var(--ink);
+    font-size: 1rem;
+}
+
+.trackSummaryTop p,
+.editorHeader p,
+.guidanceNote {
+    margin: 0.22rem 0 0;
+    color: var(--muted);
+    font-size: 0.86rem;
+}
+
+.trackDot {
+    width: 0.75rem;
+    height: 0.75rem;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    margin-top: 0.3rem;
+    box-shadow: 0 0 0 4px var(--surface-tint);
+}
+
+.trackDotPrimary {
+    background: var(--accent);
+}
+
+.trackDotSecondary {
+    background: var(--signal);
+}
+
+.classChipList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.classChip,
+.emptyChip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.85rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    padding: 0.34rem 0.62rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.classChip {
+    background: var(--surface-field);
+    color: var(--ink);
+}
+
+.emptyChip {
+    background: var(--surface-card-soft);
+    color: var(--muted);
+}
+
+.guidancePanel {
+    align-self: stretch;
+    background:
+        linear-gradient(135deg, var(--surface-tint), transparent 52%),
+        var(--panel);
+}
+
+.guidancePanel h2 {
+    margin-top: 0.24rem;
+}
+
+.guidanceList {
+    display: grid;
+    gap: 0.55rem;
+    margin: 0.85rem 0 0;
+    padding-left: 1.15rem;
+    color: var(--ink);
+    font-size: 0.88rem;
+}
+
+.guidanceList li::marker {
+    color: var(--accent-strong);
+    font-weight: 800;
+}
+
+.guidanceNote {
+    border-top: 1px solid var(--line);
+    margin-top: 0.95rem;
+    padding-top: 0.85rem;
+}
+
+.structureEditor {
+    display: grid;
+    gap: 1rem;
+}
+
+.editorHeader {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 0.9rem;
+}
+
+.trackEditorCard {
+    display: grid;
+    gap: 0.85rem;
+    padding: 0.9rem;
+    background: var(--surface-card);
+}
+
+.trackEditorCardError {
+    border-color: var(--status-error-border);
+    background:
+        linear-gradient(180deg, var(--danger-soft-strong), transparent 40%),
+        var(--surface-card);
+}
+
+.structureTextarea {
+    width: 100%;
+    min-height: 16rem;
+    resize: vertical;
+    border: 1px solid var(--line);
+    border-radius: 0.95rem;
+    background: var(--surface-field);
+    color: var(--ink);
+    padding: 0.9rem 1rem;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    outline: none;
+    transition:
+        border-color 140ms ease,
+        box-shadow 140ms ease,
+        background-color 140ms ease;
+}
+
+.structureTextarea::placeholder {
+    color: var(--muted);
+    opacity: 0.72;
+}
+
+.structureTextarea:hover {
+    border-color: color-mix(in srgb, var(--accent) 32%, var(--line));
+}
+
+.structureTextarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.previewBlock {
+    display: grid;
+    gap: 0.55rem;
+    border-radius: 0.85rem;
+    background: var(--surface-card-muted);
+    padding: 0.75rem;
+}
+
+.previewBlock > span {
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
 .dangerText {
     color: var(--danger);
 }
@@ -324,5 +602,28 @@
     .splitPanel {
         grid-template-columns: minmax(0, 1.6fr) minmax(22rem, 0.95fr);
         align-items: start;
+    }
+
+    .structureOverview {
+        grid-template-columns: minmax(0, 1.5fr) minmax(19rem, 0.65fr);
+        align-items: stretch;
+    }
+
+    .trackSummaryGrid,
+    .trackEditorGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .structureSummaryHeader,
+    .editorHeader,
+    .trackEditorTop {
+        display: grid;
+    }
+
+    .structureRoleBadge,
+    .classCountBadge {
+        width: fit-content;
     }
 }
