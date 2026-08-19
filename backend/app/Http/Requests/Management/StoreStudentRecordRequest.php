@@ -34,7 +34,7 @@ class StoreStudentRecordRequest extends FormRequest
     {
         return [
             'school_track' => ['required', Rule::in(SchoolContextOptions::trackValues())],
-            'class_name' => ['required', 'string', Rule::in(SchoolContextOptions::allClasses())],
+            'class_name' => ['required', 'string', Rule::in(SchoolContextOptions::allClasses($this->user()?->school_id))],
             'full_name' => ['required', 'string', 'max:255'],
             'sex' => ['nullable', Rule::in(['male', 'female', 'other'])],
             'date_of_birth' => ['nullable', 'date'],
@@ -61,7 +61,7 @@ class StoreStudentRecordRequest extends FormRequest
                 $track = $this->string('school_track')->toString();
                 $className = $this->string('class_name')->toString();
 
-                if ($track !== '' && $className !== '' && ! SchoolContextOptions::isValidClassForTrack($track, $className)) {
+                if ($track !== '' && $className !== '' && ! SchoolContextOptions::isValidClassForTrack($track, $className, $this->user()?->school_id)) {
                     $validator->errors()->add('class_name', 'The selected class does not belong to the selected school track.');
                 }
             },

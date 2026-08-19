@@ -48,10 +48,12 @@ class StoreTimetableRequest extends FormRequest
 
     public function rules(): array
     {
+        $schoolId = $this->user()?->school_id;
+
         return [
             'title' => ['required', 'string', 'max:255'],
             'school_track' => ['required', Rule::in(SchoolContextOptions::trackValues())],
-            'class_name' => ['required', 'string', Rule::in(SchoolContextOptions::allClasses()), Rule::unique('timetables', 'class_name')
+            'class_name' => ['required', 'string', Rule::in(SchoolContextOptions::allClasses($schoolId)), Rule::unique('timetables', 'class_name')
                 ->where(fn ($query) => $query->where('school_track', $this->input('school_track')))],
             'assigned_teacher_id' => ['required', 'integer', 'exists:users,id'],
             'notes' => ['nullable', 'string'],
@@ -73,7 +75,7 @@ class StoreTimetableRequest extends FormRequest
                 $track = $this->string('school_track')->toString();
                 $className = $this->string('class_name')->toString();
 
-                if ($track !== '' && $className !== '' && ! SchoolContextOptions::isValidClassForTrack($track, $className)) {
+                if ($track !== '' && $className !== '' && ! SchoolContextOptions::isValidClassForTrack($track, $className, $this->user()?->school_id)) {
                     $validator->errors()->add('class_name', 'The selected class does not belong to the chosen school track.');
                 }
 

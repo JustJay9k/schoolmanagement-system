@@ -20,6 +20,8 @@ class UpdateAdminUserRequest extends FormRequest
 
     public function rules(): array
     {
+        $targetSchoolId = $this->targetSchoolId();
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->route('user'))],
@@ -28,7 +30,7 @@ class UpdateAdminUserRequest extends FormRequest
             'school_id' => ['nullable', 'integer', 'exists:schools,id'],
             'school_name' => ['nullable', 'string', 'max:180'],
             'school_track' => ['nullable', Rule::in(SchoolContextOptions::trackValues())],
-            'assigned_class_name' => ['nullable', 'string', Rule::in(SchoolContextOptions::allClasses())],
+            'assigned_class_name' => ['nullable', 'string', Rule::in(SchoolContextOptions::allClasses($targetSchoolId))],
             'email_verified' => ['nullable', 'boolean'],
             'password' => ['nullable', 'confirmed', Password::defaults()],
         ];
@@ -43,8 +45,11 @@ class UpdateAdminUserRequest extends FormRequest
                 $schoolName = trim($this->string('school_name')->toString());
                 $track = $this->string('school_track')->toString();
                 $className = $this->string('assigned_class_name')->toString();
+                $targetSchoolId = $this->targetSchoolId();
 
-                if (! $schoolId && $schoolName === '') {
+                $schoolWasSubmitted = $this->has('school_id') || $this->has('school_name');
+
+                if ($schoolWasSubmitted && ! $schoolId && ! $targetSchoolId && $schoolName === '') {
                     $validator->errors()->add('school_id', 'Choose an existing school or enter a new school name.');
                 }
 
@@ -66,19 +71,21 @@ class UpdateAdminUserRequest extends FormRequest
                     return;
                 }
 
-                if (! SchoolContextOptions::isValidClassForTrack($track, $className)) {
+                if (! SchoolContextOptions::isValidClassForTrack($track, $className, $targetSchoolId)) {
                     $validator->errors()->add('assigned_class_name', 'The selected class does not belong to the chosen track.');
                     return;
                 }
 
-                $targetSchoolId = $this->targetSchoolId();
+                $classIsAvailable = $targetSchoolId
+                    ? SchoolContextOptions::isTeacherClassAvailableForSchool(
+                        $track,
+                        $className,
+                        $targetSchoolId,
+                        $this->route('user'),
+                    )
+                    : SchoolContextOptions::isTeacherClassAvailable($track, $className, $this->route('user'));
 
-                if (! SchoolContextOptions::isTeacherClassAvailableForSchool(
-                    $track,
-                    $className,
-                    $targetSchoolId,
-                    $this->route('user'),
-                )) {
+                if (! $classIsAvailable) {
                     $message = $track === 'secondary'
                         ? 'That form class already has a form teacher.'
                         : 'That class is already assigned to another teacher.';
@@ -98,7 +105,7 @@ class UpdateAdminUserRequest extends FormRequest
 
         $schoolName = Str::squish($this->string('school_name')->toString());
         if ($schoolName === '') {
-            return null;
+            return $this->route('user')?->school_id;
         }
 
         return School::query()

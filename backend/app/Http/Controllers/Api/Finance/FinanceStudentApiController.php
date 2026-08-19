@@ -47,7 +47,7 @@ class FinanceStudentApiController extends Controller
             ],
             'options' => [
                 'schoolTracks' => SchoolContextOptions::tracks(),
-                'classesByTrack' => SchoolContextOptions::classesByTrack(),
+                'classesByTrack' => SchoolContextOptions::classesByTrack($request->user()?->school_id),
             ],
         ]);
     }

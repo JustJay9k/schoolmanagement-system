@@ -192,8 +192,12 @@ export default function AdminUsersPage() {
         )
     }, [editingUserId, users])
 
+    const classesForSelectedSchool =
+        form.school_id && options?.classesByTrackBySchool?.[form.school_id]
+            ? options.classesByTrackBySchool[form.school_id]
+            : options?.classesByTrack ?? {}
     const availableClasses =
-        options?.classesByTrack?.[form.school_track] ?? []
+        classesForSelectedSchool?.[form.school_track] ?? []
 
     const closeEditor = () => {
         setEditorOpen(false)

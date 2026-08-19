@@ -28,6 +28,7 @@ class UpdateSchoolStructureRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'school_id' => ['nullable', 'integer', 'exists:schools,id'],
             'classes_by_track.primary' => ['required', 'array', 'min:1'],
             'classes_by_track.primary.*' => ['required', 'string', 'max:100', 'distinct'],
             'classes_by_track.secondary' => ['required', 'array', 'min:1'],
@@ -39,6 +40,13 @@ class UpdateSchoolStructureRequest extends FormRequest
     {
         return [
             function ($validator): void {
+                $schoolId = $this->targetSchoolId();
+
+                if (! $schoolId) {
+                    $validator->errors()->add('school_id', 'Choose a school before editing the school structure.');
+                    return;
+                }
+
                 $classesByTrack = SchoolContextOptions::normalizeClassesByTrack(
                     $this->input('classes_by_track', []),
                     fallbackToDefaults: false,
@@ -55,6 +63,7 @@ class UpdateSchoolStructureRequest extends FormRequest
 
                 $teachersWithMissingClasses = User::query()
                     ->where('role', UserRole::Teacher)
+                    ->where('school_id', $schoolId)
                     ->whereNotNull('school_track')
                     ->whereNotNull('assigned_class_name')
                     ->get(['name', 'school_track', 'assigned_class_name'])
@@ -81,6 +90,11 @@ class UpdateSchoolStructureRequest extends FormRequest
                 });
 
                 Timetable::query()
+                    ->where(function ($query) use ($schoolId): void {
+                        $query
+                            ->whereHas('assignedTeacher', fn ($teacherQuery) => $teacherQuery->where('school_id', $schoolId))
+                            ->orWhereHas('creator', fn ($creatorQuery) => $creatorQuery->where('school_id', $schoolId));
+                    })
                     ->get(['title', 'school_track', 'class_name'])
                     ->filter(function (Timetable $timetable) use ($classesByTrack): bool {
                         return ! in_array($timetable->class_name, $classesByTrack[$timetable->school_track] ?? [], true);
@@ -93,6 +107,17 @@ class UpdateSchoolStructureRequest extends FormRequest
                     });
             },
         ];
+    }
+
+    private function targetSchoolId(): ?int
+    {
+        $requestedSchoolId = $this->integer('school_id') ?: null;
+
+        if ($this->user()?->isAdmin() && $requestedSchoolId) {
+            return $requestedSchoolId;
+        }
+
+        return $this->user()?->school_id;
     }
 
     /**

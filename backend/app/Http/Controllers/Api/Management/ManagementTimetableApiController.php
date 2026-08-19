@@ -132,7 +132,7 @@ class ManagementTimetableApiController extends Controller
 
         return [
             'schoolTracks' => SchoolContextOptions::tracks(),
-            'classesByTrack' => SchoolContextOptions::classesByTrack(),
+            'classesByTrack' => SchoolContextOptions::classesByTrack(request()->user()?->school_id),
             'subjectsByTrack' => $subjectsByTrack,
             'teachersByTrack' => $teachersByTrack,
             'daysOfWeek' => TimetableOptions::daysOfWeek(),

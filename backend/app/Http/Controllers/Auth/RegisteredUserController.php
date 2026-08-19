@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 
@@ -35,13 +36,20 @@ class RegisteredUserController extends Controller
 
         return response()->json([
             'tracks' => SchoolContextOptions::tracks(),
-            'classesByTrack' => SchoolContextOptions::classesByTrack(),
-            'takenClassesByTrack' => SchoolContextOptions::takenClassesByTrack(),
+            'classesByTrack' => SchoolContextOptions::defaultClassesByTrack(),
             'availableClassesByTrack' => SchoolContextOptions::availableClassesByTrack(),
             'schools' => $schools->map(fn (School $school): array => [
                 'value' => (string) $school->id,
                 'label' => $school->name,
             ])->values(),
+            'classesByTrackBySchool' => $schools
+                ->mapWithKeys(fn (School $school): array => [
+                    (string) $school->id => SchoolContextOptions::classesByTrack($school->id),
+                ]),
+            'availableClassesByTrackBySchool' => $schools
+                ->mapWithKeys(fn (School $school): array => [
+                    (string) $school->id => SchoolContextOptions::availableClassesByTrack(null, $school->id),
+                ]),
             'takenClassesByTrackBySchool' => $schools
                 ->mapWithKeys(fn (School $school): array => [
                     (string) $school->id => SchoolContextOptions::takenClassesByTrackForSchool($school->id),
@@ -66,6 +74,8 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): JsonResponse|Response
     {
+        $schoolIdForValidation = $this->resolveSchoolIdFromRequest($request);
+
         $validator = Validator::make($request->all(), [
             'account_type' => ['required', 'string', 'in:teacher,guardian'],
             'name' => ['required', 'string', 'max:255'],
@@ -73,7 +83,7 @@ class RegisteredUserController extends Controller
             'school_id' => ['nullable', 'integer', 'exists:schools,id'],
             'school_name' => ['nullable', 'string', 'max:180'],
             'school_track' => ['nullable', 'string', 'in:'.implode(',', SchoolContextOptions::trackValues())],
-            'assigned_class_name' => ['nullable', 'string', 'in:'.implode(',', SchoolContextOptions::allClasses())],
+            'assigned_class_name' => ['nullable', 'string', Rule::in(SchoolContextOptions::allClasses($schoolIdForValidation))],
             'child_id' => ['nullable', 'integer', 'exists:student_records,id'],
             'child_name' => ['nullable', 'string', 'max:255'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
@@ -127,7 +137,7 @@ class RegisteredUserController extends Controller
                 return;
             }
 
-            if (! SchoolContextOptions::isValidClassForTrack($track, $className)) {
+            if (! SchoolContextOptions::isValidClassForTrack($track, $className, $schoolId)) {
                 $validator->errors()->add('assigned_class_name', 'The selected class does not belong to the chosen track.');
                 return;
             }

@@ -28,8 +28,8 @@ class ManagementFormTeacherApiController extends Controller
                 ->filter(fn (array $teacher): bool => $teacher['is_form_teacher'])
                 ->values(),
             'options' => [
-                'secondaryClasses' => SchoolContextOptions::classesByTrack()['secondary'] ?? [],
-                'takenClasses' => SchoolContextOptions::takenClassesByTrack()['secondary'] ?? [],
+                'secondaryClasses' => SchoolContextOptions::classesByTrack(request()->user()?->school_id)['secondary'] ?? [],
+                'takenClasses' => SchoolContextOptions::takenClassesByTrack(null, request()->user()?->school_id)['secondary'] ?? [],
             ],
         ]);
     }
@@ -46,8 +46,8 @@ class ManagementFormTeacherApiController extends Controller
                 : 'Form teacher allocation cleared successfully.',
             'teacher' => $this->serializeTeacher($teacher->fresh()),
             'options' => [
-                'secondaryClasses' => SchoolContextOptions::classesByTrack()['secondary'] ?? [],
-                'takenClasses' => SchoolContextOptions::takenClassesByTrack($teacher->fresh())['secondary'] ?? [],
+                'secondaryClasses' => SchoolContextOptions::classesByTrack($request->user()?->school_id)['secondary'] ?? [],
+                'takenClasses' => SchoolContextOptions::takenClassesByTrack($teacher->fresh(), $request->user()?->school_id)['secondary'] ?? [],
             ],
         ]);
     }

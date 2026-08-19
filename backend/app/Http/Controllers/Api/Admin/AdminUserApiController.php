@@ -222,10 +222,14 @@ class AdminUserApiController extends Controller
         $validated = $request->validated();
 
         $role = UserRole::from($validated['role']);
-        $school = $this->resolveSchoolFromInput(
-            isset($validated['school_id']) ? (int) $validated['school_id'] : null,
-            $validated['school_name'] ?? null,
-        );
+        $schoolId = isset($validated['school_id']) ? (int) $validated['school_id'] : null;
+        $schoolName = $validated['school_name'] ?? null;
+        $school = $this->resolveSchoolFromInput($schoolId, $schoolName);
+
+        if ($request instanceof UpdateAdminUserRequest && ! $school && $schoolId === null && blank($schoolName)) {
+            $school = $user?->school;
+        }
+
         $payload = [
             'name' => $validated['name'],
             'email' => $validated['email'],
@@ -279,6 +283,10 @@ class AdminUserApiController extends Controller
      */
     private function options(): array
     {
+        $schools = School::query()
+            ->orderBy('name')
+            ->get();
+
         return [
             'roles' => collect(UserRole::cases())
                 ->map(fn (UserRole $role): array => [
@@ -293,11 +301,16 @@ class AdminUserApiController extends Controller
                 ])
                 ->values(),
             'schoolTracks' => SchoolContextOptions::tracks(),
-            'classesByTrack' => SchoolContextOptions::classesByTrack(),
-            'takenClassesByTrack' => SchoolContextOptions::takenClassesByTrack(),
-            'schools' => School::query()
-                ->orderBy('name')
-                ->get()
+            'classesByTrack' => SchoolContextOptions::defaultClassesByTrack(),
+            'classesByTrackBySchool' => $schools
+                ->mapWithKeys(fn (School $school): array => [
+                    (string) $school->id => SchoolContextOptions::classesByTrack($school->id),
+                ]),
+            'takenClassesByTrackBySchool' => $schools
+                ->mapWithKeys(fn (School $school): array => [
+                    (string) $school->id => SchoolContextOptions::takenClassesByTrackForSchool($school->id),
+                ]),
+            'schools' => $schools
                 ->map(fn (School $school): array => [
                     'value' => (string) $school->id,
                     'label' => $school->name,

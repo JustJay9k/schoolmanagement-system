@@ -26,7 +26,7 @@ class UpdateFormTeacherAllocationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'assigned_class_name' => ['nullable', 'string', Rule::in(SchoolContextOptions::classesByTrack()['secondary'] ?? [])],
+            'assigned_class_name' => ['nullable', 'string', Rule::in(SchoolContextOptions::classesByTrack($this->user()?->school_id)['secondary'] ?? [])],
         ];
     }
 

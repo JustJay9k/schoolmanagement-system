@@ -34,7 +34,8 @@ const Page = () => {
         schools: [],
         tracks: {},
         classesByTrack: {},
-        availableClassesByTrack: {},
+        classesByTrackBySchool: {},
+        availableClassesByTrackBySchool: {},
         takenClassesByTrackBySchool: {},
         studentsBySchool: {},
     })
@@ -57,8 +58,10 @@ const Page = () => {
                     schools: response.data?.schools ?? [],
                     tracks: response.data?.tracks ?? {},
                     classesByTrack: response.data?.classesByTrack ?? {},
-                    availableClassesByTrack:
-                        response.data?.availableClassesByTrack ?? {},
+                    classesByTrackBySchool:
+                        response.data?.classesByTrackBySchool ?? {},
+                    availableClassesByTrackBySchool:
+                        response.data?.availableClassesByTrackBySchool ?? {},
                     takenClassesByTrackBySchool:
                         response.data?.takenClassesByTrackBySchool ?? {},
                     studentsBySchool: response.data?.studentsBySchool ?? {},
@@ -99,8 +102,13 @@ const Page = () => {
             : registrationOptions.takenClassesByTrackBySchool?.[
                   effectiveSchoolId
               ] ?? { primary: [], secondary: [] }
+    const classesForSelectedSchool =
+        effectiveSchoolId === ''
+            ? registrationOptions.classesByTrack
+            : registrationOptions.classesByTrackBySchool?.[effectiveSchoolId] ??
+              registrationOptions.classesByTrack
     const availableClasses = schoolTrack
-        ? (registrationOptions.classesByTrack?.[schoolTrack] ?? []).filter(
+        ? (classesForSelectedSchool?.[schoolTrack] ?? []).filter(
               className =>
                   !(
                       takenClassesForSelectedSchool?.[schoolTrack] ?? []

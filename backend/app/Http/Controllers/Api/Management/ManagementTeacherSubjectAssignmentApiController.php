@@ -63,7 +63,7 @@ class ManagementTeacherSubjectAssignmentApiController extends Controller
     private function options(): array
     {
         return [
-            'secondaryClasses' => SchoolContextOptions::classesByTrack()['secondary'] ?? [],
+            'secondaryClasses' => SchoolContextOptions::classesByTrack(request()->user()?->school_id)['secondary'] ?? [],
             'teachers' => User::query()
                 ->where('role', UserRole::Teacher)
                 ->where('status', UserStatus::Active)

@@ -20,6 +20,8 @@ class StoreAdminUserRequest extends FormRequest
 
     public function rules(): array
     {
+        $targetSchoolId = $this->targetSchoolId();
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
@@ -28,7 +30,7 @@ class StoreAdminUserRequest extends FormRequest
             'school_id' => ['nullable', 'integer', 'exists:schools,id'],
             'school_name' => ['nullable', 'string', 'max:180'],
             'school_track' => ['nullable', Rule::in(SchoolContextOptions::trackValues())],
-            'assigned_class_name' => ['nullable', 'string', Rule::in(SchoolContextOptions::allClasses())],
+            'assigned_class_name' => ['nullable', 'string', Rule::in(SchoolContextOptions::allClasses($targetSchoolId))],
             'email_verified' => ['nullable', 'boolean'],
             'password' => ['required', 'confirmed', Password::defaults()],
         ];
@@ -43,10 +45,7 @@ class StoreAdminUserRequest extends FormRequest
                 $schoolName = trim($this->string('school_name')->toString());
                 $track = $this->string('school_track')->toString();
                 $className = $this->string('assigned_class_name')->toString();
-
-                if (! $schoolId && $schoolName === '') {
-                    $validator->errors()->add('school_id', 'Choose an existing school or enter a new school name.');
-                }
+                $targetSchoolId = $this->targetSchoolId();
 
                 if ($role !== UserRole::Teacher->value) {
                     return;
@@ -66,14 +65,16 @@ class StoreAdminUserRequest extends FormRequest
                     return;
                 }
 
-                if (! SchoolContextOptions::isValidClassForTrack($track, $className)) {
+                if (! SchoolContextOptions::isValidClassForTrack($track, $className, $targetSchoolId)) {
                     $validator->errors()->add('assigned_class_name', 'The selected class does not belong to the chosen track.');
                     return;
                 }
 
-                $targetSchoolId = $this->targetSchoolId();
+                $classIsAvailable = $targetSchoolId
+                    ? SchoolContextOptions::isTeacherClassAvailableForSchool($track, $className, $targetSchoolId)
+                    : SchoolContextOptions::isTeacherClassAvailable($track, $className);
 
-                if (! SchoolContextOptions::isTeacherClassAvailableForSchool($track, $className, $targetSchoolId)) {
+                if (! $classIsAvailable) {
                     $message = $track === 'secondary'
                         ? 'That form class already has a form teacher.'
                         : 'That class is already assigned to another teacher.';

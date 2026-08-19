@@ -88,7 +88,10 @@ class AdminApiManagementTest extends TestCase
 
     public function test_admin_can_update_school_structure_through_api(): void
     {
-        $admin = User::factory()->admin()->create();
+        $school = \App\Models\School::query()->create(['name' => 'Admin School']);
+        $admin = User::factory()->admin()->create([
+            'school_id' => $school->id,
+        ]);
 
         $this->actingAs($admin)
             ->putJson('/api/admin/school-structure', [

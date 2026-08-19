@@ -23,7 +23,7 @@ class StoreTeacherSubjectAssignmentRequest extends FormRequest
         return [
             'teacher_id' => ['required', 'integer', 'exists:users,id'],
             'subject_id' => ['required', 'integer', 'exists:school_subjects,id'],
-            'class_name' => ['required', 'string', Rule::in(SchoolContextOptions::classesByTrack()['secondary'] ?? [])],
+            'class_name' => ['required', 'string', Rule::in(SchoolContextOptions::classesByTrack($this->user()?->school_id)['secondary'] ?? [])],
         ];
     }
 
@@ -48,7 +48,7 @@ class StoreTeacherSubjectAssignmentRequest extends FormRequest
                     $validator->errors()->add('subject_id', 'Choose a subject that belongs to the secondary track.');
                 }
 
-                if ($className !== '' && ! SchoolContextOptions::isValidClassForTrack('secondary', $className)) {
+                if ($className !== '' && ! SchoolContextOptions::isValidClassForTrack('secondary', $className, $this->user()?->school_id)) {
                     $validator->errors()->add('class_name', 'Choose a valid secondary class.');
                 }
 

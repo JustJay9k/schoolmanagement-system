@@ -99,7 +99,7 @@ class TeacherGradebookApiController extends Controller
             'scope' => $scope,
             'options' => [
                 'schoolTracks' => SchoolContextOptions::tracks(),
-                'classesByTrack' => SchoolContextOptions::classesByTrack(),
+                'classesByTrack' => SchoolContextOptions::classesByTrack($actor->school_id),
                 'subjectsByTrack' => $subjectsByTrack,
                 'assessmentPeriods' => $assessmentPeriods,
                 'registerScheduleByTrack' => SchoolContextOptions::registerScheduleByTrack(),
@@ -209,7 +209,7 @@ class TeacherGradebookApiController extends Controller
             $track = '';
         }
 
-        if ($className !== '' && $track !== '' && ! SchoolContextOptions::isValidClassForTrack($track, $className)) {
+        if ($className !== '' && $track !== '' && ! SchoolContextOptions::isValidClassForTrack($track, $className, $actor->school_id)) {
             $className = '';
         }
 
