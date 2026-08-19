@@ -1116,14 +1116,6 @@ const Dashboard = () => {
                             </div>
                             <span className={styles.alertTag}>Admin</span>
                         </a>
-
-                        <a href="/admin/settings" className={styles.alertCard}>
-                            <div>
-                                <strong>System Settings</strong>
-                                <p>Review platform-level settings and controls.</p>
-                            </div>
-                            <span className={styles.alertTag}>Admin</span>
-                        </a>
                     </div>
                 </div>
             </section>

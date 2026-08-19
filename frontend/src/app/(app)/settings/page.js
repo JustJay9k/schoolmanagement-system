@@ -8,9 +8,8 @@ import { useAuth } from '@/hooks/auth'
 import Button from '@/components/Button'
 import InputError from '@/components/InputError'
 import axios from '@/lib/axios'
-import { formatRoleLabel, isAdminUser } from '@/lib/userAccess'
+import { formatRoleLabel } from '@/lib/userAccess'
 import Image from 'next/image'
-import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { useSWRConfig } from 'swr'
 
@@ -222,11 +221,6 @@ export default function SettingsPage() {
                                     className={workspaceStyles.secondaryButton}>
                                     Remove photo
                                 </button>
-                                {isAdminUser(user) ? (
-                                    <Link href="/admin/settings" className={workspaceStyles.secondaryButton}>
-                                        Open system settings
-                                    </Link>
-                                ) : null}
                             </div>
                         </form>
 
