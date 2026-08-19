@@ -12,7 +12,7 @@ class UpdateSchoolStructureRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->canAccessAdminPanel() ?? false;
+        return $this->user()?->canManageSchoolStructure() ?? false;
     }
 
     protected function prepareForValidation(): void

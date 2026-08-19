@@ -66,6 +66,9 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 });
 
 Route::middleware(['auth:sanctum', 'timetable-manager'])->prefix('management')->group(function () {
+    Route::get('/school-structure', [AdminSchoolStructureApiController::class, 'show']);
+    Route::put('/school-structure', [AdminSchoolStructureApiController::class, 'update']);
+
     Route::get('/students', [ManagementStudentRecordApiController::class, 'index']);
     Route::post('/students', [ManagementStudentRecordApiController::class, 'store']);
     Route::post('/students/import', [ManagementStudentRecordApiController::class, 'import']);

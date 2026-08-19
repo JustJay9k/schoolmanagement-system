@@ -1083,6 +1083,14 @@ const Dashboard = () => {
                             </div>
                             <span className={styles.alertTag}>Setup</span>
                         </a>
+
+                        <a href="/management/school-structure" className={styles.alertCard}>
+                            <div>
+                                <strong>School Structure</strong>
+                                <p>Set up the class structure used across the portal.</p>
+                            </div>
+                            <span className={styles.alertTag}>Setup</span>
+                        </a>
                     </div>
                 </div>
             </section>

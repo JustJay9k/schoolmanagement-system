@@ -99,6 +99,12 @@ class User extends Authenticatable
         return $this->isHeadTeacher() && $this->isActive();
     }
 
+    public function canManageSchoolStructure(): bool
+    {
+        return $this->isActive()
+            && ($this->isAdmin() || ($this->isHeadTeacher() && filled($this->school_id)));
+    }
+
     public function canManageFinance(): bool
     {
         return $this->isAccountant() && $this->isActive();

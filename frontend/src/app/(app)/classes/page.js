@@ -44,7 +44,7 @@ export default function ClassesPage() {
                     </div>
 
                     <div className={styles.list}>
-                        <Link href="/admin/school-structure" className={styles.listItem}>
+                        <Link href="/management/school-structure" className={styles.listItem}>
                             <div>
                                 <strong>School Structure</strong>
                                 <p>Maintain the class structure used throughout the portal.</p>

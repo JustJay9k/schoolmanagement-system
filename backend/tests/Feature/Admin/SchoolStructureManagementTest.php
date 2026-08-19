@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\SchoolSetting;
+use App\Models\School;
 use App\Models\Timetable;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -42,6 +43,51 @@ class SchoolStructureManagementTest extends TestCase
             'primary' => ['Reception', 'Standard 1', 'Standard 2'],
             'secondary' => ['Form A', 'Form B'],
         ], SchoolSetting::query()->where('key', 'school_structure')->firstOrFail()->value);
+    }
+
+    public function test_management_user_can_view_school_structure(): void
+    {
+        $school = School::query()->create(['name' => 'Managed School']);
+        $headTeacher = User::factory()->management()->create([
+            'school_id' => $school->id,
+        ]);
+
+        $this->actingAs($headTeacher)
+            ->getJson('/api/management/school-structure')
+            ->assertOk()
+            ->assertJsonPath('classesByTrack.primary.0', 'Standard 1')
+            ->assertJsonPath('classesByTrack.secondary.3', 'Form 4');
+    }
+
+    public function test_management_user_can_update_school_structure(): void
+    {
+        $school = School::query()->create(['name' => 'Managed School']);
+        $headTeacher = User::factory()->management()->create([
+            'school_id' => $school->id,
+        ]);
+
+        $this->actingAs($headTeacher)
+            ->putJson('/api/management/school-structure', [
+                'primary_classes' => "Reception\nStandard 1\nStandard 2",
+                'secondary_classes' => "Form A\nForm B",
+            ])
+            ->assertOk();
+
+        $this->assertSame([
+            'primary' => ['Reception', 'Standard 1', 'Standard 2'],
+            'secondary' => ['Form A', 'Form B'],
+        ], SchoolSetting::query()->where('key', 'school_structure')->firstOrFail()->value);
+    }
+
+    public function test_management_user_without_a_school_cannot_manage_school_structure(): void
+    {
+        $headTeacher = User::factory()->management()->create([
+            'school_id' => null,
+        ]);
+
+        $this->actingAs($headTeacher)
+            ->getJson('/api/management/school-structure')
+            ->assertForbidden();
     }
 
     public function test_school_structure_update_cannot_remove_a_class_that_is_already_assigned(): void

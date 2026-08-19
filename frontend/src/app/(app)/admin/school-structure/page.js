@@ -10,11 +10,19 @@ import {
 import Button from '@/components/Button'
 import InputError from '@/components/InputError'
 import axios from '@/lib/axios'
-import { formatRoleLabel, isAdminUser } from '@/lib/userAccess'
+import {
+    canManageSchoolStructure,
+    formatRoleLabel,
+    isManagementUser,
+} from '@/lib/userAccess'
 import { useAuth } from '@/hooks/auth'
 import { useEffect, useState } from 'react'
 
 const toTextareaValue = classes => (classes ?? []).join('\n')
+const getSchoolStructureEndpoint = user =>
+    isManagementUser(user)
+        ? '/api/management/school-structure'
+        : '/api/admin/school-structure'
 
 export default function SchoolStructurePage() {
     const { user } = useAuth({ middleware: 'auth' })
@@ -33,7 +41,7 @@ export default function SchoolStructurePage() {
         setLoading(true)
 
         try {
-            const response = await axios.get('/api/admin/school-structure')
+            const response = await axios.get(getSchoolStructureEndpoint(user))
 
             setDefaultClassesByTrack(response.data?.defaultClassesByTrack ?? null)
             setTeacherCountsByTrack(response.data?.teacherCountsByTrack ?? null)
@@ -58,7 +66,7 @@ export default function SchoolStructurePage() {
     }
 
     useEffect(() => {
-        if (!user || !isAdminUser(user)) {
+        if (!user || !canManageSchoolStructure(user)) {
             return
         }
 
@@ -72,7 +80,7 @@ export default function SchoolStructurePage() {
         setStatus(null)
 
         try {
-            const response = await axios.put('/api/admin/school-structure', form)
+            const response = await axios.put(getSchoolStructureEndpoint(user), form)
 
             setStatus({
                 type: 'success',
@@ -99,17 +107,17 @@ export default function SchoolStructurePage() {
         return null
     }
 
-    if (!isAdminUser(user)) {
+    if (!canManageSchoolStructure(user)) {
         return (
             <WorkspacePageShell
                 eyebrow="Restricted"
-                title="Administrator access required"
-                description={`This account is signed in as ${formatRoleLabel(user?.role)}. Only administrator accounts can change the school structure.`}
+                title="School structure access required"
+                description={`This account is signed in as ${formatRoleLabel(user?.role)}. Only administrator and head teacher accounts can change the school structure.`}
             >
                 <article className={workspaceStyles.panel}>
                     <p className={adminStyles.message}>
-                        Ask a current administrator to grant the correct role if
-                        you need to edit primary and secondary class definitions.
+                        Ask a current administrator to grant the correct role if you
+                        need to edit primary and secondary class definitions.
                     </p>
                 </article>
             </WorkspacePageShell>
@@ -118,7 +126,7 @@ export default function SchoolStructurePage() {
 
     return (
         <WorkspacePageShell
-            eyebrow="Administration"
+            eyebrow="School Setup"
             title="School structure"
             description="Set the primary and secondary class names used during teacher onboarding, user assignment, and class visibility across the workspace."
             actions={

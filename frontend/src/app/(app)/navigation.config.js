@@ -22,6 +22,7 @@ const managementNavItems = [
     { label: 'Attendance Reports', href: '/attendance-reports', icon: 'reports' },
     { label: 'Subjects', href: '/management/subjects', icon: 'subjects' },
     { label: 'Teacher Allocations', href: '/management/form-teachers', icon: 'users' },
+    { label: 'School Structure', href: '/management/school-structure', icon: 'schoolStructure' },
     { label: 'Timetables', href: '/management/timetables', icon: 'timetable' },
     { label: 'Behaviour', href: '/behaviour', icon: 'behaviour' },
     { label: 'Settings', href: '/settings', icon: 'settings' },

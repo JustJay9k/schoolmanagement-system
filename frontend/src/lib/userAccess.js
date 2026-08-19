@@ -32,6 +32,8 @@ export const isTeacherUser = user => normalizeRole(user?.role) === 'teacher'
 export const isAccountantUser = user => normalizeRole(user?.role) === 'accountant'
 export const isGuardianUser = user => normalizeRole(user?.role) === 'guardian'
 export const canManageSystem = user => isAdminUser(user)
+export const canManageSchoolStructure = user =>
+    isAdminUser(user) || (isManagementUser(user) && Boolean(user?.school_id))
 export const canManageManagementWorkspace = user => isManagementUser(user)
 export const canManageStudentRecords = user => isManagementUser(user)
 export const canManageFinanceWorkspace = user => isAccountantUser(user)

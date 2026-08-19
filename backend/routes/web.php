@@ -23,6 +23,7 @@ Route::get('/admin/settings', fn () => $redirectToFrontend('admin/settings'));
 Route::get('/finance', fn () => $redirectToFrontend('finance'));
 Route::get('/management/subjects', fn () => $redirectToFrontend('management/subjects'));
 Route::get('/management/form-teachers', fn () => $redirectToFrontend('management/form-teachers'));
+Route::get('/management/school-structure', fn () => $redirectToFrontend('management/school-structure'));
 Route::get('/management/timetables', fn () => $redirectToFrontend('management/timetables'));
 Route::get('/notifications', fn () => $redirectToFrontend('notifications'));
 Route::get('/settings', fn () => $redirectToFrontend('settings'));
