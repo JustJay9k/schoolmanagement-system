@@ -21,22 +21,31 @@ const accentIds = new Set(accentThemes.map(theme => theme.id))
 const getSystemTheme = () =>
     window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 
+const getStoredTheme = () => {
+    if (typeof window === 'undefined') {
+        return 'light'
+    }
+
+    const storedTheme = localStorage.getItem(themeStorageKey)
+
+    return storedTheme === 'light' || storedTheme === 'dark'
+        ? storedTheme
+        : getSystemTheme()
+}
+
+const getStoredAccent = () => {
+    if (typeof window === 'undefined') {
+        return defaultAccent
+    }
+
+    const storedAccent = localStorage.getItem(accentStorageKey)
+
+    return accentIds.has(storedAccent) ? storedAccent : defaultAccent
+}
+
 export const ThemeProvider = ({ children }) => {
-    const [theme, setTheme] = useState('light')
-    const [accent, setAccent] = useState(defaultAccent)
-
-    useEffect(() => {
-        const storedTheme = localStorage.getItem(themeStorageKey)
-        const storedAccent = localStorage.getItem(accentStorageKey)
-        const resolvedTheme =
-            storedTheme === 'light' || storedTheme === 'dark'
-                ? storedTheme
-                : getSystemTheme()
-        const resolvedAccent = accentIds.has(storedAccent) ? storedAccent : defaultAccent
-
-        setTheme(resolvedTheme)
-        setAccent(resolvedAccent)
-    }, [])
+    const [theme, setTheme] = useState(getStoredTheme)
+    const [accent, setAccent] = useState(getStoredAccent)
 
     useEffect(() => {
         const root = document.documentElement
