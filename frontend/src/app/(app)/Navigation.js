@@ -253,6 +253,24 @@ const icons = {
             />
         </>
     ),
+    deletedRecords: (
+        <>
+            <path
+                d="M5.5 7.5h13l-1 12h-11l-1-12z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M9 4.8h6M4 7.5h16M9.5 11.2l5 5M14.5 11.2l-5 5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
+        </>
+    ),
     finance: (
         <>
             <path

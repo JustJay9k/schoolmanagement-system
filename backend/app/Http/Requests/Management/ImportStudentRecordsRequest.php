@@ -91,8 +91,14 @@ class ImportStudentRecordsRequest extends FormRequest
 
                     $seenCodes[] = $studentCode;
 
-                    if (StudentRecord::query()->where('student_code', $studentCode)->exists()) {
-                        return;
+                    if (
+                        StudentRecord::withTrashed()
+                            ->where('school_id', $this->user()?->school_id)
+                            ->where('student_code', $studentCode)
+                            ->whereNotNull('deleted_at')
+                            ->exists()
+                    ) {
+                        $validator->errors()->add("records.{$index}.student_code", 'A deleted student record already uses this code. Ask an administrator to restore it first.');
                     }
                 });
             },

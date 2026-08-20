@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Management;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Management\ImportStudentRecordsRequest;
 use App\Http\Requests\Management\StoreStudentRecordRequest;
+use App\Http\Requests\Management\UpdateStudentRecordRequest;
 use App\Models\StudentRecord;
 use App\Support\SchoolContextOptions;
 use Carbon\Carbon;
@@ -96,6 +97,35 @@ class ManagementStudentRecordApiController extends Controller
                 'updated' => $updated,
                 'processed' => count($validated['records']),
             ],
+        ]);
+    }
+
+    public function update(UpdateStudentRecordRequest $request, StudentRecord $student): JsonResponse
+    {
+        $student->update($this->payload(
+            $request->validated(),
+            $student->created_by,
+            $request->user()?->school_id,
+        ));
+
+        return response()->json([
+            'message' => 'Student record updated successfully.',
+            'student' => $this->serializeStudent($student->fresh('creator:id,name')),
+        ]);
+    }
+
+    public function destroy(StudentRecord $student): JsonResponse
+    {
+        abort_unless(
+            request()->user()?->canManageTimetables()
+                && $student->school_id === request()->user()?->school_id,
+            403,
+        );
+
+        $student->delete();
+
+        return response()->json([
+            'message' => 'Student record deleted successfully.',
         ]);
     }
 

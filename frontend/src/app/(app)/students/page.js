@@ -5,7 +5,9 @@ import * as XLSX from 'xlsx'
 import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import managementStyles from '@/app/(app)/management/management-tools.module.css'
+import { DeleteIcon, EditIcon } from '@/app/(app)/admin/action-icons'
 import Button from '@/components/Button'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import Input from '@/components/Input'
 import InputError from '@/components/InputError'
 import axios from '@/lib/axios'
@@ -218,6 +220,32 @@ const getSchoolMeta = user => ({
     label: user?.school?.name ?? 'Assigned school',
 })
 
+const hasNamedDisability = value => {
+    const normalized = String(value ?? '').trim().toLowerCase()
+
+    return normalized !== '' && !['n/a', 'none', 'no'].includes(normalized)
+}
+
+const studentToManualForm = student => ({
+    school_track: student.school_track ?? 'primary',
+    class_name: student.class_name ?? '',
+    full_name: student.full_name ?? '',
+    sex: student.sex ?? 'male',
+    date_of_birth: student.date_of_birth ?? '',
+    age: student.age == null ? '' : String(student.age),
+    student_code: student.student_code ?? '',
+    orphan_status: student.orphan_status ?? '',
+    has_disability: hasNamedDisability(student.disability_name) ? 'yes' : '',
+    disability_name: hasNamedDisability(student.disability_name)
+        ? student.disability_name
+        : '',
+    guardian_name: student.guardian_name ?? '',
+    guardian_phone: student.guardian_phone ?? '',
+    guardian_email: student.guardian_email ?? '',
+    residence: student.residence ?? '',
+    first_entry_date: student.first_entry_date ?? '',
+})
+
 export default function StudentsPage() {
     const { user } = useAuth({ middleware: 'auth' })
     const [students, setStudents] = useState([])
@@ -227,6 +255,9 @@ export default function StudentsPage() {
     const [manualForm, setManualForm] = useState(createManualForm())
     const [manualErrors, setManualErrors] = useState({})
     const [manualSaving, setManualSaving] = useState(false)
+    const [editingStudentId, setEditingStudentId] = useState(null)
+    const [confirmingStudent, setConfirmingStudent] = useState(null)
+    const [deletingStudentId, setDeletingStudentId] = useState(null)
     const [importForm, setImportForm] = useState(createImportForm())
     const [importErrors, setImportErrors] = useState({})
     const [importing, setImporting] = useState(false)
@@ -266,6 +297,25 @@ export default function StudentsPage() {
     const importClasses = options?.classesByTrack?.[importForm.school_track] ?? []
 
     const schoolCount = schoolMeta.label ? 1 : 0
+
+    const resetManualEditor = () => {
+        setManualForm(createManualForm())
+        setManualErrors({})
+        setEditingStudentId(null)
+    }
+
+    const startEditingStudent = student => {
+        setManualForm(studentToManualForm(student))
+        setManualErrors({})
+        setEditingStudentId(student.id)
+        setPageStatus(null)
+
+        window.requestAnimationFrame(() => {
+            document
+                .getElementById('student-editor')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        })
+    }
 
     const groupedStudents = useMemo(() => {
         const classes = students.reduce((groups, student) => {
@@ -401,17 +451,25 @@ export default function StudentsPage() {
         try {
             const { has_disability, ...manualPayload } = manualForm
 
-            await axios.post('/api/management/students', {
+            const payload = {
                 ...manualPayload,
                 age: manualPayload.age === '' ? null : Number(manualPayload.age),
                 disability_name:
                     has_disability === 'yes' ? manualPayload.disability_name : '',
-            })
+            }
 
-            setManualForm(createManualForm())
+            if (editingStudentId) {
+                await axios.put(`/api/management/students/${editingStudentId}`, payload)
+            } else {
+                await axios.post('/api/management/students', payload)
+            }
+
+            resetManualEditor()
             setPageStatus({
                 type: 'success',
-                message: 'Student record added successfully.',
+                message: editingStudentId
+                    ? 'Student record updated successfully.'
+                    : 'Student record added successfully.',
             })
             await loadStudents()
         } catch (error) {
@@ -424,6 +482,35 @@ export default function StudentsPage() {
             })
         } finally {
             setManualSaving(false)
+        }
+    }
+
+    const deleteStudent = async student => {
+        setDeletingStudentId(student.id)
+        setPageStatus(null)
+
+        try {
+            await axios.delete(`/api/management/students/${student.id}`)
+
+            if (editingStudentId === student.id) {
+                resetManualEditor()
+            }
+
+            setConfirmingStudent(null)
+            setPageStatus({
+                type: 'success',
+                message: 'Student record deleted successfully.',
+            })
+            await loadStudents()
+        } catch (error) {
+            setPageStatus({
+                type: 'error',
+                message:
+                    error?.response?.data?.message ??
+                    'Unable to delete the student record.',
+            })
+        } finally {
+            setDeletingStudentId(null)
         }
     }
 
@@ -522,11 +609,13 @@ export default function StudentsPage() {
             </section>
 
             <section className={managementStyles.summaryCards}>
-                <article className={workspaceStyles.panel}>
+                <article id="student-editor" className={workspaceStyles.panel}>
                     <div className={workspaceStyles.panelHeader}>
                         <div>
                             <p className={workspaceStyles.panelEyebrow}>Manual entry</p>
-                            <h2 className={workspaceStyles.panelTitle}>Add one student</h2>
+                            <h2 className={workspaceStyles.panelTitle}>
+                                {editingStudentId ? 'Edit student' : 'Add one student'}
+                            </h2>
                         </div>
                     </div>
 
@@ -819,8 +908,20 @@ export default function StudentsPage() {
 
                         <div className={managementStyles.actions}>
                             <Button disabled={manualSaving}>
-                                {manualSaving ? 'Saving...' : 'Add student'}
+                                {manualSaving
+                                    ? 'Saving...'
+                                    : editingStudentId
+                                    ? 'Update student'
+                                    : 'Add student'}
                             </Button>
+                            {editingStudentId ? (
+                                <button
+                                    type="button"
+                                    onClick={resetManualEditor}
+                                    className={managementStyles.secondaryButton}>
+                                    Cancel edit
+                                </button>
+                            ) : null}
                         </div>
                     </form>
                 </article>
@@ -1022,6 +1123,7 @@ export default function StudentsPage() {
                                                             <th>Guardian email</th>
                                                             <th>Residence</th>
                                                             <th>Entry date</th>
+                                                            <th>Actions</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -1063,6 +1165,49 @@ export default function StudentsPage() {
                                                                     {student.first_entry_date ||
                                                                         'N/A'}
                                                                 </td>
+                                                                <td>
+                                                                    <div
+                                                                        className={
+                                                                            managementStyles.tableActions
+                                                                        }>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                startEditingStudent(
+                                                                                    student,
+                                                                                )
+                                                                            }
+                                                                            aria-label={`Edit ${student.full_name}`}
+                                                                            title={`Edit ${student.full_name}`}
+                                                                            className={`${managementStyles.secondaryButton} ${managementStyles.iconButton}`}>
+                                                                            <span
+                                                                                className={
+                                                                                    managementStyles.srOnly
+                                                                                }>
+                                                                                {`Edit ${student.full_name}`}
+                                                                            </span>
+                                                                            <EditIcon />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                setConfirmingStudent(
+                                                                                    student,
+                                                                                )
+                                                                            }
+                                                                            aria-label={`Delete ${student.full_name}`}
+                                                                            title={`Delete ${student.full_name}`}
+                                                                            className={`${managementStyles.dangerButton} ${managementStyles.iconButton}`}>
+                                                                            <span
+                                                                                className={
+                                                                                    managementStyles.srOnly
+                                                                                }>
+                                                                                {`Delete ${student.full_name}`}
+                                                                            </span>
+                                                                            <DeleteIcon />
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
                                                             </tr>
                                                         ))}
                                                     </tbody>
@@ -1076,6 +1221,29 @@ export default function StudentsPage() {
                     </div>
                 )}
             </section>
+            <ConfirmDialog
+                open={Boolean(confirmingStudent)}
+                eyebrow="Delete student"
+                title="Delete this student record?"
+                message={
+                    confirmingStudent
+                        ? `Are you sure you want to delete ${confirmingStudent.full_name}?`
+                        : ''
+                }
+                confirmLabel="Delete student"
+                busyLabel="Deleting..."
+                tone="danger"
+                busy={
+                    deletingStudentId != null &&
+                    deletingStudentId === confirmingStudent?.id
+                }
+                onClose={() => setConfirmingStudent(null)}
+                onConfirm={() => {
+                    if (confirmingStudent) {
+                        deleteStudent(confirmingStudent)
+                    }
+                }}
+            />
         </WorkspacePageShell>
     )
 }

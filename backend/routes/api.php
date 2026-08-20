@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\AdminSchoolStructureApiController;
+use App\Http\Controllers\Api\Admin\AdminDeletedStudentRecordApiController;
 use App\Http\Controllers\Api\Admin\AdminUserApiController;
 use App\Http\Controllers\Api\Finance\FinanceMerchandiseApiController;
 use App\Http\Controllers\Api\Finance\FinanceStudentApiController;
@@ -64,6 +65,10 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 
     Route::get('/school-structure', [AdminSchoolStructureApiController::class, 'show']);
     Route::put('/school-structure', [AdminSchoolStructureApiController::class, 'update']);
+
+    Route::get('/deleted-records/students', [AdminDeletedStudentRecordApiController::class, 'index']);
+    Route::patch('/deleted-records/students/{student}/restore', [AdminDeletedStudentRecordApiController::class, 'restore']);
+    Route::delete('/deleted-records/students/{student}', [AdminDeletedStudentRecordApiController::class, 'destroy']);
 });
 
 Route::middleware(['auth:sanctum', 'timetable-manager'])->prefix('management')->group(function () {
@@ -75,6 +80,8 @@ Route::middleware(['auth:sanctum', 'timetable-manager'])->prefix('management')->
     Route::get('/students', [ManagementStudentRecordApiController::class, 'index']);
     Route::post('/students', [ManagementStudentRecordApiController::class, 'store']);
     Route::post('/students/import', [ManagementStudentRecordApiController::class, 'import']);
+    Route::put('/students/{student}', [ManagementStudentRecordApiController::class, 'update']);
+    Route::delete('/students/{student}', [ManagementStudentRecordApiController::class, 'destroy']);
 
     Route::get('/form-teachers', [ManagementFormTeacherApiController::class, 'index']);
     Route::put('/form-teachers/{teacher}', [ManagementFormTeacherApiController::class, 'update']);
