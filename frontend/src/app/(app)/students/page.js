@@ -1281,6 +1281,7 @@ export default function StudentsPage() {
                                                                         <th>Age</th>
                                                                         <th>Code</th>
                                                                         <th>Disability</th>
+                                                                        <th>Orphan</th>
                                                                         <th>Guardian</th>
                                                                         <th>
                                                                             Guardian phone
@@ -1320,6 +1321,10 @@ export default function StudentsPage() {
                                                                                 </td>
                                                                                 <td>
                                                                                     {student.disability_name ||
+                                                                                        'N/A'}
+                                                                                </td>
+                                                                                <td>
+                                                                                    {student.orphan_status ||
                                                                                         'N/A'}
                                                                                 </td>
                                                                                 <td>
