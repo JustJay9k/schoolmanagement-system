@@ -162,7 +162,7 @@ const Home = () => {
                                     Create staff account
                                 </Link>
                                 <Link
-                                    href="/dashboard"
+                                    href="/login"
                                     className="inline-flex items-center justify-center rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:-translate-y-0.5 hover:border-white/50 hover:bg-white/16 hover:text-white">
                                     Get Started
                                 </Link>
