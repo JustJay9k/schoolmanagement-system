@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useTheme } from '@/components/ThemeProvider'
 
 const SunIcon = () => (
@@ -36,16 +37,21 @@ const MoonIcon = () => (
 
 const ThemeToggleButton = ({ className = '' }) => {
     const { theme, setTheme } = useTheme()
-    const isDark = theme === 'dark'
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => setMounted(true), [])
+
+    const isDark = mounted ? theme === 'dark' : false
 
     return (
         <button
             type="button"
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
             aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+            suppressHydrationWarning
             className={`inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface-card-soft)] px-4 py-2 text-sm font-semibold text-[var(--ink)] shadow-[0_10px_28px_var(--shadow-soft)] backdrop-blur transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:text-[var(--accent-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-strong)] ${className}`}>
             {isDark ? <SunIcon /> : <MoonIcon />}
-            <span>{isDark ? 'Light mode' : 'Dark mode'}</span>
+            <span suppressHydrationWarning>{isDark ? 'Light mode' : 'Dark mode'}</span>
         </button>
     )
 }

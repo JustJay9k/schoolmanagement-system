@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs/dist/exceljs.min.js'
 import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import managementStyles from '@/app/(app)/management/management-tools.module.css'
@@ -91,12 +91,12 @@ const toIsoDate = value => {
     }
 
     if (typeof value === 'number') {
-        const parsed = XLSX.SSF.parse_date_code(value)
-
-        if (parsed) {
-            const month = String(parsed.m).padStart(2, '0')
-            const day = String(parsed.d).padStart(2, '0')
-            return `${parsed.y}-${month}-${day}`
+        const date = new Date((value - 25569) * 86400 * 1000)
+        if (!Number.isNaN(date.getTime())) {
+            const year = date.getUTCFullYear()
+            const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+            const day = String(date.getUTCDate()).padStart(2, '0')
+            return `${year}-${month}-${day}`
         }
     }
 
@@ -367,14 +367,74 @@ export default function StudentsPage() {
 
         try {
             const buffer = await file.arrayBuffer()
-            const workbook = XLSX.read(buffer, {
-                type: 'array',
-                cellDates: true,
-            })
-            const firstSheetName = workbook.SheetNames[0]
-            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName], {
-                defval: '',
-            })
+            const workbook = new ExcelJS.Workbook()
+            if (file.name.endsWith('.csv')) {
+                await workbook.csv.load(new Uint8Array(buffer))
+            } else {
+                await workbook.xlsx.load(buffer)
+            }
+            const worksheet = workbook.worksheets[0]
+            if (!worksheet) {
+                throw new Error('No worksheets found in file')
+            }
+
+            const rows = []
+            const colCount = worksheet.columnCount
+            const rowCount = worksheet.rowCount
+
+            const headers = []
+            const headerRow = worksheet.getRow(1)
+            for (let c = 1; c <= colCount; c++) {
+                const cell = headerRow.getCell(c)
+                let headerVal = cell.value
+                if (headerVal && typeof headerVal === 'object') {
+                    if (headerVal.richText) {
+                        headerVal = headerVal.richText.map(t => t.text).join('')
+                    } else if (headerVal.text) {
+                        headerVal = headerVal.text
+                    } else if (headerVal.result !== undefined) {
+                        headerVal = headerVal.result
+                    }
+                }
+                headers[c] = headerVal ? String(headerVal).trim() : ''
+            }
+
+            for (let r = 2; r <= rowCount; r++) {
+                const row = worksheet.getRow(r)
+                let hasValues = false
+                const rowData = {}
+
+                for (let c = 1; c <= colCount; c++) {
+                    const header = headers[c]
+                    if (!header) continue
+
+                    const cell = row.getCell(c)
+                    let cellVal = cell.value
+
+                    if (cellVal && typeof cellVal === 'object' && !(cellVal instanceof Date)) {
+                        if (cellVal.richText) {
+                            cellVal = cellVal.richText.map(t => t.text).join('')
+                        } else if (cellVal.text) {
+                            cellVal = cellVal.text
+                        } else if (cellVal.result !== undefined) {
+                            cellVal = cellVal.result
+                        } else {
+                            cellVal = ''
+                        }
+                    }
+
+                    if (cellVal !== undefined && cellVal !== null && cellVal !== '') {
+                        hasValues = true
+                    }
+
+                    rowData[header] = cellVal ?? ''
+                }
+
+                if (hasValues) {
+                    rows.push(rowData)
+                }
+            }
+
             const records = normalizeSpreadsheetRows(rows)
 
             setImportForm(current => ({

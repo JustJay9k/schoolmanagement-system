@@ -136,84 +136,84 @@ const Home = () => {
             <div id="hero" className="relative bg-cover bg-center scroll-mt-16" style={{ backgroundImage: "url('/images/schoolclassroom.jpg')" }}>
                 <div className="absolute inset-0 bg-black/50" />
                 <div className="mx-auto max-w-7xl px-4 pb-16 pt-28 sm:px-6 lg:px-8 lg:pt-32 relative z-10 text-white">
-                <section className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
-                    <div className="space-y-8">
-                        <div className="inline-flex rounded-full border border-white/30 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-white shadow-sm backdrop-blur">
-                            K-12 digital registering and school operations
-                        </div>
+                    <section className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+                        <div className="space-y-8">
+                            <div className="inline-flex rounded-full border border-white/30 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-white shadow-sm backdrop-blur">
+                                Digital registering and school operations
+                            </div>
 
-                        <div className="space-y-5">
-                            <h1 className="max-w-4xl font-[var(--font-display)] text-5xl leading-[0.94] sm:text-6xl lg:text-7xl text-white">
-                                Attendance first. Leadership visibility built
-                                in.
-                            </h1>
-                            <p className="max-w-2xl text-lg text-white/90 sm:text-xl">
-                                Phunziro Class Management System (PCMS) unifies primary and secondary
-                                attendance flows, student insight, discipline,
-                                timetable control, and fee tracking in one fast
-                                headless interface.
-                            </p>
-                        </div>
+                            <div className="space-y-5">
+                                <h1 className="max-w-4xl font-[var(--font-display)] text-5xl leading-[0.94] sm:text-6xl lg:text-7xl text-white">
+                                    Attendance first. Leadership visibility built
+                                    in.
+                                </h1>
+                                <p className="max-w-2xl text-lg text-white/90 sm:text-xl">
+                                    Phunziro Class Management System (PCMS) unifies primary and secondary
+                                    attendance flows, student insight, discipline,
+                                    timetable control, and fee tracking in one fast
+                                    headless interface.
+                                </p>
+                            </div>
 
-                        <div className="flex flex-col gap-4 sm:flex-row">
-                            <Link
-                                href="/register"
-                                className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(180deg,var(--accent),var(--accent-strong))] px-6 py-3 text-sm font-semibold text-[var(--accent-contrast)] shadow-[0_18px_45px_var(--shadow-strong)] transition hover:-translate-y-0.5 hover:brightness-105">
-                                Create staff account
-                            </Link>
-                            <Link
-                                href="/dashboard"
-                                className="inline-flex items-center justify-center rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:-translate-y-0.5 hover:border-white/50 hover:bg-white/16 hover:text-white">
-                                Get Started
-                            </Link>
-                        </div>
-                    </div>
-
-                    <div className="relative">
-                        <div className="absolute inset-x-10 top-8 h-56 rounded-full bg-[rgba(var(--accent-rgb),0.14)] blur-3xl" />
-                        <div className="relative overflow-hidden rounded-[36px] border border-[var(--line)] bg-[var(--surface-card)] p-6 shadow-[0_30px_80px_var(--shadow-strong)] backdrop-blur sm:p-8">
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                {[
-                                    {
-                                        label: 'Today',
-                                        value: '92.4%',
-                                        note: 'Register completion across all tracked classes',
-                                    },
-                                    {
-                                        label: 'Escalations',
-                                        value: '07',
-                                        note: 'Late chronic absence or missing submission alerts',
-                                    },
-                                    {
-                                        label: 'Outstanding',
-                                        value: 'MWK 4.8M',
-                                        note: 'Live tuition balance awaiting follow-up',
-                                    },
-                                    {
-                                        label: 'Timetable load',
-                                        value: '116',
-                                        note: 'Scheduled lessons mapped to staff and sections',
-                                    },
-                                ].map(item => (
-                                    <div
-                                        key={item.label}
-                                        tabIndex={0}
-                                        className="rounded-3xl border border-[var(--line)] bg-[var(--surface-raised)] p-5 transition-transform duration-200 ease-out transform-gpu hover:-translate-y-1 hover:scale-105 cursor-pointer focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)]">
-                                        <p className="text-xs uppercase tracking-[0.24em] text-[var(--muted)]">
-                                            {item.label}
-                                        </p>
-                                        <p className="mt-3 font-[var(--font-display)] text-4xl text-[var(--ink)]">
-                                            {item.value}
-                                        </p>
-                                        <p className="mt-3 text-sm text-[var(--muted)]">
-                                            {item.note}
-                                        </p>
-                                    </div>
-                                ))}
+                            <div className="flex flex-col gap-4 sm:flex-row">
+                                <Link
+                                    href="/register"
+                                    className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(180deg,var(--accent),var(--accent-strong))] px-6 py-3 text-sm font-semibold text-[var(--accent-contrast)] shadow-[0_18px_45px_var(--shadow-strong)] transition hover:-translate-y-0.5 hover:brightness-105">
+                                    Create staff account
+                                </Link>
+                                <Link
+                                    href="/dashboard"
+                                    className="inline-flex items-center justify-center rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:-translate-y-0.5 hover:border-white/50 hover:bg-white/16 hover:text-white">
+                                    Get Started
+                                </Link>
                             </div>
                         </div>
-                    </div>
-                </section>
+
+                        <div className="relative">
+                            <div className="absolute inset-x-10 top-8 h-56 rounded-full bg-[rgba(var(--accent-rgb),0.14)] blur-3xl" />
+                            <div className="relative overflow-hidden rounded-[36px] border border-[var(--line)] bg-[var(--surface-card)] p-6 shadow-[0_30px_80px_var(--shadow-strong)] backdrop-blur sm:p-8">
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    {[
+                                        {
+                                            label: 'Today',
+                                            value: '92.4%',
+                                            note: 'Register completion across all tracked classes',
+                                        },
+                                        {
+                                            label: 'Escalations',
+                                            value: '07',
+                                            note: 'Late chronic absence or missing submission alerts',
+                                        },
+                                        {
+                                            label: 'Outstanding',
+                                            value: 'MWK 4.8M',
+                                            note: 'Live tuition balance awaiting follow-up',
+                                        },
+                                        {
+                                            label: 'Timetable load',
+                                            value: '116',
+                                            note: 'Scheduled lessons mapped to staff and sections',
+                                        },
+                                    ].map(item => (
+                                        <div
+                                            key={item.label}
+                                            tabIndex={0}
+                                            className="rounded-3xl border border-[var(--line)] bg-[var(--surface-raised)] p-5 transition-transform duration-200 ease-out transform-gpu hover:-translate-y-1 hover:scale-105 cursor-pointer focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)]">
+                                            <p className="text-xs uppercase tracking-[0.24em] text-[var(--muted)]">
+                                                {item.label}
+                                            </p>
+                                            <p className="mt-3 font-[var(--font-display)] text-4xl text-[var(--ink)]">
+                                                {item.value}
+                                            </p>
+                                            <p className="mt-3 text-sm text-[var(--muted)]">
+                                                {item.note}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </div>
 
@@ -353,11 +353,10 @@ const Home = () => {
                         {pricingTiers.map(tier => (
                             <div
                                 key={tier.name}
-                                className={`relative flex flex-col rounded-[32px] border p-8 shadow-[0_18px_45px_var(--shadow-soft)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_30px_80px_var(--shadow-strong)] ${
-                                    tier.highlighted
+                                className={`relative flex flex-col rounded-[32px] border p-8 shadow-[0_18px_45px_var(--shadow-soft)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_30px_80px_var(--shadow-strong)] ${tier.highlighted
                                         ? 'border-[var(--accent)] bg-[var(--surface-card-strong)] ring-1 ring-[var(--accent)]/20'
                                         : 'border-[var(--line)] bg-[var(--surface-card)]'
-                                }`}>
+                                    }`}>
                                 {tier.highlighted && (
                                     <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,var(--accent),var(--accent-strong))] px-4 py-1 text-xs font-semibold text-[var(--accent-contrast)] shadow-[0_4px_16px_var(--shadow-strong)]">
                                         Most popular
@@ -409,11 +408,10 @@ const Home = () => {
 
                                 <Link
                                     href={tier.highlighted ? '/register' : '#contact'}
-                                    className={`mt-8 block rounded-full px-6 py-3 text-center text-sm font-semibold transition hover:-translate-y-0.5 ${
-                                        tier.highlighted
+                                    className={`mt-8 block rounded-full px-6 py-3 text-center text-sm font-semibold transition hover:-translate-y-0.5 ${tier.highlighted
                                             ? 'bg-[linear-gradient(180deg,var(--accent),var(--accent-strong))] text-[var(--accent-contrast)] shadow-[0_18px_45px_var(--shadow-strong)] hover:brightness-105'
                                             : 'border border-[var(--line)] bg-[var(--surface-raised)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
-                                    }`}>
+                                        }`}>
                                     {tier.cta}
                                 </Link>
                             </div>

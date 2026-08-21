@@ -1,4 +1,5 @@
 import { Manrope, Space_Grotesk } from 'next/font/google'
+import Script from 'next/script'
 import '@/app/global.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { ToastProvider } from '@/components/ToastProvider'
@@ -21,32 +22,12 @@ const RootLayout = ({ children }) => {
             lang="en"
             suppressHydrationWarning
             className={`${bodyFont.variable} ${displayFont.variable}`}>
-            <head>
-                <script
-                    dangerouslySetInnerHTML={{
-                        __html: `(() => {
-                            try {
-                                const accentOptions = ['teal', 'blue', 'indigo', 'rose', 'amber', 'emerald']
-                                const storedTheme = localStorage.getItem('pcms-theme')
-                                const storedAccent = localStorage.getItem('pcms-accent')
-                                const theme = storedTheme === 'dark' || storedTheme === 'light'
-                                    ? storedTheme
-                                    : window.matchMedia('(prefers-color-scheme: dark)').matches
-                                        ? 'dark'
-                                        : 'light'
-                                const accent = accentOptions.includes(storedAccent)
-                                    ? storedAccent
-                                    : 'teal'
-
-                                document.documentElement.dataset.theme = theme
-                                document.documentElement.dataset.accent = accent
-                                document.documentElement.style.colorScheme = theme
-                            } catch (error) {}
-                        })();`,
-                    }}
-                />
-            </head>
             <body className="font-[var(--font-body)] antialiased text-[var(--ink)]">
+                <Script
+                    id="theme-init"
+                    src="/theme-init.js"
+                    strategy="beforeInteractive"
+                />
                 <ThemeProvider>
                     <ToastProvider>{children}</ToastProvider>
                 </ThemeProvider>
