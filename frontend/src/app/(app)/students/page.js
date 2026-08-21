@@ -262,6 +262,8 @@ export default function StudentsPage() {
     const [importErrors, setImportErrors] = useState({})
     const [importing, setImporting] = useState(false)
     const [pageStatus, setPageStatus] = useState(null)
+    const [collapsedClasses, setCollapsedClasses] = useState(new Set())
+    const [classFilter, setClassFilter] = useState('')
     const schoolMeta = useMemo(() => getSchoolMeta(user), [user])
 
     const loadStudents = async () => {
@@ -349,6 +351,36 @@ export default function StudentsPage() {
             },
         ]
     }, [schoolMeta, students])
+
+    const toggleClassCollapse = classKey => {
+        setCollapsedClasses(prev => {
+            const next = new Set(prev)
+
+            if (next.has(classKey)) {
+                next.delete(classKey)
+            } else {
+                next.add(classKey)
+            }
+
+            return next
+        })
+    }
+
+    const allClassKeys = useMemo(
+        () => groupedStudents.flatMap(school => school.classes.map(c => c.key)),
+        [groupedStudents],
+    )
+
+    const filteredGroupedStudents = useMemo(() => {
+        if (!classFilter) {
+            return groupedStudents
+        }
+
+        return groupedStudents.map(school => ({
+            ...school,
+            classes: school.classes.filter(c => c.key === classFilter),
+        }))
+    }, [groupedStudents, classFilter])
 
     const handleSpreadsheetSelection = async event => {
         const file = event.target.files?.[0]
@@ -1128,157 +1160,246 @@ export default function StudentsPage() {
                         or import a class register spreadsheet.
                     </p>
                 ) : (
-                    <div className={workspaceStyles.list}>
-                        {groupedStudents.map(school => (
-                            <article key={school.key} className={workspaceStyles.panel}>
-                                <div className={workspaceStyles.panelHeader}>
-                                    <div>
-                                        <p className={workspaceStyles.panelEyebrow}>School</p>
-                                        <h2 className={workspaceStyles.panelTitle}>
-                                            {school.label}
-                                        </h2>
-                                    </div>
-                                    <span className={workspaceStyles.badge}>
-                                        {school.students.length} student
-                                        {school.students.length === 1 ? '' : 's'}
+                    <>
+                        {allClassKeys.length > 1 && (
+                            <div className={workspaceStyles.filterBar}>
+                                <label className={managementStyles.field}>
+                                    <span className={managementStyles.fieldLabel}>
+                                        Filter by class
                                     </span>
-                                </div>
+                                    <select
+                                        value={classFilter}
+                                        onChange={event =>
+                                            setClassFilter(event.target.value)
+                                        }
+                                        className={managementStyles.select}>
+                                        <option value="">All classes</option>
+                                        {allClassKeys.map(key => {
+                                            const [, className] = key.split('::')
 
-                                <div className={workspaceStyles.panelGrid}>
-                                    {school.classes.map(group => (
-                                        <article
-                                            key={`${school.key}-${group.key}`}
-                                            className={workspaceStyles.panel}>
-                                            <div className={workspaceStyles.panelHeader}>
-                                                <div>
-                                                    <p className={workspaceStyles.panelEyebrow}>
-                                                        {options?.schoolTracks?.[
-                                                            group.school_track
-                                                        ] ?? group.school_track}
-                                                    </p>
-                                                    <h2 className={workspaceStyles.panelTitle}>
-                                                        {group.class_name}
-                                                    </h2>
-                                                </div>
-                                                <span className={workspaceStyles.badge}>
-                                                    {group.students.length} student
-                                                    {group.students.length === 1
-                                                        ? ''
-                                                        : 's'}
-                                                </span>
-                                            </div>
+                                            return (
+                                                <option key={key} value={key}>
+                                                    {className}
+                                                </option>
+                                            )
+                                        })}
+                                    </select>
+                                </label>
+                            </div>
+                        )}
 
-                                            <div className={workspaceStyles.tableWrap}>
-                                                <table className={workspaceStyles.table}>
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Full name</th>
-                                                            <th>Sex</th>
-                                                            <th>DOB</th>
-                                                            <th>Age</th>
-                                                            <th>Code</th>
-                                                            <th>Disability</th>
-                                                            <th>Guardian</th>
-                                                            <th>Guardian phone</th>
-                                                            <th>Guardian email</th>
-                                                            <th>Residence</th>
-                                                            <th>Entry date</th>
-                                                            <th>Actions</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {group.students.map(student => (
-                                                            <tr key={student.id}>
-                                                                <td>{student.full_name}</td>
-                                                                <td>{student.sex || 'N/A'}</td>
-                                                                <td>
-                                                                    {student.date_of_birth ||
-                                                                        'N/A'}
-                                                                </td>
-                                                                <td>
-                                                                    {student.age ?? 'N/A'}
-                                                                </td>
-                                                                <td>
-                                                                    {student.student_code ||
-                                                                        'N/A'}
-                                                                </td>
-                                                                <td>
-                                                                    {student.disability_name ||
-                                                                        'N/A'}
-                                                                </td>
-                                                                <td>
-                                                                    {student.guardian_name ||
-                                                                        'N/A'}
-                                                                </td>
-                                                                <td>
-                                                                    {student.guardian_phone ||
-                                                                        'N/A'}
-                                                                </td>
-                                                                <td>
-                                                                    {student.guardian_email ||
-                                                                        'N/A'}
-                                                                </td>
-                                                                <td>
-                                                                    {student.residence || 'N/A'}
-                                                                </td>
-                                                                <td>
-                                                                    {student.first_entry_date ||
-                                                                        'N/A'}
-                                                                </td>
-                                                                <td>
-                                                                    <div
-                                                                        className={
-                                                                            managementStyles.tableActions
-                                                                        }>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                startEditingStudent(
-                                                                                    student,
-                                                                                )
-                                                                            }
-                                                                            aria-label={`Edit ${student.full_name}`}
-                                                                            title={`Edit ${student.full_name}`}
-                                                                            className={`${managementStyles.secondaryButton} ${managementStyles.iconButton}`}>
-                                                                            <span
-                                                                                className={
-                                                                                    managementStyles.srOnly
-                                                                                }>
-                                                                                {`Edit ${student.full_name}`}
-                                                                            </span>
-                                                                            <EditIcon />
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                setConfirmingStudent(
-                                                                                    student,
-                                                                                )
-                                                                            }
-                                                                            aria-label={`Delete ${student.full_name}`}
-                                                                            title={`Delete ${student.full_name}`}
-                                                                            className={`${managementStyles.dangerButton} ${managementStyles.iconButton}`}>
-                                                                            <span
-                                                                                className={
-                                                                                    managementStyles.srOnly
-                                                                                }>
-                                                                                {`Delete ${student.full_name}`}
-                                                                            </span>
-                                                                            <DeleteIcon />
-                                                                        </button>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </article>
-                                    ))}
-                                </div>
-                            </article>
-                        ))}
-                    </div>
+                        <div className={workspaceStyles.list}>
+                            {filteredGroupedStudents.map(school => (
+                                <article key={school.key} className={workspaceStyles.panel}>
+                                    <div className={workspaceStyles.panelHeader}>
+                                        <div>
+                                            <p className={workspaceStyles.panelEyebrow}>School</p>
+                                            <h2 className={workspaceStyles.panelTitle}>
+                                                {school.label}
+                                            </h2>
+                                        </div>
+                                        <span className={workspaceStyles.badge}>
+                                            {school.students.length} student
+                                            {school.students.length === 1 ? '' : 's'}
+                                        </span>
+                                    </div>
+
+                                    <div className={workspaceStyles.panelGrid}>
+                                        {school.classes.map(group => {
+                                            const isCollapsed = collapsedClasses.has(group.key)
+
+                                            return (
+                                                <article
+                                                    key={`${school.key}-${group.key}`}
+                                                    className={workspaceStyles.panel}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            toggleClassCollapse(group.key)
+                                                        }
+                                                        className={
+                                                            workspaceStyles.collapseTrigger
+                                                        }>
+                                                        <div>
+                                                            <p
+                                                                className={
+                                                                    workspaceStyles.panelEyebrow
+                                                                }>
+                                                                {options?.schoolTracks?.[
+                                                                    group.school_track
+                                                                ] ?? group.school_track}
+                                                            </p>
+                                                            <h2
+                                                                className={
+                                                                    workspaceStyles.panelTitle
+                                                                }>
+                                                                {group.class_name}
+                                                            </h2>
+                                                        </div>
+                                                        <div
+                                                            className={
+                                                                workspaceStyles.collapseRight
+                                                            }>
+                                                            <span
+                                                                className={workspaceStyles.badge}>
+                                                                {group.students.length} student
+                                                                {group.students.length === 1
+                                                                    ? ''
+                                                                    : 's'}
+                                                            </span>
+                                                            <svg
+                                                                viewBox="0 0 24 24"
+                                                                aria-hidden="true"
+                                                                className={`${
+                                                                    workspaceStyles.chevron
+                                                                } ${
+                                                                    isCollapsed
+                                                                        ? ''
+                                                                        : workspaceStyles.chevronOpen
+                                                                }`}>
+                                                                <path
+                                                                    d="M6 9l6 6 6-6"
+                                                                    fill="none"
+                                                                    stroke="currentColor"
+                                                                    strokeWidth="2"
+                                                                    strokeLinecap="round"
+                                                                    strokeLinejoin="round"
+                                                                />
+                                                            </svg>
+                                                        </div>
+                                                    </button>
+
+                                                    {!isCollapsed && (
+                                                        <div className={workspaceStyles.tableWrap}>
+                                                            <table
+                                                                className={workspaceStyles.table}>
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Full name</th>
+                                                                        <th>Sex</th>
+                                                                        <th>DOB</th>
+                                                                        <th>Age</th>
+                                                                        <th>Code</th>
+                                                                        <th>Disability</th>
+                                                                        <th>Guardian</th>
+                                                                        <th>
+                                                                            Guardian phone
+                                                                        </th>
+                                                                        <th>
+                                                                            Guardian email
+                                                                        </th>
+                                                                        <th>Residence</th>
+                                                                        <th>Entry date</th>
+                                                                        <th>Actions</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {group.students.map(
+                                                                        student => (
+                                                                            <tr key={student.id}>
+                                                                                <td>
+                                                                                    {
+                                                                                        student.full_name
+                                                                                    }
+                                                                                </td>
+                                                                                <td>
+                                                                                    {student.sex ||
+                                                                                        'N/A'}
+                                                                                </td>
+                                                                                <td>
+                                                                                    {student.date_of_birth ||
+                                                                                        'N/A'}
+                                                                                </td>
+                                                                                <td>
+                                                                                    {student.age ??
+                                                                                        'N/A'}
+                                                                                </td>
+                                                                                <td>
+                                                                                    {student.student_code ||
+                                                                                        'N/A'}
+                                                                                </td>
+                                                                                <td>
+                                                                                    {student.disability_name ||
+                                                                                        'N/A'}
+                                                                                </td>
+                                                                                <td>
+                                                                                    {student.guardian_name ||
+                                                                                        'N/A'}
+                                                                                </td>
+                                                                                <td>
+                                                                                    {student.guardian_phone ||
+                                                                                        'N/A'}
+                                                                                </td>
+                                                                                <td>
+                                                                                    {student.guardian_email ||
+                                                                                        'N/A'}
+                                                                                </td>
+                                                                                <td>
+                                                                                    {student.residence ||
+                                                                                        'N/A'}
+                                                                                </td>
+                                                                                <td>
+                                                                                    {student.first_entry_date ||
+                                                                                        'N/A'}
+                                                                                </td>
+                                                                                <td>
+                                                                                    <div
+                                                                                        className={
+                                                                                            managementStyles.tableActions
+                                                                                        }>
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() =>
+                                                                                                startEditingStudent(
+                                                                                                    student,
+                                                                                                )
+                                                                                            }
+                                                                                            aria-label={`Edit ${student.full_name}`}
+                                                                                            title={`Edit ${student.full_name}`}
+                                                                                            className={`${managementStyles.secondaryButton} ${managementStyles.iconButton}`}>
+                                                                                            <span
+                                                                                                className={
+                                                                                                    managementStyles.srOnly
+                                                                                                }>
+                                                                                                {`Edit ${student.full_name}`}
+                                                                                            </span>
+                                                                                            <EditIcon />
+                                                                                        </button>
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() =>
+                                                                                                setConfirmingStudent(
+                                                                                                    student,
+                                                                                                )
+                                                                                            }
+                                                                                            aria-label={`Delete ${student.full_name}`}
+                                                                                            title={`Delete ${student.full_name}`}
+                                                                                            className={`${managementStyles.dangerButton} ${managementStyles.iconButton}`}>
+                                                                                            <span
+                                                                                                className={
+                                                                                                    managementStyles.srOnly
+                                                                                                }>
+                                                                                                {`Delete ${student.full_name}`}
+                                                                                            </span>
+                                                                                            <DeleteIcon />
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        ),
+                                                                    )}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    )}
+                                                </article>
+                                            )
+                                        })}
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    </>
                 )}
             </section>
             <ConfirmDialog

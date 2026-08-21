@@ -97,7 +97,62 @@
 }
 
 .panelGrid {
-    grid-template-columns: repeat(auto-fit, minmax(14.5rem, 1fr));
+    display: flex;
+    flex-direction: column;
+    gap: 0.72rem;
+}
+
+.panelGrid > .panel {
+    padding-inline: 1.5rem;
+}
+
+.filterBar {
+    margin-bottom: 0.72rem;
+}
+
+.filterBar .field {
+    max-width: 18rem;
+}
+
+.collapseTrigger {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.7rem;
+    width: 100%;
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+    color: inherit;
+    font: inherit;
+}
+
+.collapseTrigger:focus-visible {
+    outline: 2px solid var(--focus-ring-strong);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+}
+
+.collapseRight {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.chevron {
+    width: 1.1rem;
+    height: 1.1rem;
+    flex-shrink: 0;
+    color: var(--muted);
+    transition: transform 200ms ease;
+    transform: rotate(-90deg);
+}
+
+.chevronOpen {
+    transform: rotate(0deg);
 }
 
 .statCard,
