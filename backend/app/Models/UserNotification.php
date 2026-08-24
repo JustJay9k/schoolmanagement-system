@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['user_id', 'title', 'message', 'level', 'action_url', 'read_at'])]
+#[Fillable(['user_id', 'announcement_id', 'title', 'message', 'level', 'action_url', 'read_at'])]
 class UserNotification extends Model
 {
     protected function casts(): array
@@ -19,5 +19,10 @@ class UserNotification extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function announcement(): BelongsTo
+    {
+        return $this->belongsTo(Announcement::class);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AnnouncementAttachment;
 use App\Models\UserNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,6 +17,7 @@ class NotificationController extends Controller
         abort_unless($user, 401);
 
         $notifications = $user->notifications()
+            ->with('announcement.attachments')
             ->latest('created_at')
             ->get()
             ->map(fn (UserNotification $notification): array => $this->serializeNotification($notification))
@@ -66,7 +68,9 @@ class NotificationController extends Controller
 
         return response()->json([
             'message' => 'Notification marked as read.',
-            'notification' => $this->serializeNotification($notification->fresh()),
+            'notification' => $this->serializeNotification(
+                $notification->fresh()->loadMissing('announcement.attachments'),
+            ),
         ]);
     }
 
@@ -81,6 +85,17 @@ class NotificationController extends Controller
             'message' => $notification->message,
             'level' => $notification->level,
             'action_url' => $notification->action_url,
+            'attachments' => $notification->announcement?->attachments
+                ->map(fn (AnnouncementAttachment $attachment): array => [
+                    'id' => $attachment->id,
+                    'name' => $attachment->original_name,
+                    'url' => $attachment->file_url,
+                    'mime_type' => $attachment->mime_type,
+                    'size_in_kb' => (int) $attachment->size_in_kb,
+                    'is_image' => (bool) $attachment->is_image,
+                ])
+                ->values()
+                ->all() ?? [],
             'read_at' => $notification->read_at?->toIso8601String(),
             'created_at' => $notification->created_at?->toIso8601String(),
         ];

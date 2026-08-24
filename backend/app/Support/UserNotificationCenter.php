@@ -13,9 +13,11 @@ final class UserNotificationCenter
         string $message,
         string $level = 'info',
         ?string $actionUrl = null,
+        ?int $announcementId = null,
     ): UserNotification {
         return UserNotification::query()->create([
             'user_id' => $user->id,
+            'announcement_id' => $announcementId,
             'title' => $title,
             'message' => $message,
             'level' => $level,

@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Finance\FinanceMerchandiseApiController;
 use App\Http\Controllers\Api\Finance\FinanceStudentApiController;
 use App\Http\Controllers\Api\Guardian\GuardianChildApiController;
 use App\Http\Controllers\Api\Guardian\GuardianMerchandiseApiController;
+use App\Http\Controllers\Api\Management\ManagementAnnouncementApiController;
 use App\Http\Controllers\Api\Management\ManagementFormTeacherApiController;
 use App\Http\Controllers\Api\Management\ManagementDashboardApiController;
 use App\Http\Controllers\Api\Management\ManagementGradeAssessmentPeriodApiController;
@@ -73,6 +74,10 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 
 Route::middleware(['auth:sanctum', 'timetable-manager'])->prefix('management')->group(function () {
     Route::get('/dashboard', [ManagementDashboardApiController::class, 'show']);
+
+    Route::get('/announcements', [ManagementAnnouncementApiController::class, 'index']);
+    Route::post('/announcements', [ManagementAnnouncementApiController::class, 'store']);
+    Route::delete('/announcements/{announcement}', [ManagementAnnouncementApiController::class, 'destroy']);
 
     Route::get('/school-structure', [AdminSchoolStructureApiController::class, 'show']);
     Route::put('/school-structure', [AdminSchoolStructureApiController::class, 'update']);

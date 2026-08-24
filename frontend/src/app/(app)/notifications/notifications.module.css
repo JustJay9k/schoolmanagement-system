@@ -3,6 +3,166 @@
     gap: 0.8rem;
 }
 
+.tabSwitch {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    width: max-content;
+    max-width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-tint);
+    padding: 0.3rem;
+}
+
+.tabButton {
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    padding: 0.62rem 1rem;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition:
+        background-color 140ms ease,
+        color 140ms ease,
+        box-shadow 140ms ease,
+        transform 140ms ease;
+}
+
+.tabButton:hover {
+    color: var(--accent-strong);
+    transform: translateY(-1px);
+}
+
+.tabButtonActive {
+    background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+    color: var(--accent-contrast);
+    box-shadow: 0 12px 22px var(--shadow-soft);
+}
+
+.tabButtonActive:hover {
+    color: var(--accent-contrast);
+}
+
+.tabButton:focus-visible {
+    outline: 2px solid var(--focus-ring-strong);
+    outline-offset: 2px;
+}
+
+.composeGrid {
+    display: grid;
+    gap: 0.8rem;
+}
+
+.metaNote {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+}
+
+.attachmentList {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.attachmentLabel {
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-right: 0.15rem;
+}
+
+.attachmentChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    max-width: 16rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-card-soft);
+    padding: 0.32rem 0.68rem;
+    font-size: 0.72rem;
+    color: var(--ink);
+    text-decoration: none;
+    transition:
+        transform 140ms ease,
+        border-color 140ms ease,
+        box-shadow 140ms ease;
+}
+
+.attachmentChip:hover {
+    transform: translateY(-1px);
+    border-color: var(--accent);
+    box-shadow: 0 10px 20px var(--shadow-soft);
+}
+
+.attachmentChip:focus-visible {
+    outline: 2px solid var(--focus-ring-strong);
+    outline-offset: 2px;
+}
+
+.attachmentChip strong {
+    color: var(--accent-strong);
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.64rem;
+    letter-spacing: 0.08em;
+}
+
+.attachmentChip span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.attachmentChip small {
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.fileChipRemove {
+    border: 0;
+    background: none;
+    padding: 0 0.15rem;
+    color: var(--danger);
+    font-size: 0.7rem;
+    font-weight: 800;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.fileChipRemove:hover {
+    text-decoration: underline;
+}
+
+.dangerTextButton {
+    border: 0;
+    background: none;
+    border-radius: 999px;
+    padding: 0.34rem 0.6rem;
+    color: var(--danger);
+    font-size: 0.74rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition:
+        background-color 140ms ease;
+}
+
+.dangerTextButton:hover {
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+.dangerTextButton:focus-visible {
+    outline: 2px solid var(--focus-ring-strong);
+    outline-offset: 2px;
+}
+
 .summaryGrid {
     display: grid;
     gap: 0.75rem;
