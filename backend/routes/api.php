@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Admin\AdminSchoolStructureApiController;
 use App\Http\Controllers\Api\Admin\AdminDeletedStudentRecordApiController;
 use App\Http\Controllers\Api\Admin\AdminUserApiController;
+use App\Http\Controllers\Api\AnnouncementAttachmentFileController;
 use App\Http\Controllers\Api\Finance\FinanceMerchandiseApiController;
 use App\Http\Controllers\Api\Finance\FinanceStudentApiController;
 use App\Http\Controllers\Api\Guardian\GuardianChildApiController;
@@ -39,6 +40,12 @@ Route::post('/email/verification-notification', [EmailVerificationNotificationCo
     ->middleware(['auth:sanctum', 'throttle:6,1']);
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
     ->middleware('auth:sanctum');
+
+// Signed, expiring download URLs for announcement attachments. Public by design:
+// the signature replaces auth so <img> tags work without Bearer headers.
+Route::get('/announcements/attachments/{attachment}/file', AnnouncementAttachmentFileController::class)
+    ->middleware('signed')
+    ->name('announcements.attachments.file');
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user()?->fresh()->load([

@@ -89,7 +89,7 @@ class NotificationController extends Controller
                 ->map(fn (AnnouncementAttachment $attachment): array => [
                     'id' => $attachment->id,
                     'name' => $attachment->original_name,
-                    'url' => $attachment->file_url,
+                    'url' => $attachment->download_url,
                     'mime_type' => $attachment->mime_type,
                     'size_in_kb' => (int) $attachment->size_in_kb,
                     'is_image' => (bool) $attachment->is_image,

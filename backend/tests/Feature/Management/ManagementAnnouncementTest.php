@@ -117,6 +117,47 @@ class ManagementAnnouncementTest extends TestCase
             ->assertJsonPath('notifications.0.attachments.0.is_image', false);
     }
 
+    public function test_attachment_urls_are_host_independent_signed_links(): void
+    {
+        Storage::fake('public');
+
+        config(['app.url' => 'http://wrong-host.example']);
+
+        $school = School::query()->create(['name' => 'Managed School']);
+        $headTeacher = User::factory()->management()->create([
+            'school_id' => $school->id,
+        ]);
+        $guardian = User::factory()->guardian()->create(['school_id' => $school->id]);
+
+        $this->actingAs($headTeacher)
+            ->post('/api/management/announcements', [
+                'title' => 'Sports day',
+                'attachments' => [
+                    UploadedFile::fake()->createWithContent('photo.jpg', 'jpeg-bytes'),
+                ],
+            ])
+            ->assertCreated();
+
+        $attachmentUrl = $this->actingAs($guardian)
+            ->getJson('/api/notifications')
+            ->assertOk()
+            ->assertJsonPath('notifications.0.attachments.0.is_image', true)
+            ->json('notifications.0.attachments.0.url');
+
+        // Built from the request host, not APP_URL, and carries a signature.
+        $this->assertStringNotContainsString('wrong-host.example', $attachmentUrl);
+        $this->assertStringContainsString('signature=', $attachmentUrl);
+
+        // Unsigned access to the same path is rejected.
+        $this->get('/api/announcements/attachments/1/file')
+            ->assertForbidden();
+
+        // The signed link streams the stored image without any auth header.
+        $this->get($attachmentUrl)
+            ->assertOk()
+            ->assertHeader('content-type', 'image/jpeg');
+    }
+
     public function test_head_teacher_cannot_delete_another_schools_announcement(): void
     {
         $managedSchool = School::query()->create(['name' => 'Managed School']);

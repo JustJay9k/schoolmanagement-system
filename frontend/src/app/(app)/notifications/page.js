@@ -7,6 +7,7 @@ import styles from './notifications.module.css'
 import axios from '@/lib/axios'
 import { useAuth } from '@/hooks/auth'
 import { isManagementUser } from '@/lib/userAccess'
+import Image from 'next/image'
 import Link from 'next/link'
 import useSWR, { useSWRConfig } from 'swr'
 import { useState } from 'react'
@@ -50,6 +51,63 @@ const createDraft = () => ({
     body: '',
     files: [],
 })
+
+const AttachmentMedia = ({ attachments, showFileSizes = false }) => {
+    const images = attachments.filter(attachment => attachment.is_image)
+    const files = attachments.filter(attachment => !attachment.is_image)
+
+    if (!images.length && !files.length) {
+        return null
+    }
+
+    return (
+        <>
+            {images.length > 0 ? (
+                <div className={styles.imageGrid}>
+                    {images.map(image => (
+                        <a
+                            key={image.id}
+                            href={image.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            title={`Open ${image.name}`}
+                            className={styles.imageThumbLink}>
+                            <Image
+                                src={image.url}
+                                alt={image.name}
+                                width={480}
+                                height={360}
+                                className={styles.imageThumb}
+                                unoptimized
+                            />
+                        </a>
+                    ))}
+                </div>
+            ) : null}
+
+            {files.length > 0 ? (
+                <div className={styles.attachmentList}>
+                    <span className={styles.attachmentLabel}>Documents</span>
+                    {files.map(file => (
+                        <a
+                            key={file.id}
+                            href={file.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            title={file.name}
+                            className={styles.attachmentChip}>
+                            <strong>File</strong>
+                            <span>{file.name}</span>
+                            {showFileSizes ? (
+                                <small>{formatFileSize(file.size_in_kb)}</small>
+                            ) : null}
+                        </a>
+                    ))}
+                </div>
+            ) : null}
+        </>
+    )
+}
 
 const extractErrorMessage = error => {
     const errors = error?.response?.data?.errors
@@ -380,25 +438,9 @@ export default function NotificationsPage() {
                                         </p>
 
                                         {notification.attachments?.length ? (
-                                            <div className={styles.attachmentList}>
-                                                <span className={styles.attachmentLabel}>
-                                                    Attachments
-                                                </span>
-                                                {notification.attachments.map(attachment => (
-                                                    <a
-                                                        key={attachment.id}
-                                                        href={attachment.url}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        title={attachment.name}
-                                                        className={styles.attachmentChip}>
-                                                        <strong>
-                                                            {attachment.is_image ? 'Image' : 'File'}
-                                                        </strong>
-                                                        <span>{attachment.name}</span>
-                                                    </a>
-                                                ))}
-                                            </div>
+                                            <AttachmentMedia
+                                                attachments={notification.attachments}
+                                            />
                                         ) : null}
 
                                         <div className={styles.actionsRow}>
@@ -619,32 +661,10 @@ export default function NotificationsPage() {
                                         )}
 
                                         {announcement.attachments?.length ? (
-                                            <div className={styles.attachmentList}>
-                                                <span className={styles.attachmentLabel}>
-                                                    Attachments
-                                                </span>
-                                                {announcement.attachments.map(attachment => (
-                                                    <a
-                                                        key={attachment.id}
-                                                        href={attachment.url}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        title={attachment.name}
-                                                        className={styles.attachmentChip}>
-                                                        <strong>
-                                                            {attachment.is_image
-                                                                ? 'Image'
-                                                                : 'File'}
-                                                        </strong>
-                                                        <span>{attachment.name}</span>
-                                                        <small>
-                                                            {formatFileSize(
-                                                                attachment.size_in_kb,
-                                                            )}
-                                                        </small>
-                                                    </a>
-                                                ))}
-                                            </div>
+                                            <AttachmentMedia
+                                                attachments={announcement.attachments}
+                                                showFileSizes
+                                            />
                                         ) : null}
 
                                         <div className={styles.actionsRow}>
