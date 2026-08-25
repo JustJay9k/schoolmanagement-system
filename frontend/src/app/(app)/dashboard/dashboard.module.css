@@ -916,6 +916,114 @@
     color: var(--danger);
 }
 
+.merchGrid {
+    display: grid;
+    gap: 0.8rem;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+}
+
+.merchCard {
+    border: 1px solid var(--line);
+    border-radius: 1.1rem;
+    background: var(--surface-field);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.merchImageWrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: var(--surface-tint);
+}
+
+.merchImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.merchPlaceholder {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-align: center;
+    padding: 0.5rem;
+}
+
+.merchBody {
+    padding: 0.8rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.merchName {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--ink);
+}
+
+.merchCategory {
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.merchPrice {
+    margin: 0.3rem 0 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--accent-strong);
+}
+
+.merchAvailability {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: auto;
+    padding-top: 0.45rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+}
+
+.merchDot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 999px;
+}
+
+.merchDotAvailable {
+    background: var(--success);
+}
+
+.merchDotHidden {
+    background: var(--muted);
+}
+
+.merchLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--accent-strong);
+    text-decoration: none;
+}
+
+.merchLink:hover {
+    text-decoration: underline;
+}
+
 @media (max-width: 1279px) {
     .metricsRow,
     .managementCards,
@@ -946,7 +1054,8 @@
     .managementSummaryGrid,
     .lowerGrid,
     .profileStats,
-    .bioDataGrid {
+    .bioDataGrid,
+    .merchGrid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
@@ -965,7 +1074,8 @@
     .managementSummaryGrid,
     .lowerGrid,
     .profileStats,
-    .bioDataGrid {
+    .bioDataGrid,
+    .merchGrid {
         grid-template-columns: 1fr;
     }
 

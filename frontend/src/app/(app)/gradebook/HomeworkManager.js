@@ -701,6 +701,9 @@ export default function HomeworkManager() {
                                                                     </td>
                                                                     <td>
                                                                         <input
+                                                                            type="number"
+                                                                            min="0"
+                                                                            step="0.1"
                                                                             value={gradeValueFor(
                                                                                 item,
                                                                                 student.id,
@@ -714,7 +717,7 @@ export default function HomeworkManager() {
                                                                                     event.target.value,
                                                                                 )
                                                                             }
-                                                                            placeholder="e.g. 8/10"
+                                                                            placeholder="0 - 100"
                                                                             maxLength={60}
                                                                             disabled={
                                                                                 savingGradesKey ===

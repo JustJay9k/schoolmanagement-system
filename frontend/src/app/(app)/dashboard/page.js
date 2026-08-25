@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import useSWR from 'swr'
 import { useAuth } from '@/hooks/auth'
 import axios from '@/lib/axios'
@@ -128,6 +129,13 @@ const initials = name =>
 
 const formatShare = (value, total) =>
     total === 0 ? '0%' : `${Math.round((value / total) * 1000) / 10}%`
+
+const formatCurrency = value =>
+    new Intl.NumberFormat('en-MW', {
+        style: 'currency',
+        currency: 'MWK',
+        maximumFractionDigits: 0,
+    }).format(Number(value ?? 0))
 
 const formatBirthDate = value => {
     if (!value) {
@@ -378,6 +386,26 @@ const Dashboard = () => {
         isLoading: managementDashboardLoading,
     } = useSWR(
         managementView ? '/api/management/dashboard' : null,
+        teacherDashboardFetcher,
+        {
+            revalidateOnFocus: false,
+        },
+    )
+    const {
+        data: financeDashboardData,
+        isLoading: financeDashboardLoading,
+    } = useSWR(
+        financeView ? '/api/finance/students' : null,
+        teacherDashboardFetcher,
+        {
+            revalidateOnFocus: false,
+        },
+    )
+    const {
+        data: merchandiseDashboardData,
+        isLoading: merchandiseDashboardLoading,
+    } = useSWR(
+        financeView ? '/api/finance/merchandise' : null,
         teacherDashboardFetcher,
         {
             revalidateOnFocus: false,
@@ -1209,38 +1237,185 @@ const Dashboard = () => {
         </div>
     )
 
-    const renderFinanceView = () => (
-        <div className={styles.managementStack}>
-            <section className={styles.lowerGrid}>
-                <div className={styles.panel}>
+    const renderFinanceView = () => {
+        const financeStats = financeDashboardData?.stats ?? null
+        const merchItems = merchandiseDashboardData?.items ?? []
+        const merchAvailable = merchItems.filter(item => item.is_available).length
+        const merchValue = merchItems.reduce(
+            (sum, item) => sum + Number(item.price ?? 0),
+            0,
+        )
+
+        return (
+            <div className={styles.managementStack}>
+                <section className={styles.managementSummaryPanel}>
                     <div className={styles.panelHeader}>
                         <div>
-                            <p className={styles.panelEyebrow}>Finance Workspace</p>
-                            <h2 className={styles.panelTitle}>Accountant tools</h2>
+                            <p className={styles.panelEyebrow}>Finance Snapshot</p>
+                            <h2 className={styles.panelTitle}>Financial overview</h2>
+                        </div>
+                        <span className={styles.groupBadge}>
+                            {financeDashboardLoading ? 'Loading' : 'Live'}
+                        </span>
+                    </div>
+
+                    <div className={styles.managementSummaryGrid}>
+                        {[
+                            {
+                                accent: 'Students',
+                                label: 'Total students',
+                                value: financeDashboardLoading ? '...' : (financeStats?.total_students ?? 0),
+                                meta: 'Learners in the current school',
+                            },
+                            {
+                                accent: 'Balance',
+                                label: 'Outstanding balance',
+                                value: financeDashboardLoading ? '...' : formatCurrency(financeStats?.outstanding_balance ?? 0),
+                                meta: 'Combined fees still owed by learners',
+                            },
+                            {
+                                accent: 'Average',
+                                label: 'Average balance',
+                                value: financeDashboardLoading ? '...' : formatCurrency(financeStats?.average_balance ?? 0),
+                                meta: 'Mean outstanding balance per student',
+                            },
+                            {
+                                accent: 'Paid',
+                                label: 'Fully paid up',
+                                value: financeDashboardLoading ? '...' : (financeStats?.fully_paid ?? 0),
+                                meta: 'No fees due, books paid, uniform paid',
+                            },
+                            {
+                                accent: 'Books',
+                                label: 'Books pending',
+                                value: financeDashboardLoading ? '...' : (financeStats?.books_pending ?? 0),
+                                meta: 'Learners still needing to pay for books',
+                            },
+                            {
+                                accent: 'Uniform',
+                                label: 'Uniform pending',
+                                value: financeDashboardLoading ? '...' : (financeStats?.uniform_pending ?? 0),
+                                meta: 'Learners still needing to pay for uniform',
+                            },
+                            {
+                                accent: 'Shop',
+                                label: 'Merchandise listed',
+                                value: merchandiseDashboardLoading ? '...' : merchItems.length,
+                                meta: `${merchAvailable} visible to guardians`,
+                            },
+                            {
+                                accent: 'Value',
+                                label: 'Merchandise value',
+                                value: merchandiseDashboardLoading ? '...' : formatCurrency(merchValue),
+                                meta: 'Sum of all listed item prices',
+                            },
+                        ].map(card => (
+                            <article key={card.label} className={styles.managementSummaryCard}>
+                                <span className={styles.managementSummaryAccent}>{card.accent}</span>
+                                <p className={styles.managementSummaryLabel}>{card.label}</p>
+                                <strong className={styles.managementSummaryValue}>{card.value}</strong>
+                                <small>{card.meta}</small>
+                            </article>
+                        ))}
+                    </div>
+                </section>
+
+                <section className={styles.panel}>
+                    <div className={styles.panelHeader}>
+                        <div>
+                            <p className={styles.panelEyebrow}>School Shop</p>
+                            <h2 className={styles.panelTitle}>Merchandise preview</h2>
+                        </div>
+                        <a href="/finance/merchandise" className={styles.merchLink}>
+                            View all
+                        </a>
+                    </div>
+
+                    {merchandiseDashboardLoading ? (
+                        <p className={styles.metricMeta}>Loading merchandise...</p>
+                    ) : merchItems.length === 0 ? (
+                        <p className={styles.metricMeta}>
+                            No merchandise has been uploaded yet.
+                        </p>
+                    ) : (
+                        <div className={styles.merchGrid}>
+                            {merchItems.slice(0, 6).map(item => (
+                                <article key={item.id} className={styles.merchCard}>
+                                    {item.image_url ? (
+                                        <div className={styles.merchImageWrap}>
+                                            <Image
+                                                src={item.image_url}
+                                                alt={item.name}
+                                                width={320}
+                                                height={240}
+                                                className={styles.merchImage}
+                                                unoptimized
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className={styles.merchPlaceholder}>
+                                            No image
+                                        </div>
+                                    )}
+
+                                    <div className={styles.merchBody}>
+                                        <p className={styles.merchName}>{item.name}</p>
+                                        <p className={styles.merchCategory}>
+                                            {item.category || 'Uncategorised'}
+                                        </p>
+                                        <p className={styles.merchPrice}>
+                                            {formatCurrency(item.price)}
+                                        </p>
+                                        <span className={styles.merchAvailability}>
+                                            <span
+                                                className={`${styles.merchDot} ${
+                                                    item.is_available
+                                                        ? styles.merchDotAvailable
+                                                        : styles.merchDotHidden
+                                                }`}
+                                            />
+                                            {item.is_available
+                                                ? 'Visible to guardians'
+                                                : 'Hidden'}
+                                        </span>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    )}
+                </section>
+
+                <section className={styles.lowerGrid}>
+                    <div className={styles.panel}>
+                        <div className={styles.panelHeader}>
+                            <div>
+                                <p className={styles.panelEyebrow}>Quick Access</p>
+                                <h2 className={styles.panelTitle}>Finance tools</h2>
+                            </div>
+                        </div>
+
+                        <div className={styles.alertList}>
+                            <a href="/finance" className={styles.alertCard}>
+                                <div>
+                                    <strong>Student finance desk</strong>
+                                    <p>Update balances, book payments, and uniform payments.</p>
+                                </div>
+                                <span className={styles.alertTag}>Finance</span>
+                            </a>
+
+                            <a href="/finance/merchandise" className={styles.alertCard}>
+                                <div>
+                                    <strong>School merchandise</strong>
+                                    <p>Manage uniforms, books, shirts, and other school items.</p>
+                                </div>
+                                <span className={styles.alertTag}>Shop</span>
+                            </a>
                         </div>
                     </div>
-
-                    <div className={styles.alertList}>
-                        <a href="/finance" className={styles.alertCard}>
-                            <div>
-                                <strong>Student finance desk</strong>
-                                <p>Update balances, book payments, and uniform payments.</p>
-                            </div>
-                            <span className={styles.alertTag}>Finance</span>
-                        </a>
-
-                        <a href="/finance/merchandise" className={styles.alertCard}>
-                            <div>
-                                <strong>School merchandise</strong>
-                                <p>Manage uniforms, books, shirts, and other school items.</p>
-                            </div>
-                            <span className={styles.alertTag}>Shop</span>
-                        </a>
-                    </div>
-                </div>
-            </section>
-        </div>
-    )
+                </section>
+            </div>
+        )
+    }
 
     const renderUnsupportedView = () => (
         <div className={`${styles.statusNotice} ${styles.statusError}`}>

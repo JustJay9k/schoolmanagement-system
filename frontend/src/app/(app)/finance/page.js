@@ -21,7 +21,7 @@ const createDrafts = students =>
         students.map(student => [
             student.id,
             {
-                fees_balance: String(student.fees_balance ?? 0),
+                fees_balance: formatWithCommas(String(student.fees_balance ?? 0)),
                 books_paid: Boolean(student.books_paid),
                 uniform_paid: Boolean(student.uniform_paid),
             },
@@ -34,6 +34,25 @@ const formatCurrency = value =>
         currency: 'MWK',
         maximumFractionDigits: 0,
     }).format(Number(value ?? 0))
+
+const parseNumericInput = raw => {
+    const stripped = (raw ?? '').replace(/[^0-9.]/g, '')
+
+    return stripped
+}
+
+const formatWithCommas = raw => {
+    const cleaned = parseNumericInput(raw)
+
+    if (cleaned === '' || cleaned === '.') {
+        return ''
+    }
+
+    const parts = cleaned.split('.')
+    const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+
+    return parts.length > 1 ? `${intPart}.${parts[1]}` : intPart
+}
 
 export default function FinancePage() {
     const { user } = useAuth({ middleware: 'auth' })
@@ -96,7 +115,7 @@ export default function FinancePage() {
         }
 
         return (
-            Number(draft.fees_balance || 0) !== Number(student.fees_balance || 0) ||
+            Number(parseNumericInput(draft.fees_balance) || 0) !== Number(student.fees_balance || 0) ||
             draft.books_paid !== Boolean(student.books_paid) ||
             draft.uniform_paid !== Boolean(student.uniform_paid)
         )
@@ -140,7 +159,7 @@ export default function FinancePage() {
         try {
             const response = await axios.put(`/api/finance/students/${studentId}`, {
                 fees_balance:
-                    draft.fees_balance === '' ? 0 : Number(draft.fees_balance),
+                    parseNumericInput(draft.fees_balance) === '' ? 0 : Number(parseNumericInput(draft.fees_balance)),
                 books_paid: draft.books_paid,
                 uniform_paid: draft.uniform_paid,
             })
@@ -154,7 +173,7 @@ export default function FinancePage() {
             setDrafts(current => ({
                 ...current,
                 [studentId]: {
-                    fees_balance: String(updatedStudent?.fees_balance ?? 0),
+                    fees_balance: formatWithCommas(String(updatedStudent?.fees_balance ?? 0)),
                     books_paid: Boolean(updatedStudent?.books_paid),
                     uniform_paid: Boolean(updatedStudent?.uniform_paid),
                 },
@@ -440,15 +459,14 @@ export default function FinancePage() {
                                             </td>
                                             <td>
                                                 <Input
-                                                    type="number"
-                                                    min="0"
-                                                    step="0.01"
-                                                    value={draft?.fees_balance ?? '0'}
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    value={draft?.fees_balance ?? ''}
                                                     onChange={event =>
                                                         updateDraft(
                                                             student.id,
                                                             'fees_balance',
-                                                            event.target.value,
+                                                            formatWithCommas(event.target.value),
                                                         )
                                                     }
                                                 />

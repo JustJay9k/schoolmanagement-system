@@ -44,6 +44,12 @@ class FinanceStudentApiController extends Controller
                 'outstanding_balance' => round($students->sum('fees_balance'), 2),
                 'books_pending' => $students->where('books_paid', false)->count(),
                 'uniform_pending' => $students->where('uniform_paid', false)->count(),
+                'fully_paid' => $students
+                    ->filter(fn (StudentRecord $s) => $s->fees_balance <= 0 && $s->books_paid && $s->uniform_paid)
+                    ->count(),
+                'average_balance' => $students->count() > 0
+                    ? round($students->avg('fees_balance'), 2)
+                    : 0.0,
             ],
             'options' => [
                 'schoolTracks' => SchoolContextOptions::tracks(),

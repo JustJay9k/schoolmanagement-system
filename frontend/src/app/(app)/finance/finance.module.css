@@ -1,0 +1,59 @@
+.highlightCard {
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--accent) 8%, var(--surface-card-soft)) 0%,
+        var(--surface-card-soft) 100%
+    );
+    border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--line));
+}
+
+.highlightNote {
+    font-size: 0.72rem;
+    line-height: 1.4;
+    color: var(--muted);
+    margin-top: 0.25rem;
+}
+
+.merchLink {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent-strong);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.merchLink:hover {
+    text-decoration: underline;
+}
+
+.summarySection {
+    display: grid;
+    gap: 1rem;
+}
+
+.summaryGrid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.summaryCard {
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--surface-card-soft);
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.summaryCardAccent {
+    composes: summaryCard;
+    border-color: color-mix(in srgb, var(--accent) 18%, var(--line));
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--accent) 6%, var(--surface-card-soft)) 0%,
+        var(--surface-card-soft) 100%
+    );
+}
