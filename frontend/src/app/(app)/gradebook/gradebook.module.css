@@ -158,6 +158,37 @@
     min-width: 8.5rem;
 }
 
+.periodAverage {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--line);
+    padding-top: 0.6rem;
+}
+
+.periodAverageLabel {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.periodAverageValue {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--accent-strong);
+}
+
+.positionNumber {
+    font-size: 1.05rem;
+    color: var(--accent-strong);
+}
+
+.positionUngraded {
+    color: var(--muted);
+}
+
 .emptyState {
     color: var(--muted);
 }

@@ -261,6 +261,46 @@
     padding: 0.85rem 0.95rem;
 }
 
+.averageBadge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.22rem 0.55rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    background: color-mix(in srgb, #2563eb 14%, var(--surface-card-soft));
+    color: #1d4ed8;
+}
+
+.positionNumber {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+    color: var(--accent-contrast);
+}
+
+.positionUngraded {
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+.averageRow td {
+    padding-top: 0.65rem;
+    border-top: 2px solid var(--line);
+    font-size: 0.82rem;
+    color: var(--muted);
+}
+
+.averageRow strong {
+    color: var(--ink);
+}
+
 .dangerTextButton {
     border: 0;
     background: none;

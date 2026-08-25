@@ -66,6 +66,58 @@ const getPerformanceForPeriod = (student, periodId) =>
 
 const studentHasSavedRecords = student => (student.performances ?? []).length > 0
 
+const parseGradeToNumber = grade => {
+    const text = (grade ?? '').trim()
+
+    if (!text) {
+        return null
+    }
+
+    const fractionMatch = text.match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/)
+
+    if (fractionMatch && Number(fractionMatch[2]) > 0) {
+        return (Number(fractionMatch[1]) / Number(fractionMatch[2])) * 100
+    }
+
+    const percentMatch = text.match(/^(\d+(?:\.\d+)?)%$/)
+
+    if (percentMatch) {
+        return Number(percentMatch[1])
+    }
+
+    if (/^\d+(?:\.\d+)?$/.test(text)) {
+        const value = Number(text)
+
+        return value <= 100 ? value : null
+    }
+
+    const letterMap = {
+        'A+': 97, A: 93, 'A-': 90,
+        'B+': 87, B: 83, 'B-': 80,
+        'C+': 77, C: 73, 'C-': 70,
+        'D+': 67, D: 63, 'D-': 60,
+        F: 50, E: 40,
+    }
+
+    const upper = text.toUpperCase()
+
+    return upper in letterMap ? letterMap[upper] : null
+}
+
+const computeAverage = values => {
+    const numbers = values
+        .map(parseGradeToNumber)
+        .filter(value => value !== null)
+
+    if (numbers.length === 0) {
+        return null
+    }
+
+    return Math.round(
+        (numbers.reduce((sum, value) => sum + value, 0) / numbers.length) * 10,
+    ) / 10
+}
+
 export default function GradebookPage() {
     const { user } = useAuth({ middleware: 'auth' })
     const { showToast } = useToast()
@@ -148,6 +200,64 @@ export default function GradebookPage() {
     const assessmentPeriods = getAssessmentPeriods(options)
     const managementMode = isManagementUser(user)
     const tableColumnCount = assessmentPeriods.length > 0 ? 1 + assessmentPeriods.length : 2
+
+    const computePeriodAverage = (studentId, periodId) => {
+        const draft = drafts[studentId]?.[String(periodId)]
+        const subjectGrades = draft?.subjectGrades ?? {}
+
+        return computeAverage(Object.values(subjectGrades))
+    }
+
+    const computeStudentOverallAverage = student => {
+        const allGrades = []
+
+        for (const period of assessmentPeriods) {
+            const draft = drafts[student.id]?.[String(period.id)]
+
+            if (draft?.subjectGrades) {
+                allGrades.push(...Object.values(draft.subjectGrades))
+            }
+        }
+
+        return computeAverage(allGrades)
+    }
+
+    const positions = (() => {
+        if (students.length === 0 || assessmentPeriods.length === 0) {
+            return []
+        }
+
+        const entries = students.map(student => ({
+            id: student.id,
+            full_name: student.full_name,
+            school_track_label: student.school_track_label,
+            class_name: student.class_name,
+            average: computeStudentOverallAverage(student),
+        }))
+
+        const sorted = [...entries].sort((a, b) => {
+            if (a.average === null && b.average === null) return 0
+            if (a.average === null) return 1
+            if (b.average === null) return -1
+
+            return b.average - a.average
+        })
+
+        let rank = 0
+        let lastAverage = null
+
+        return sorted.map(entry => {
+            if (entry.average !== null && entry.average !== lastAverage) {
+                rank++
+                lastAverage = entry.average
+            }
+
+            return {
+                ...entry,
+                position: entry.average !== null ? rank : null,
+            }
+        })
+    })()
 
     const updatePeriodDraft = (studentId, periodId, field, value) => {
         setDrafts(current => ({
@@ -444,6 +554,66 @@ export default function GradebookPage() {
                         </article>
                     ))}
                 </section>
+
+                {positions.length > 0 ? (
+                    <article className={workspaceStyles.fullPanel}>
+                        <div className={workspaceStyles.panelHeader}>
+                            <div>
+                                <p className={workspaceStyles.panelEyebrow}>Class ranking</p>
+                                <h2 className={workspaceStyles.panelTitle}>
+                                    Learner positions
+                                </h2>
+                            </div>
+                        </div>
+
+                        <div className={workspaceStyles.tableWrap}>
+                            <table className={workspaceStyles.table}>
+                                <thead>
+                                    <tr>
+                                        <th>Pos</th>
+                                        <th>Learner</th>
+                                        <th>Class</th>
+                                        <th>Average</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {positions.map(entry => (
+                                        <tr key={entry.id}>
+                                            <td>
+                                                {entry.position != null ? (
+                                                    <strong className={styles.positionNumber}>
+                                                        {entry.position}
+                                                    </strong>
+                                                ) : (
+                                                    <span className={styles.positionUngraded}>—</span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                <strong>{entry.full_name}</strong>
+                                            </td>
+                                            <td>
+                                                <small className={styles.metaText}>
+                                                    {entry.school_track_label} | {entry.class_name}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                {entry.average != null ? (
+                                                    <span className={styles.periodAverageValue}>
+                                                        {entry.average}%
+                                                    </span>
+                                                ) : (
+                                                    <span className={styles.positionUngraded}>
+                                                        Not graded
+                                                    </span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+                ) : null}
 
                 {managementMode ? (
                     <section className={managementStyles.summaryCards}>
@@ -807,6 +977,21 @@ export default function GradebookPage() {
                                                                             )}
                                                                         </div>
                                                                     )}
+
+                                                                    {trackSubjects.length > 0 ? (() => {
+                                                                        const periodAverage = computePeriodAverage(student.id, period.id)
+
+                                                                        return periodAverage !== null ? (
+                                                                            <div className={styles.periodAverage}>
+                                                                                <span className={styles.periodAverageLabel}>
+                                                                                    Average
+                                                                                </span>
+                                                                                <span className={styles.periodAverageValue}>
+                                                                                    {periodAverage}%
+                                                                                </span>
+                                                                            </div>
+                                                                        ) : null
+                                                                    })() : null}
 
                                                                     <textarea
                                                                         value={draft.comment}
