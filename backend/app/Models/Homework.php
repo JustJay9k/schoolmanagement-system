@@ -43,4 +43,9 @@ class Homework extends Model
     {
         return $this->hasMany(HomeworkGrade::class);
     }
+
+    public function submissions(): HasMany
+    {
+        return $this->hasMany(HomeworkSubmission::class);
+    }
 }

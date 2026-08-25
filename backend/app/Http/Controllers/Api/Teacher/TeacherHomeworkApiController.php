@@ -9,6 +9,8 @@ use App\Models\Homework;
 use App\Models\HomeworkAttachment;
 use App\Models\HomeworkGrade;
 use App\Models\HomeworkQuestion;
+use App\Models\HomeworkSubmission;
+use App\Models\HomeworkSubmissionAttachment;
 use App\Models\StudentRecord;
 use App\Support\UserNotificationCenter;
 use Illuminate\Http\JsonResponse;
@@ -35,7 +37,7 @@ class TeacherHomeworkApiController extends Controller
         $homework = Homework::query()
             ->where('school_id', $actor->school_id)
             ->where('teacher_id', $actor->id)
-            ->with(['questions', 'attachments', 'grades'])
+            ->with(['questions', 'attachments', 'grades', 'submissions.studentRecord:id,full_name', 'submissions.attachments'])
             ->latest()
             ->get();
 
@@ -316,6 +318,33 @@ class TeacherHomeworkApiController extends Controller
                     'updated_at' => $grade->updated_at?->toIso8601String(),
                 ])
                 ->values(),
+            'submissions' => $homework->submissions
+                ->where('status', HomeworkSubmission::STATUS_SUBMITTED)
+                ->sortBy('submitted_at')
+                ->values()
+                ->map(fn (HomeworkSubmission $submission): array => [
+                    'id' => $submission->id,
+                    'student_record_id' => $submission->student_record_id,
+                    'student_name' => $submission->studentRecord?->full_name ?? 'Learner',
+                    'notes' => $submission->notes,
+                    'submitted_at' => $submission->submitted_at?->toIso8601String(),
+                    'answers' => collect($submission->answers ?? [])
+                        ->map(fn ($answer, int|string $questionId): array => [
+                            'question_id' => (int) $questionId,
+                            'answer' => is_string($answer) ? $answer : '',
+                        ])
+                        ->values()
+                        ->all(),
+                    'attachments' => $submission->attachments
+                        ->map(fn (HomeworkSubmissionAttachment $attachment): array => [
+                            'id' => $attachment->id,
+                            'name' => $attachment->original_name,
+                            'url' => $attachment->download_url,
+                            'size_in_kb' => (int) $attachment->size_in_kb,
+                            'is_image' => (bool) $attachment->is_image,
+                        ])
+                        ->values(),
+                ]),
             'created_at' => $homework->created_at?->toIso8601String(),
         ];
     }

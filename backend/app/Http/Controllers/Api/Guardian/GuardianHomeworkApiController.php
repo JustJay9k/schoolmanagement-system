@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Homework;
 use App\Models\HomeworkAttachment;
 use App\Models\HomeworkGrade;
+use App\Models\HomeworkSubmission;
+use App\Models\HomeworkSubmissionAttachment;
 use App\Models\StudentRecord;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,6 +40,9 @@ class GuardianHomeworkApiController extends Controller
                 'questions',
                 'attachments',
                 'grades' => fn ($query) => $query->where('student_record_id', $child->id),
+                'submissions' => fn ($query) => $query
+                    ->where('student_record_id', $child->id)
+                    ->with('attachments'),
             ])
             ->latest()
             ->get();
@@ -94,7 +99,41 @@ class GuardianHomeworkApiController extends Controller
                 'remarks' => $myGrade->remarks,
                 'graded_at' => $myGrade->updated_at?->toIso8601String(),
             ] : null,
+            'my_submission' => $this->serializeSubmission($homework->submissions->first()),
             'created_at' => $homework->created_at?->toIso8601String(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function serializeSubmission(?HomeworkSubmission $submission): ?array
+    {
+        if (! $submission) {
+            return null;
+        }
+
+        return [
+            'id' => $submission->id,
+            'status' => $submission->status,
+            'submitted_at' => $submission->submitted_at?->toIso8601String(),
+            'notes' => $submission->notes,
+            'answers' => collect($submission->answers ?? [])
+                ->map(fn ($answer, int|string $questionId): array => [
+                    'question_id' => (int) $questionId,
+                    'answer' => is_string($answer) ? $answer : '',
+                ])
+                ->values()
+                ->all(),
+            'attachments' => $submission->attachments
+                ->map(fn (HomeworkSubmissionAttachment $attachment): array => [
+                    'id' => $attachment->id,
+                    'name' => $attachment->original_name,
+                    'url' => $attachment->download_url,
+                    'size_in_kb' => (int) $attachment->size_in_kb,
+                    'is_image' => (bool) $attachment->is_image,
+                ])
+                ->values(),
         ];
     }
 }

@@ -80,6 +80,7 @@ export default function HomeworkManager() {
     const [questionInput, setQuestionInput] = useState('')
     const [publishing, setPublishing] = useState(false)
     const [expandedId, setExpandedId] = useState(null)
+    const [responsesId, setResponsesId] = useState(null)
     const [gradeDrafts, setGradeDrafts] = useState({})
     const [savingGradesKey, setSavingGradesKey] = useState(null)
     const [pendingDelete, setPendingDelete] = useState(null)
@@ -522,6 +523,7 @@ export default function HomeworkManager() {
                         <div className={styles.stack}>
                             {homeworkList.map(item => {
                                 const expanded = expandedId === item.id
+                                const responsesOpen = responsesId === item.id
 
                                 return (
                                     <article key={item.id} className={styles.taskCard}>
@@ -641,6 +643,20 @@ export default function HomeworkManager() {
                                                     ? 'Hide grading'
                                                     : `Add grades (${roster.length} learners)`}
                                             </button>
+                                            {(item.submissions?.length ?? 0) > 0 ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setResponsesId(
+                                                            responsesOpen ? null : item.id,
+                                                        )
+                                                    }
+                                                    className={workspaceStyles.secondaryButton}>
+                                                    {responsesOpen
+                                                        ? 'Hide responses'
+                                                        : `View responses (${item.submissions.length})`}
+                                                </button>
+                                            ) : null}
                                             <button
                                                 type="button"
                                                 onClick={() => setPendingDelete(item)}
@@ -752,6 +768,180 @@ export default function HomeworkManager() {
                                                             : 'Save grades and notify guardians'}
                                                     </button>
                                                 </div>
+                                            </div>
+                                        ) : null}
+
+                                        {responsesOpen ? (
+                                            <div className={styles.stack}>
+                                                {item.submissions.map(submission => (
+                                                    <article
+                                                        key={submission.id}
+                                                        className={
+                                                            styles.submissionCard
+                                                        }>
+                                                        <div
+                                                            className={
+                                                                styles.taskHeader
+                                                            }>
+                                                            <strong>
+                                                                {
+                                                                    submission.student_name
+                                                                }
+                                                            </strong>
+                                                            <small
+                                                                className={
+                                                                    styles.taskMeta
+                                                                }>
+                                                                Submitted{' '}
+                                                                {formatDate(
+                                                                    submission.submitted_at,
+                                                                )}
+                                                            </small>
+                                                        </div>
+
+                                                        {submission.answers?.length ? (
+                                                            <ol
+                                                                className={
+                                                                    styles.qaList
+                                                                }>
+                                                                {submission.answers.map(
+                                                                    answerEntry => (
+                                                                        <li
+                                                                            key={
+                                                                                answerEntry.question_id
+                                                                            }
+                                                                            className={
+                                                                                styles.qaItem
+                                                                            }>
+                                                                            <p
+                                                                                className={
+                                                                                    styles.qaQuestion
+                                                                                }>
+                                                                                {item.questions?.find(
+                                                                                    question =>
+                                                                                        question.id ===
+                                                                                        answerEntry.question_id,
+                                                                                )?.question_text ??
+                                                                                    'Answer'}
+                                                                            </p>
+                                                                            <p
+                                                                                className={
+                                                                                    styles.qaAnswer
+                                                                                }>
+                                                                                {
+                                                                                    answerEntry.answer
+                                                                                }
+                                                                            </p>
+                                                                        </li>
+                                                                    ),
+                                                                )}
+                                                            </ol>
+                                                        ) : null}
+
+                                                        {submission.notes ? (
+                                                            <p className={styles.taskBody}>
+                                                                {submission.notes}
+                                                            </p>
+                                                        ) : null}
+
+                                                        {submission.attachments?.some(
+                                                            attachment =>
+                                                                attachment.is_image,
+                                                        ) ? (
+                                                            <div
+                                                                className={
+                                                                    styles.imageGrid
+                                                                }>
+                                                                {submission.attachments
+                                                                    .filter(
+                                                                        attachment =>
+                                                                            attachment.is_image,
+                                                                    )
+                                                                    .map(attachment => (
+                                                                        <a
+                                                                            key={
+                                                                                attachment.id
+                                                                            }
+                                                                            href={
+                                                                                attachment.url
+                                                                            }
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            title={`Open ${attachment.name}`}
+                                                                            className={
+                                                                                styles.imageThumbLink
+                                                                            }>
+                                                                            <Image
+                                                                                src={
+                                                                                    attachment.url
+                                                                                }
+                                                                                alt={
+                                                                                    attachment.name
+                                                                                }
+                                                                                width={
+                                                                                    480
+                                                                                }
+                                                                                height={
+                                                                                    360
+                                                                                }
+                                                                                className={
+                                                                                    styles.imageThumb
+                                                                                }
+                                                                                unoptimized
+                                                                            />
+                                                                        </a>
+                                                                    ))}
+                                                            </div>
+                                                        ) : null}
+
+                                                        {submission.attachments?.some(
+                                                            attachment =>
+                                                                !attachment.is_image,
+                                                        ) ? (
+                                                            <div
+                                                                className={
+                                                                    styles.attachmentList
+                                                                }>
+                                                                {submission.attachments
+                                                                    .filter(
+                                                                        attachment =>
+                                                                            !attachment.is_image,
+                                                                    )
+                                                                    .map(attachment => (
+                                                                        <a
+                                                                            key={
+                                                                                attachment.id
+                                                                            }
+                                                                            href={
+                                                                                attachment.url
+                                                                            }
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            title={
+                                                                                attachment.name
+                                                                            }
+                                                                            className={
+                                                                                styles.attachmentChip
+                                                                            }>
+                                                                            <strong>
+                                                                                File
+                                                                            </strong>
+                                                                            <span>
+                                                                                {
+                                                                                    attachment.name
+                                                                                }
+                                                                            </span>
+                                                                            <small>
+                                                                                {formatFileSize(
+                                                                                    attachment.size_in_kb,
+                                                                                )}
+                                                                            </small>
+                                                                        </a>
+                                                                    ))}
+                                                            </div>
+                                                        ) : null}
+                                                    </article>
+                                                ))}
                                             </div>
                                         ) : null}
                                     </article>

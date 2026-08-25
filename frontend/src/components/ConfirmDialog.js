@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useId, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import styles from './confirm-dialog.module.css'
 
 export default function ConfirmDialog({
@@ -49,7 +50,7 @@ export default function ConfirmDialog({
         return null
     }
 
-    return (
+    return createPortal(
         <div
             className={styles.overlay}
             onClick={() => {
@@ -105,6 +106,7 @@ export default function ConfirmDialog({
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body,
     )
 }

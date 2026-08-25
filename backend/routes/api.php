@@ -8,8 +8,10 @@ use App\Http\Controllers\Api\Finance\FinanceMerchandiseApiController;
 use App\Http\Controllers\Api\Finance\FinanceStudentApiController;
 use App\Http\Controllers\Api\Guardian\GuardianChildApiController;
 use App\Http\Controllers\Api\Guardian\GuardianHomeworkApiController;
+use App\Http\Controllers\Api\Guardian\GuardianHomeworkSubmissionApiController;
 use App\Http\Controllers\Api\Guardian\GuardianMerchandiseApiController;
 use App\Http\Controllers\Api\HomeworkAttachmentFileController;
+use App\Http\Controllers\Api\HomeworkSubmissionFileController;
 use App\Http\Controllers\Api\Management\ManagementAnnouncementApiController;
 use App\Http\Controllers\Api\Management\ManagementFormTeacherApiController;
 use App\Http\Controllers\Api\Management\ManagementDashboardApiController;
@@ -54,6 +56,11 @@ Route::get('/announcements/attachments/{attachment}/file', AnnouncementAttachmen
 Route::get('/homework/attachments/{attachment}/file', HomeworkAttachmentFileController::class)
     ->middleware('signed')
     ->name('homework.attachments.file');
+
+// Signed, expiring download URLs for guardian homework submission attachments.
+Route::get('/homework/submissions/attachments/{attachment}/file', HomeworkSubmissionFileController::class)
+    ->middleware('signed')
+    ->name('homework.submissions.file');
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user()?->fresh()->load([
@@ -157,4 +164,7 @@ Route::middleware(['auth:sanctum', 'portal'])->prefix('guardian')->group(functio
     Route::get('/child', [GuardianChildApiController::class, 'show']);
     Route::get('/merchandise', [GuardianMerchandiseApiController::class, 'index']);
     Route::get('/homework', [GuardianHomeworkApiController::class, 'index']);
+    Route::get('/homework/{homework}/submission', [GuardianHomeworkSubmissionApiController::class, 'show']);
+    Route::post('/homework/{homework}/submission', [GuardianHomeworkSubmissionApiController::class, 'saveDraft']);
+    Route::post('/homework/{homework}/submit', [GuardianHomeworkSubmissionApiController::class, 'submit']);
 });
