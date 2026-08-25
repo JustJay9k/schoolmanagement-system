@@ -287,10 +287,15 @@ export default function SettingsPage() {
                             <p className={workspaceStyles.panelEyebrow}>Theme color</p>
                             <h2 className={workspaceStyles.panelTitle}>Accent palette</h2>
                         </div>
-                        <span className={workspaceStyles.badge}>{activeAccent?.label ?? 'Teal'} selected</span>
+                        <span className={workspaceStyles.badge}>
+                            {activeAccent?.label ?? 'Teal'} selected
+                        </span>
                     </div>
 
-                    <div className={workspaceStyles.paletteGrid} role="group" aria-label="Accent palette selector">
+                    <div
+                        className={workspaceStyles.paletteGrid}
+                        role="group"
+                        aria-label="Accent palette selector">
                         {accentThemes.map(option => (
                             <button
                                 key={option.id}
@@ -298,7 +303,9 @@ export default function SettingsPage() {
                                 onClick={() => setAccent(option.id)}
                                 aria-pressed={accent === option.id}
                                 className={`${workspaceStyles.paletteButton} ${
-                                    accent === option.id ? workspaceStyles.paletteButtonActive : ''
+                                    accent === option.id
+                                        ? workspaceStyles.paletteButtonActive
+                                        : ''
                                 }`}>
                                 <div
                                     className={workspaceStyles.paletteSwatch}
@@ -308,12 +315,16 @@ export default function SettingsPage() {
                                 />
                                 <div className={workspaceStyles.paletteMeta}>
                                     <strong>{option.label}</strong>
-                                    <span>Applies to buttons, highlights, and active states.</span>
+                                    <span>
+                                        Applies to buttons, highlights, and active
+                                        states.
+                                    </span>
                                 </div>
                             </button>
                         ))}
                     </div>
                 </article>
+
             </section>
         </WorkspacePageShell>
     )

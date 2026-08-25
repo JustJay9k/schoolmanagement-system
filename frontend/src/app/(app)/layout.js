@@ -42,6 +42,15 @@ const AppLayout = ({ children }) => {
     }, [sidebarCollapsed])
 
     useEffect(() => {
+        if (!user?.id) {
+            localStorage.removeItem('pcms-user-id')
+            return
+        }
+
+        localStorage.setItem('pcms-user-id', String(user.id))
+    }, [user?.id])
+
+    useEffect(() => {
         if (!user) {
             return undefined
         }
@@ -51,6 +60,7 @@ const AppLayout = ({ children }) => {
         const scheduleLogout = () => {
             window.clearTimeout(timeoutId)
             timeoutId = window.setTimeout(() => {
+                localStorage.removeItem('pcms-user-id')
                 logout()
             }, idleTimeoutMs)
         }
