@@ -14,7 +14,9 @@ import {
     canManageGradebook,
     formatRoleLabel,
     isManagementUser,
+    isTeacherUser,
 } from '@/lib/userAccess'
+import HomeworkManager from './HomeworkManager'
 import styles from './gradebook.module.css'
 
 const createSubjectGradeMap = subjectGrades =>
@@ -67,6 +69,8 @@ const studentHasSavedRecords = student => (student.performances ?? []).length > 
 export default function GradebookPage() {
     const { user } = useAuth({ middleware: 'auth' })
     const { showToast } = useToast()
+    const canManageHomework = isTeacherUser(user)
+    const [activeTab, setActiveTab] = useState('gradebook')
     const [filters, setFilters] = useState({
         school_track: '',
         class_name: '',
@@ -387,9 +391,39 @@ export default function GradebookPage() {
         <>
             <WorkspacePageShell
                 eyebrow="Academic Records"
-                title="Learner gradebook"
-                description="Head teachers can define examination periods and teachers can populate subject grades for each learner inside every configured period."
+                title="Schoolwork"
+                description={
+                    canManageHomework
+                        ? 'Switch between the gradebook to capture examination results per period and the homework tab to publish tasks with documents or manual questions, then grade each learner.'
+                        : 'Head teachers can define examination periods and teachers can populate subject grades for each learner inside every configured period.'
+                }
                 actions={pageActions}>
+            {canManageHomework ? (
+                <div className={styles.tabSwitch} role="tablist">
+                    <button
+                        type="button"
+                        role="tab"
+                        aria-selected={activeTab === 'gradebook'}
+                        onClick={() => setActiveTab('gradebook')}
+                        className={`${styles.tabButton} ${
+                            activeTab === 'gradebook' ? styles.tabButtonActive : ''
+                        }`}>
+                        Gradebook
+                    </button>
+                    <button
+                        type="button"
+                        role="tab"
+                        aria-selected={activeTab === 'homework'}
+                        onClick={() => setActiveTab('homework')}
+                        className={`${styles.tabButton} ${
+                            activeTab === 'homework' ? styles.tabButtonActive : ''
+                        }`}>
+                        Homework
+                    </button>
+                </div>
+            ) : null}
+
+            {activeTab === 'gradebook' || !canManageHomework ? (
             <section className={styles.stack}>
                 <section className={workspaceStyles.statGrid}>
                     {[
@@ -839,6 +873,9 @@ export default function GradebookPage() {
                     </div>
                 </article>
             </section>
+            ) : (
+                <HomeworkManager />
+            )}
             </WorkspacePageShell>
             <ConfirmDialog
                 open={Boolean(confirmingAssessment)}

@@ -4,7 +4,7 @@ const teacherNavItems = [
     { label: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
     { label: 'Notifications', href: '/notifications', icon: 'notifications' },
     { label: 'Registers', href: '/registers', icon: 'register' },
-    { label: 'Gradebook', href: '/gradebook', icon: 'gradebook' },
+    { label: 'Schoolwork', href: '/gradebook', icon: 'gradebook' },
     { label: 'Attendance Reports', href: '/attendance-reports', icon: 'reports' },
     { label: 'Timetables', href: '/timetables', icon: 'timetable' },
     { label: 'Behaviour', href: '/behaviour', icon: 'behaviour' },
@@ -46,6 +46,7 @@ const financeNavItems = [
 const guardianNavItems = [
     { label: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
     { label: 'Notifications', href: '/notifications', icon: 'notifications' },
+    { label: 'Schoolwork', href: '/guardian/homework', icon: 'gradebook' },
     { label: 'School Shop', href: '/guardian/merchandise', icon: 'merchandise' },
     { label: 'Settings', href: '/settings', icon: 'settings' },
 ]

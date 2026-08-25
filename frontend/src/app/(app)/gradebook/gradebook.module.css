@@ -3,6 +3,54 @@
     gap: 1rem;
 }
 
+.tabSwitch {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    width: max-content;
+    max-width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-tint);
+    padding: 0.3rem;
+}
+
+.tabButton {
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    padding: 0.62rem 1rem;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition:
+        background-color 140ms ease,
+        color 140ms ease,
+        box-shadow 140ms ease,
+        transform 140ms ease;
+}
+
+.tabButton:hover {
+    color: var(--accent-strong);
+    transform: translateY(-1px);
+}
+
+.tabButtonActive {
+    background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+    color: var(--accent-contrast);
+    box-shadow: 0 12px 22px var(--shadow-soft);
+}
+
+.tabButtonActive:hover {
+    color: var(--accent-contrast);
+}
+
+.tabButton:focus-visible {
+    outline: 2px solid var(--focus-ring-strong);
+    outline-offset: 2px;
+}
+
 .toolbar {
     display: grid;
     gap: 1rem;

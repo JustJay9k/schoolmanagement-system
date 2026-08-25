@@ -7,7 +7,9 @@ use App\Http\Controllers\Api\AnnouncementAttachmentFileController;
 use App\Http\Controllers\Api\Finance\FinanceMerchandiseApiController;
 use App\Http\Controllers\Api\Finance\FinanceStudentApiController;
 use App\Http\Controllers\Api\Guardian\GuardianChildApiController;
+use App\Http\Controllers\Api\Guardian\GuardianHomeworkApiController;
 use App\Http\Controllers\Api\Guardian\GuardianMerchandiseApiController;
+use App\Http\Controllers\Api\HomeworkAttachmentFileController;
 use App\Http\Controllers\Api\Management\ManagementAnnouncementApiController;
 use App\Http\Controllers\Api\Management\ManagementFormTeacherApiController;
 use App\Http\Controllers\Api\Management\ManagementDashboardApiController;
@@ -21,6 +23,7 @@ use App\Http\Controllers\Api\Management\ManagementTimetableApiController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProfileSettingsController;
 use App\Http\Controllers\Api\Teacher\TeacherGradebookApiController;
+use App\Http\Controllers\Api\Teacher\TeacherHomeworkApiController;
 use App\Http\Controllers\Api\Teacher\TeacherRegisterReportApiController;
 use App\Http\Controllers\Api\Teacher\TeacherTimetableApiController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -46,6 +49,11 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
 Route::get('/announcements/attachments/{attachment}/file', AnnouncementAttachmentFileController::class)
     ->middleware('signed')
     ->name('announcements.attachments.file');
+
+// Signed, expiring download URLs for homework attachments.
+Route::get('/homework/attachments/{attachment}/file', HomeworkAttachmentFileController::class)
+    ->middleware('signed')
+    ->name('homework.attachments.file');
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user()?->fresh()->load([
@@ -138,9 +146,15 @@ Route::middleware(['auth:sanctum', 'portal'])->prefix('teacher')->group(function
     Route::put('/register-reports/current', [TeacherRegisterReportApiController::class, 'storeOrUpdateCurrent']);
     Route::put('/register-reports/{report}', [TeacherRegisterReportApiController::class, 'update']);
     Route::post('/register-reports/{report}/submit', [TeacherRegisterReportApiController::class, 'submit']);
+
+    Route::get('/homework', [TeacherHomeworkApiController::class, 'index']);
+    Route::post('/homework', [TeacherHomeworkApiController::class, 'store']);
+    Route::delete('/homework/{homework}', [TeacherHomeworkApiController::class, 'destroy']);
+    Route::put('/homework/{homework}/grades', [TeacherHomeworkApiController::class, 'updateGrades']);
 });
 
 Route::middleware(['auth:sanctum', 'portal'])->prefix('guardian')->group(function () {
     Route::get('/child', [GuardianChildApiController::class, 'show']);
     Route::get('/merchandise', [GuardianMerchandiseApiController::class, 'index']);
+    Route::get('/homework', [GuardianHomeworkApiController::class, 'index']);
 });
