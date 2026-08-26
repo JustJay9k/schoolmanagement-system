@@ -2,11 +2,13 @@
     display: grid;
     gap: 1rem;
     padding: 1rem 0.8rem 2rem;
+    min-width: 0;
 }
 
 .hero {
     display: grid;
     gap: 0.7rem;
+    min-width: 0;
     border: 1px solid var(--line);
     border-radius: 1.2rem;
     background:
@@ -35,6 +37,7 @@
     font-size: clamp(1.5rem, 3.4vw, 2.3rem);
     line-height: 1;
     color: var(--ink);
+    overflow-wrap: anywhere;
 }
 
 .description {
@@ -103,7 +106,7 @@
 }
 
 .panelGrid > .panel {
-    padding-inline: 1.5rem;
+    padding-inline: 0.85rem;
 }
 
 .filterBar {
@@ -203,6 +206,7 @@
 
 .panelHeader {
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-between;
     gap: 0.7rem;
@@ -405,5 +409,9 @@
 
     .hero {
         padding: 1.15rem;
+    }
+
+    .panelGrid > .panel {
+        padding-inline: 1.5rem;
     }
 }

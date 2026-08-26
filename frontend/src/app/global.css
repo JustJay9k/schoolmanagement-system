@@ -178,10 +178,12 @@
 html {
     scroll-behavior: smooth;
     font-size: 14px;
+    overflow-x: clip;
 }
 
 body {
     min-height: 100vh;
+    overflow-x: clip;
     background:
         radial-gradient(circle at top left, var(--bg-glow-primary), transparent 30%),
         radial-gradient(circle at top right, var(--bg-glow-secondary), transparent 22%),
@@ -206,6 +208,7 @@ body::before {
     width: 100%;
     min-width: 0;
     padding-left: 0;
+    overflow-x: clip;
     transition:
         width 240ms ease,
         margin-left 240ms ease;

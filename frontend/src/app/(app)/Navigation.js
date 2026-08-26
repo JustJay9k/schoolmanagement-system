@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/auth'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import axios from '@/lib/axios'
 import styles from './navigation.module.css'
@@ -364,10 +364,29 @@ const Navigation = ({ user, sidebarCollapsed, onToggleSidebar }) => {
     const isItemActive = href => href === activeHref
     const activeItem = navItems.find(item => item.href === activeHref)
 
-    const Sidebar = (
-        <aside className={`${styles.sidebar} ${sidebarCollapsed ? styles.sidebarCollapsed : ''}`}>
+    useEffect(() => {
+        setOpen(false)
+    }, [pathname])
+
+    useEffect(() => {
+        const originalOverflow = document.body.style.overflow
+
+        if (open) {
+            document.body.style.overflow = 'hidden'
+        }
+
+        return () => {
+            document.body.style.overflow = originalOverflow
+        }
+    }, [open])
+
+    const Sidebar = ({ forceExpanded = false } = {}) => {
+        const isCollapsed = sidebarCollapsed && !forceExpanded
+
+        return (
+        <aside className={`${styles.sidebar} ${isCollapsed ? styles.sidebarCollapsed : ''}`}>
             <div className={styles.brand}>
-                {sidebarCollapsed ? (
+                {isCollapsed ? (
                     <button
                         type="button"
                         onClick={onToggleSidebar}
@@ -386,12 +405,12 @@ const Navigation = ({ user, sidebarCollapsed, onToggleSidebar }) => {
                 <div className={styles.brandHeader}>
                     <div
                         className={`${styles.brandCopy} ${
-                            sidebarCollapsed ? styles.brandCopyCollapsed : ''
+                            isCollapsed ? styles.brandCopyCollapsed : ''
                         }`}>
                         <p className={styles.schoolName}>PCMS</p>
                         <p className={styles.schoolMeta}>Phunziro Class Management System</p>
                     </div>
-                    {!sidebarCollapsed ? (
+                    {!isCollapsed ? (
                         <button
                             type="button"
                             onClick={onToggleSidebar}
@@ -418,17 +437,17 @@ const Navigation = ({ user, sidebarCollapsed, onToggleSidebar }) => {
                             href={item.href}
                             onClick={() => setOpen(false)}
                             className={`${styles.navLink} ${active ? styles.navLinkActive : ''} ${
-                                sidebarCollapsed ? styles.navLinkCollapsed : ''
+                                isCollapsed ? styles.navLinkCollapsed : ''
                             }`}>
                             <span className={styles.navIconWrap}>
                                 <NavIcon name={item.icon} />
-                                {showNotificationBadge && sidebarCollapsed ? (
+                                {showNotificationBadge && isCollapsed ? (
                                     <span className={styles.navBadgeDot} />
                                 ) : null}
                             </span>
                             <span
                                 className={`${styles.navLabel} ${
-                                    sidebarCollapsed ? styles.navLabelCollapsed : ''
+                                    isCollapsed ? styles.navLabelCollapsed : ''
                                 }`}>
                                 <span>{item.label}</span>
                                 {showNotificationBadge ? (
@@ -442,7 +461,7 @@ const Navigation = ({ user, sidebarCollapsed, onToggleSidebar }) => {
                 })}
             </nav>
 
-            <div className={`${styles.profileCard} ${sidebarCollapsed ? styles.profileCardCollapsed : ''}`}>
+            <div className={`${styles.profileCard} ${isCollapsed ? styles.profileCardCollapsed : ''}`}>
                 <div className={styles.avatar}>
                     {user?.profile_photo_url ? (
                         <Image
@@ -463,7 +482,7 @@ const Navigation = ({ user, sidebarCollapsed, onToggleSidebar }) => {
                 </div>
                 <div
                     className={`${styles.profileCopy} ${
-                        sidebarCollapsed ? styles.profileCopyCollapsed : ''
+                        isCollapsed ? styles.profileCopyCollapsed : ''
                     }`}>
                     <div>
                         <p className={styles.profileName}>{user?.name}</p>
@@ -473,12 +492,13 @@ const Navigation = ({ user, sidebarCollapsed, onToggleSidebar }) => {
             </div>
 
             <button onClick={logout} className={styles.logoutButton}>
-                <span className={`${styles.logoutLabel} ${sidebarCollapsed ? styles.logoutLabelCollapsed : ''}`}>
+                <span className={`${styles.logoutLabel} ${isCollapsed ? styles.logoutLabelCollapsed : ''}`}>
                     Logout
                 </span>
             </button>
         </aside>
-    )
+        )
+    }
 
     return (
         <>
@@ -493,8 +513,16 @@ const Navigation = ({ user, sidebarCollapsed, onToggleSidebar }) => {
                     </div>
                 </Link>
 
-                <button onClick={() => setOpen(true)} className={styles.mobileButton}>
-                    Menu
+                <button
+                    type="button"
+                    onClick={() => setOpen(true)}
+                    className={styles.mobileButton}
+                    aria-label="Open navigation menu"
+                    aria-expanded={open}>
+                    <span className={styles.mobileButtonIcon}>
+                        <SidebarToggleIcon />
+                    </span>
+                    <span>Menu</span>
                 </button>
             </div>
 
@@ -502,20 +530,20 @@ const Navigation = ({ user, sidebarCollapsed, onToggleSidebar }) => {
                 className={`${styles.desktopSidebar} ${
                     sidebarCollapsed ? styles.desktopSidebarCollapsed : ''
                 }`}>
-                {Sidebar}
+                <Sidebar />
             </div>
 
             {open && (
-                <div className={styles.mobileOverlay}>
+                <div
+                    className={styles.mobileOverlay}
+                    role="presentation"
+                    onClick={() => setOpen(false)}>
                     <div className={styles.mobileOverlayInner}>
-                        <div className={styles.mobileOverlayActions}>
-                            <button
-                                onClick={() => setOpen(false)}
-                                className={styles.mobileButton}>
-                                Close
-                            </button>
+                        <div
+                            className={styles.mobileSidebarSlot}
+                            onClick={event => event.stopPropagation()}>
+                            <Sidebar forceExpanded />
                         </div>
-                        {Sidebar}
                     </div>
                 </div>
             )}
