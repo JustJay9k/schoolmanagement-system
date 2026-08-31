@@ -92,6 +92,13 @@
     box-shadow: 0 0 0 4px var(--focus-ring);
 }
 
+.fieldError,
+.fieldError:focus,
+.fieldError:focus-within {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 18%, transparent);
+}
+
 .textarea {
     min-height: 9rem;
     resize: vertical;

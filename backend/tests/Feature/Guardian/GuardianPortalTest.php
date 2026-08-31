@@ -61,6 +61,7 @@ class GuardianPortalTest extends TestCase
                 ],
             ],
             'comment' => 'Consistent work across the term.',
+            'status' => StudentPerformanceRecord::STATUS_APPROVED,
         ]);
 
         $guardian = User::factory()->guardian()->create([

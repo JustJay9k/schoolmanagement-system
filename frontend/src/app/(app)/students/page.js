@@ -32,6 +32,54 @@ const createManualForm = () => ({
     first_entry_date: '',
 })
 
+const fieldErrorClass = errors =>
+    Array.isArray(errors) && errors.length > 0 ? managementStyles.fieldError : ''
+
+const friendlyFieldMessages = {
+    school_track: 'Choose a school track for this learner.',
+    class_name: 'Select a class for this learner.',
+    full_name: 'Full name is required.',
+    sex: 'Choose a valid sex option.',
+    date_of_birth: 'Enter a valid date of birth.',
+    age: 'Enter a valid age.',
+    student_code: 'Enter a unique student code for this learner.',
+    orphan_status: 'Choose an orphan status option.',
+    disability_name: 'Name of disability is required.',
+    guardian_name: 'Parent / guardian is required.',
+    guardian_phone: 'Enter a valid guardian phone number.',
+    guardian_email: 'Enter a valid guardian email address.',
+    residence: 'Enter a valid place of residence.',
+    first_entry_date: 'Enter a valid first entry date.',
+}
+
+const toFriendlyFieldErrors = errors =>
+    Object.entries(errors ?? {}).reduce((acc, [field, messages]) => {
+        const entries = Array.isArray(messages) ? messages : [messages]
+
+        if (entries.length > 0) {
+            acc[field] = [friendlyFieldMessages[field] ?? 'Please check this field.']
+        }
+
+        return acc
+    }, {})
+
+const importFieldMessages = {
+    school_track: 'Choose a school track for this import.',
+    class_name: 'Select a class for this import.',
+    records: 'Add at least one learner record to import.',
+}
+
+const toFriendlyImportErrors = errors =>
+    Object.entries(errors ?? {}).reduce((acc, [field, messages]) => {
+        const entries = Array.isArray(messages) ? messages : [messages]
+
+        if (entries.length > 0) {
+            acc[field] = [importFieldMessages[field] ?? entries[0]]
+        }
+
+        return acc
+    }, {})
+
 const createImportForm = () => ({
     school_track: 'primary',
     class_name: '',
@@ -279,8 +327,7 @@ export default function StudentsPage() {
             setPageStatus({
                 type: 'error',
                 message:
-                    error?.response?.data?.message ??
-                    'Unable to load student records right now.',
+                    'Unable to load student records right now. Please try again.',
             })
         } finally {
             setLoading(false)
@@ -498,6 +545,10 @@ export default function StudentsPage() {
 
         const validationErrors = {}
 
+        if (manualForm.class_name.trim() === '') {
+            validationErrors.class_name = ['Select a class for this learner.']
+        }
+
         if (manualForm.full_name.trim() === '') {
             validationErrors.full_name = ['Full name is required.']
         }
@@ -565,12 +616,11 @@ export default function StudentsPage() {
             })
             await loadStudents()
         } catch (error) {
-            setManualErrors(error?.response?.data?.errors ?? {})
+            setManualErrors(toFriendlyFieldErrors(error?.response?.data?.errors))
             setPageStatus({
                 type: 'error',
                 message:
-                    error?.response?.data?.message ??
-                    'Unable to save the student record.',
+                    'Unable to save the student record. Check the highlighted fields and try again.',
             })
         } finally {
             setManualSaving(false)
@@ -598,8 +648,7 @@ export default function StudentsPage() {
             setPageStatus({
                 type: 'error',
                 message:
-                    error?.response?.data?.message ??
-                    'Unable to delete the student record.',
+                    'Unable to delete the student record. Please try again.',
             })
         } finally {
             setDeletingStudentId(null)
@@ -629,12 +678,11 @@ export default function StudentsPage() {
             })
             await loadStudents()
         } catch (error) {
-            setImportErrors(error?.response?.data?.errors ?? {})
+            setImportErrors(toFriendlyImportErrors(error?.response?.data?.errors))
             setPageStatus({
                 type: 'error',
                 message:
-                    error?.response?.data?.message ??
-                    'Unable to import the student records.',
+                    'Unable to import the student records. Check the highlighted fields and try again.',
             })
         } finally {
             setImporting(false)
@@ -746,7 +794,7 @@ export default function StudentsPage() {
                                             class_name: event.target.value,
                                         }))
                                     }
-                                    className={managementStyles.select}
+                                    className={`${managementStyles.select} ${fieldErrorClass(manualErrors.class_name)}`}
                                     required>
                                     <option value="">Select a class</option>
                                     {manualClasses.map(className => (
@@ -771,11 +819,12 @@ export default function StudentsPage() {
                                             full_name: event.target.value,
                                         }))
                                     }
-                                    placeholder="Surname Firstname"
+                                    placeholder="Enter Full name"
                                     required
+                                    className={fieldErrorClass(manualErrors.full_name)}
                                 />
                                 <span className={managementStyles.fieldHint}>
-                                    Use the same format as the first register: start with the surname.
+                                    Enter the learner's name in any order (first name and surname).
                                 </span>
                                 <InputError messages={manualErrors.full_name} />
                             </label>
@@ -814,6 +863,7 @@ export default function StudentsPage() {
                                         }))
                                     }
                                     required
+                                    className={fieldErrorClass(manualErrors.date_of_birth)}
                                 />
                                 <InputError messages={manualErrors.date_of_birth} />
                             </label>
@@ -830,6 +880,7 @@ export default function StudentsPage() {
                                     disabled
                                     readOnly
                                     placeholder="Auto-calculated"
+                                    className={fieldErrorClass(manualErrors.age)}
                                 />
                                 <InputError messages={manualErrors.age} />
                             </label>
@@ -849,6 +900,7 @@ export default function StudentsPage() {
                                     }
                                     placeholder="20212862526"
                                     required
+                                    className={fieldErrorClass(manualErrors.student_code)}
                                 />
                                 <InputError messages={manualErrors.student_code} />
                             </label>
@@ -909,6 +961,7 @@ export default function StudentsPage() {
                                         }
                                         placeholder="Type the disability"
                                         required
+                                        className={fieldErrorClass(manualErrors.disability_name)}
                                     />
                                     <InputError messages={manualErrors.disability_name} />
                                 </label>
@@ -928,6 +981,7 @@ export default function StudentsPage() {
                                         }))
                                     }
                                     required
+                                    className={fieldErrorClass(manualErrors.guardian_name)}
                                 />
                                 <InputError messages={manualErrors.guardian_name} />
                             </label>
@@ -946,6 +1000,7 @@ export default function StudentsPage() {
                                         }))
                                     }
                                     placeholder="+265 999 000 000"
+                                    className={fieldErrorClass(manualErrors.guardian_phone)}
                                 />
                                 <InputError messages={manualErrors.guardian_phone} />
                             </label>
@@ -964,6 +1019,7 @@ export default function StudentsPage() {
                                         }))
                                     }
                                     placeholder="guardian@example.com"
+                                    className={fieldErrorClass(manualErrors.guardian_email)}
                                 />
                                 <InputError messages={manualErrors.guardian_email} />
                             </label>
@@ -1039,7 +1095,7 @@ export default function StudentsPage() {
                                             class_name: '',
                                         }))
                                     }
-                                    className={managementStyles.select}>
+                                    className={`${managementStyles.select} ${fieldErrorClass(importErrors.school_track)}`}>
                                     {Object.entries(options?.schoolTracks ?? {}).map(
                                         ([value, label]) => (
                                             <option key={value} value={value}>
@@ -1061,7 +1117,7 @@ export default function StudentsPage() {
                                             class_name: event.target.value,
                                         }))
                                     }
-                                    className={managementStyles.select}
+                                    className={`${managementStyles.select} ${fieldErrorClass(importErrors.class_name)}`}
                                     required>
                                     <option value="">Select a class</option>
                                     {importClasses.map(className => (

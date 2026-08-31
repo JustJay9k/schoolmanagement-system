@@ -140,6 +140,12 @@ export default function GradebookPage() {
     const [savingAssessment, setSavingAssessment] = useState(false)
     const [deletingAssessmentId, setDeletingAssessmentId] = useState(null)
     const [confirmingAssessment, setConfirmingAssessment] = useState(null)
+    const [savingAll, setSavingAll] = useState(false)
+    const [submitting, setSubmitting] = useState(false)
+    const [confirmingSubmit, setConfirmingSubmit] = useState(null)
+    const [confirmingApprove, setConfirmingApprove] = useState(null)
+    const [confirmingReopen, setConfirmingReopen] = useState(null)
+    const [reopening, setReopening] = useState(false)
 
     const loadGradebook = async activeFilters => {
         setLoading(true)
@@ -311,30 +317,43 @@ export default function GradebookPage() {
         )
     }
 
+    const getPeriodStatus = (student, periodId) =>
+        getPerformanceForPeriod(student, periodId)?.status ?? 'draft'
+
+    const isPeriodSubmitted = (student, periodId) =>
+        getPeriodStatus(student, periodId) === 'submitted'
+
+    const isPeriodApproved = (student, periodId) =>
+        getPeriodStatus(student, periodId) === 'approved'
+
+    const isPeriodLocked = (student, periodId) => {
+        const status = getPeriodStatus(student, periodId)
+
+        return status === 'submitted' || status === 'approved'
+    }
+
     const savePerformance = async (studentId, periodId) => {
         const student = students.find(item => item.id === studentId)
         const draft = drafts[studentId]?.[String(periodId)]
         const trackSubjects = getTrackSubjects(options, student?.school_track)
 
-        if (!student || !draft) {
-            return
+        if (!student || !draft || isPeriodLocked(student, periodId)) {
+            return { saved: false, message: 'This grade has already been submitted and is awaiting head teacher approval. Grades can only change after the head teacher reopens grading.' }
         }
 
         if (assessmentPeriods.length === 0) {
-            showToast({
-                type: 'error',
+            return {
+                saved: false,
                 message:
                     'No grade criteria have been configured yet. Ask the head teacher to add one first.',
-            })
-            return
+            }
         }
 
         if (trackSubjects.length === 0) {
-            showToast({
-                type: 'error',
+            return {
+                saved: false,
                 message: `No subjects are configured for ${student.school_track_label} yet.`,
-            })
-            return
+            }
         }
 
         const subjectGradesPayload = trackSubjects.map(subject => ({
@@ -343,72 +362,296 @@ export default function GradebookPage() {
         }))
 
         if (subjectGradesPayload.some(subjectGrade => subjectGrade.grade === '')) {
-            showToast({
-                type: 'error',
+            return {
+                saved: false,
                 message:
                     'Enter a grade for every subject in this examination period before saving.',
-            })
-            return
+            }
         }
 
-        const currentSavingKey = `${studentId}:${periodId}`
-        setSavingKey(currentSavingKey)
+        const response = await axios.put(
+            `/api/teacher/gradebook/students/${studentId}/performance`,
+            {
+                assessment_period_id: periodId,
+                subject_grades: subjectGradesPayload,
+                comment: draft.comment,
+            },
+        )
 
-        try {
-            const response = await axios.put(
-                `/api/teacher/gradebook/students/${studentId}/performance`,
-                {
-                    assessment_period_id: periodId,
-                    subject_grades: subjectGradesPayload,
-                    comment: draft.comment,
-                },
+        const updatedStudent = response.data?.student
+
+        setStudents(current => {
+            const nextStudents = current.map(item =>
+                item.id === studentId ? updatedStudent : item,
             )
 
-            const updatedStudent = response.data?.student
+            setStats(currentStats =>
+                currentStats
+                    ? {
+                          ...currentStats,
+                          graded_students: nextStudents.filter(studentHasSavedRecords)
+                              .length,
+                          pending_students: nextStudents.filter(
+                              student => !studentHasSavedRecords(student),
+                          ).length,
+                      }
+                    : currentStats,
+            )
 
-            setStudents(current => {
-                const nextStudents = current.map(item =>
-                    item.id === studentId ? updatedStudent : item,
-                )
+            return nextStudents
+        })
 
-                setStats(currentStats =>
-                    currentStats
-                        ? {
-                              ...currentStats,
-                              graded_students: nextStudents.filter(studentHasSavedRecords)
-                                  .length,
-                              pending_students: nextStudents.filter(
-                                  student => !studentHasSavedRecords(student),
-                              ).length,
-                          }
-                        : currentStats,
-                )
+        setDrafts(current => ({
+            ...current,
+            [studentId]: {
+                ...current[studentId],
+                ...createDrafts([updatedStudent], assessmentPeriods)[studentId],
+            },
+        }))
 
-                return nextStudents
+        return { saved: true, message: response.data?.message }
+    }
+
+    const saveAllDrafts = async () => {
+        const changedCells = []
+
+        for (const student of students) {
+            for (const period of assessmentPeriods) {
+                if (
+                    hasDraftChanged(student, period.id) &&
+                    !isPeriodLocked(student, period.id) &&
+                    !isPeriodApproved(student, period.id)
+                ) {
+                    changedCells.push([student.id, period.id])
+                }
+            }
+        }
+
+        if (changedCells.length === 0) {
+            showToast({
+                type: 'info',
+                message: 'There are no unsaved grade changes to save.',
             })
+            return true
+        }
 
-            setDrafts(current => ({
-                ...current,
-                [studentId]: {
-                    ...current[studentId],
-                    ...createDrafts([updatedStudent], assessmentPeriods)[studentId],
-                },
-            }))
+        setSavingAll(true)
+        setSavingKey('all')
+
+        let savedCount = 0
+        let firstError = null
+        let allSaved = true
+
+        try {
+            for (const [studentId, periodId] of changedCells) {
+                try {
+                    const result = await savePerformance(studentId, periodId)
+
+                    if (result?.saved) {
+                        savedCount++
+                    } else {
+                        allSaved = false
+
+                        if (result?.message && !firstError) {
+                            firstError = result.message
+                        }
+                    }
+                } catch (error) {
+                    allSaved = false
+
+                    if (!firstError) {
+                        firstError =
+                            error?.response?.data?.message ??
+                            'Some grade changes could not be saved.'
+                    }
+                }
+            }
+
+            if (savedCount > 0 && !firstError) {
+                showToast({
+                    type: 'success',
+                    message: `${savedCount} grade record(s) saved as draft.`,
+                })
+            } else if (firstError) {
+                showToast({
+                    type: 'error',
+                    message: firstError,
+                })
+            }
+        } finally {
+            setSavingAll(false)
+            setSavingKey(null)
+        }
+
+        return allSaved
+    }
+
+    const findMissingGrades = () => {
+        const missing = []
+
+        for (const student of students) {
+            const trackSubjects = getTrackSubjects(options, student.school_track)
+
+            if (trackSubjects.length === 0) {
+                continue
+            }
+
+            for (const period of assessmentPeriods) {
+                if (isPeriodLocked(student, period.id)) {
+                    continue
+                }
+
+                const draft = drafts[student.id]?.[String(period.id)]
+
+                const hasAllSubjects = trackSubjects.every(
+                    subject =>
+                        (draft?.subjectGrades?.[String(subject.id)] ?? '').trim() !==
+                        '',
+                )
+
+                if (!hasAllSubjects) {
+                    missing.push(student.full_name)
+                    break
+                }
+            }
+        }
+
+        return missing
+    }
+
+    const missingGradesMessage = missing => {
+        const preview = missing.slice(0, 5).join(', ')
+        const extra =
+            missing.length > 5 ? ` and ${missing.length - 5} more learner(s)` : ''
+
+        return `Grades are still missing for ${preview}${extra}. Fill in every subject grade for all learners before submitting.`
+    }
+
+    const submitGrades = async () => {
+        try {
+            const missing = findMissingGrades()
+
+            if (missing.length > 0) {
+                setConfirmingSubmit(null)
+                showToast({
+                    type: 'error',
+                    message: missingGradesMessage(missing),
+                })
+                return
+            }
+
+            const savedOk = await saveAllDrafts()
+
+            if (!savedOk) {
+                setConfirmingSubmit(null)
+                showToast({
+                    type: 'error',
+                    message:
+                        'Some grades are incomplete or could not be saved. Complete every subject grade before submitting.',
+                })
+                return
+            }
+
+            setSubmitting(true)
+            setSavingKey('submitting')
+
+            const response = await axios.post('/api/teacher/gradebook/submit')
+
             showToast({
                 type: 'success',
                 message:
-                    response.data?.message ??
-                    'Learner grade record saved successfully.',
+                    response.data?.message ?? 'Grades submitted successfully.',
             })
+            await loadGradebook(filters)
         } catch (error) {
             showToast({
                 type: 'error',
                 message:
                     error?.response?.data?.message ??
-                    'Unable to save this learner grade record.',
+                    'Unable to submit the grades. Save and try again.',
             })
         } finally {
+            setSubmitting(false)
             setSavingKey(null)
+            setConfirmingSubmit(null)
+        }
+    }
+
+    const pendingDraftCount = students.reduce((count, student) => {
+        let cells = 0
+
+        for (const period of assessmentPeriods) {
+            if (
+                hasDraftChanged(student, period.id) &&
+                !isPeriodLocked(student, period.id)
+            ) {
+                cells++
+            }
+        }
+
+        return count + cells
+    }, 0)
+
+    const approveGrades = async () => {
+        try {
+            setSubmitting(true)
+            setSavingKey('approving')
+
+            const response = await axios.post(
+                '/api/management/gradebook/approve',
+                filters,
+            )
+
+            showToast({
+                type: 'success',
+                message:
+                    response.data?.message ?? 'Grades approved and published.',
+            })
+            setConfirmingApprove(null)
+            await loadGradebook(filters)
+        } catch (error) {
+            showToast({
+                type: 'error',
+                message:
+                    error?.response?.data?.message ??
+                    'Unable to approve the grades right now.',
+            })
+        } finally {
+            setSubmitting(false)
+            setSavingKey(null)
+            setConfirmingApprove(null)
+        }
+    }
+
+    const reopenGrades = async () => {
+        try {
+            setReopening(true)
+            setSavingKey('reopening')
+
+            const response = await axios.post(
+                '/api/management/gradebook/reopen',
+                filters,
+            )
+
+            showToast({
+                type: 'success',
+                message:
+                    response.data?.message ??
+                    'Grading reopened. Teachers can edit and submit again.',
+            })
+            setConfirmingReopen(null)
+            await loadGradebook(filters)
+        } catch (error) {
+            showToast({
+                type: 'error',
+                message:
+                    error?.response?.data?.message ??
+                    'Unable to reopen grading right now.',
+            })
+        } finally {
+            setReopening(false)
+            setSavingKey(null)
+            setConfirmingReopen(null)
         }
     }
 
@@ -473,13 +716,108 @@ export default function GradebookPage() {
         }
     }
 
+    const submittedRecordsCount = students.reduce(
+        (count, student) =>
+            count +
+            (student.performances ?? []).filter(
+                performance => performance.status === 'submitted',
+            ).length,
+        0,
+    )
+
+    const approvedRecordsCount = students.reduce(
+        (count, student) =>
+            count +
+            (student.performances ?? []).filter(
+                performance => performance.status === 'approved',
+            ).length,
+        0,
+    )
+
+    const draftRecordsCount = students.reduce(
+        (count, student) =>
+            count +
+            (student.performances ?? []).filter(
+                performance => performance.status === 'draft',
+            ).length,
+        0,
+    )
+
+    const canSubmitGrades =
+        isTeacherUser(user) && (pendingDraftCount > 0 || draftRecordsCount > 0)
+
     const pageActions = (
-        <button
-            type="button"
-            onClick={() => loadGradebook(filters)}
-            className={workspaceStyles.secondaryButton}>
-            Refresh list
-        </button>
+        <>
+            <button
+                type="button"
+                onClick={() => loadGradebook(filters)}
+                className={workspaceStyles.secondaryButton}>
+                Refresh list
+            </button>
+        </>
+    )
+
+    const bottomPageActions = (
+        <div className={styles.bottomActions}>
+            {isTeacherUser(user) ? (
+                <>
+                    <button
+                        type="button"
+                        onClick={saveAllDrafts}
+                        disabled={savingAll || Boolean(savingKey)}
+                        className={workspaceStyles.secondaryButton}>
+                        {savingAll ? 'Saving...' : 'Save drafts'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const missing = findMissingGrades()
+
+                            if (missing.length > 0) {
+                                showToast({
+                                    type: 'error',
+                                    message: missingGradesMessage(missing),
+                                })
+                                return
+                            }
+
+                            setConfirmingSubmit(true)
+                        }}
+                        disabled={
+                            submitting || Boolean(savingKey) || !canSubmitGrades
+                        }
+                        className={workspaceStyles.button}>
+                        {submitting ? 'Submitting...' : 'Submit grades'}
+                    </button>
+                </>
+            ) : isManagementUser(user) ? (
+                <>
+                    <button
+                        type="button"
+                        onClick={() => setConfirmingApprove(true)}
+                        disabled={
+                            submitting ||
+                            Boolean(savingKey) ||
+                            submittedRecordsCount === 0
+                        }
+                        className={workspaceStyles.button}>
+                        {submitting ? 'Approving...' : 'Approve grades'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setConfirmingReopen(true)}
+                        disabled={
+                            reopening ||
+                            Boolean(savingKey) ||
+                            (submittedRecordsCount === 0 &&
+                                approvedRecordsCount === 0)
+                        }
+                        className={workspaceStyles.secondaryButton}>
+                        {reopening ? 'Reopening...' : 'Reopen grading'}
+                    </button>
+                </>
+            ) : null}
+        </div>
     )
 
     if (user && !canManageGradebook(user)) {
@@ -905,7 +1243,15 @@ export default function GradebookPage() {
                                                                 student,
                                                                 period.id,
                                                             )
-                                                        const currentSavingKey = `${student.id}:${period.id}`
+                                                        const status = getPeriodStatus(
+                                                            student,
+                                                            period.id,
+                                                        )
+                                                        const locked =
+                                                            status === 'submitted' ||
+                                                            status === 'approved'
+                                                        const readOnly =
+                                                            locked || !isTeacherUser(user)
 
                                                         return (
                                                             <td key={`${student.id}-${period.id}`}>
@@ -953,6 +1299,10 @@ export default function GradebookPage() {
                                                                                             type="number"
                                                                                             min="0"
                                                                                             step="0.1"
+                                                                                            disabled={
+                                                                                                readOnly ||
+                                                                                                Boolean(savingKey)
+                                                                                            }
                                                                                             value={
                                                                                                 draft
                                                                                                     .subjectGrades?.[
@@ -1006,6 +1356,10 @@ export default function GradebookPage() {
                                                                                 event.target.value,
                                                                             )
                                                                         }
+                                                                        disabled={
+                                                                            readOnly ||
+                                                                            Boolean(savingKey)
+                                                                        }
                                                                         className={`${managementStyles.textarea} ${styles.commentField}`}
                                                                         placeholder={`Comment for ${period.name}.`}
                                                                     />
@@ -1014,39 +1368,22 @@ export default function GradebookPage() {
                                                                         className={
                                                                             styles.periodMeta
                                                                         }>
-                                                                        {savedPerformance?.updated_at
-                                                                            ? `Last saved ${new Date(
-                                                                                  savedPerformance.updated_at,
-                                                                              ).toLocaleString()}`
-                                                                            : 'Not saved yet'}
+                                                                        {status === 'approved'
+                                                                            ? `Approved on ${
+                                                                                savedPerformance?.updated_at
+                                                                                    ? new Date(savedPerformance.updated_at).toLocaleString()
+                                                                                    : ''
+                                                                            }`
+                                                                            : status === 'submitted'
+                                                                              ? `Submitted ${
+                                                                                savedPerformance?.updated_at
+                                                                                    ? `on ${new Date(savedPerformance.updated_at).toLocaleString()}`
+                                                                                    : ''
+                                                                              } — awaiting approval`
+                                                                              : savedPerformance?.updated_at
+                                                                                ? `Draft saved ${new Date(savedPerformance.updated_at).toLocaleString()}`
+                                                                                : 'Not saved yet'}
                                                                     </small>
-
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            savePerformance(
-                                                                                student.id,
-                                                                                period.id,
-                                                                            )
-                                                                        }
-                                                                        disabled={
-                                                                            savingKey ===
-                                                                                currentSavingKey ||
-                                                                            trackSubjects.length ===
-                                                                                0 ||
-                                                                            !hasDraftChanged(
-                                                                                student,
-                                                                                period.id,
-                                                                            )
-                                                                        }
-                                                                        className={
-                                                                            workspaceStyles.button
-                                                                        }>
-                                                                        {savingKey ===
-                                                                        currentSavingKey
-                                                                            ? 'Saving...'
-                                                                            : 'Save period'}
-                                                                    </button>
                                                                 </div>
                                                             </td>
                                                         )
@@ -1060,6 +1397,7 @@ export default function GradebookPage() {
                         </table>
                     </div>
                 </article>
+                {bottomPageActions}
             </section>
             ) : (
                 <HomeworkManager />
@@ -1087,6 +1425,54 @@ export default function GradebookPage() {
                         deleteAssessmentPeriod(confirmingAssessment)
                     }
                 }}
+            />
+            <ConfirmDialog
+                open={Boolean(confirmingSubmit)}
+                eyebrow="Submit grades"
+                title="Publish these grades?"
+                message={
+                    confirmingSubmit && isTeacherUser(user)
+                        ? `Submitting will send the saved grades for this class to the head teacher for approval. You will not be able to edit them until the head teacher approves or reopens them, and guardians will only see them once approved. ${pendingDraftCount > 0 ? `${pendingDraftCount} unsaved change(s) will be saved first.` : ''}`
+                        : ''
+                }
+                confirmLabel="Submit grades"
+                busyLabel="Submitting..."
+                tone="danger"
+                busy={submitting}
+                onClose={() => setConfirmingSubmit(false)}
+                onConfirm={submitGrades}
+            />
+            <ConfirmDialog
+                open={Boolean(confirmingApprove)}
+                eyebrow="Approve grades"
+                title="Approve and publish these grades?"
+                message={
+                    confirmingApprove && isManagementUser(user)
+                        ? `Approving will publish ${submittedRecordsCount} submitted grade record(s) to the guardians. Once approved, the teacher can no longer edit them unless you reopen grading.`
+                        : ''
+                }
+                confirmLabel="Approve grades"
+                busyLabel="Approving..."
+                tone="danger"
+                busy={submitting}
+                onClose={() => setConfirmingApprove(false)}
+                onConfirm={approveGrades}
+            />
+            <ConfirmDialog
+                open={Boolean(confirmingReopen)}
+                eyebrow="Reopen grading"
+                title="Reopen grading for this class?"
+                message={
+                    confirmingReopen && isManagementUser(user)
+                        ? `Reopening will return ${submittedRecordsCount + approvedRecordsCount} submitted or approved grade record(s) to draft. Teachers can then edit and submit them again; approved grades will no longer be visible to guardians until re-approved.`
+                        : ''
+                }
+                confirmLabel="Reopen grading"
+                busyLabel="Reopening..."
+                tone="danger"
+                busy={reopening}
+                onClose={() => setConfirmingReopen(false)}
+                onConfirm={reopenGrades}
             />
         </>
     )

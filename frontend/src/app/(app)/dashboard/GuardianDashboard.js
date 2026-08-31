@@ -84,6 +84,23 @@ const GuardianDashboard = ({ user }) => {
                 </div>
 
                 <div className={styles.managementCard}>
+                    <p className={styles.metricLabel}>Latest test position</p>
+                    <p className={styles.managementValue}>
+                        {child.latest_class_position != null
+                            ? `#${child.latest_class_position}`
+                            : '—'}
+                        {child.latest_total_class_students != null
+                            ? ` / ${child.latest_total_class_students}`
+                            : ''}
+                    </p>
+                    <p className={styles.metricMeta}>
+                        {child.latest_average_score != null
+                            ? `Average score ${child.latest_average_score}%`
+                            : 'No scores recorded yet'}
+                    </p>
+                </div>
+
+                <div className={styles.managementCard}>
                     <p className={styles.metricLabel}>Teacher updates</p>
                     <p className={styles.managementValue}>
                         {String(performanceRecords.length).padStart(2, '0')}
@@ -198,6 +215,8 @@ const GuardianDashboard = ({ user }) => {
                             <tr>
                                 <th>Assessment period</th>
                                 <th>Teacher</th>
+                                <th>Position</th>
+                                <th>Average</th>
                                 <th>Subjects and grades</th>
                                 <th>Comment</th>
                                 <th>Updated</th>
@@ -206,7 +225,7 @@ const GuardianDashboard = ({ user }) => {
                         <tbody>
                             {performanceRecords.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5}>
+                                    <td colSpan={7}>
                                         No grades or teacher comments have been uploaded
                                         yet.
                                     </td>
@@ -219,6 +238,16 @@ const GuardianDashboard = ({ user }) => {
                                                 'General'}
                                         </td>
                                         <td>{record.teacher_name}</td>
+                                        <td>
+                                            {record.class_position != null
+                                                ? `${record.class_position}${record.total_class_students != null ? ` of ${record.total_class_students}` : ''}`
+                                                : '—'}
+                                        </td>
+                                        <td>
+                                            {record.average_score != null
+                                                ? `${record.average_score}%`
+                                                : '—'}
+                                        </td>
                                         <td>{renderSubjectGrades(record)}</td>
                                         <td>{record.comment || 'No comment added.'}</td>
                                         <td>{formatTimestamp(record.updated_at)}</td>

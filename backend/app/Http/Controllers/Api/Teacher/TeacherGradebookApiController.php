@@ -26,20 +26,40 @@ class TeacherGradebookApiController extends Controller
 
         $scope = $this->resolveScope($request, $actor);
 
-        $students = StudentRecord::query()
-            ->where('school_id', $actor->school_id)
-            ->when($scope['school_track'] !== '', fn ($query) => $query->where('school_track', $scope['school_track']))
-            ->when($scope['class_name'] !== '', fn ($query) => $query->where('class_name', $scope['class_name']))
-            ->with([
-                'performanceRecords' => fn ($query) => $query->with([
-                    'teacher:id,name',
-                    'assessmentPeriod:id,name,position',
-                ]),
-            ])
-            ->orderBy('school_track')
-            ->orderBy('class_name')
-            ->orderBy('full_name')
-            ->get();
+        if ($actor->canManageTimetables()) {
+            $students = StudentRecord::query()
+                ->where('school_id', $actor->school_id)
+                ->when($scope['school_track'] !== '', fn ($query) => $query->where('school_track', $scope['school_track']))
+                ->when($scope['class_name'] !== '', fn ($query) => $query->where('class_name', $scope['class_name']))
+                ->with([
+                    'performanceRecords' => fn ($query) => $query
+                        ->visibleToHeadTeacher()
+                        ->with([
+                            'teacher:id,name',
+                            'assessmentPeriod:id,name,position',
+                        ]),
+                ])
+                ->orderBy('school_track')
+                ->orderBy('class_name')
+                ->orderBy('full_name')
+                ->get();
+        } else {
+            $students = StudentRecord::query()
+                ->where('school_id', $actor->school_id)
+                ->when($scope['school_track'] !== '', fn ($query) => $query->where('school_track', $scope['school_track']))
+                ->when($scope['class_name'] !== '', fn ($query) => $query->where('class_name', $scope['class_name']))
+                ->with([
+                    'performanceRecords' => fn ($query) => $query
+                        ->with([
+                            'teacher:id,name',
+                            'assessmentPeriod:id,name,position',
+                        ]),
+                ])
+                ->orderBy('school_track')
+                ->orderBy('class_name')
+                ->orderBy('full_name')
+                ->get();
+        }
 
         $serialized = $students->map(
             fn (StudentRecord $student): array => $this->serializeStudent($student),
@@ -124,7 +144,7 @@ class TeacherGradebookApiController extends Controller
     ): JsonResponse {
         $actor = $request->user();
 
-        abort_unless($actor && ($actor->isTeacher() || $actor->canManageTimetables()), 403);
+        abort_unless($actor && $actor->isTeacher(), 403);
 
         if (! $this->studentIsAccessibleToActor($student, $actor)) {
             abort(404);
@@ -139,6 +159,15 @@ class TeacherGradebookApiController extends Controller
             $student->school_track,
         );
 
+        $record = StudentPerformanceRecord::query()
+            ->where('student_record_id', $student->id)
+            ->where('assessment_period_id', $assessmentPeriod->id)
+            ->first();
+
+        if ($record && $record->status !== StudentPerformanceRecord::STATUS_DRAFT) {
+            abort(422, 'This grade has already been submitted and is awaiting approval. Ask the head teacher to reopen grading before editing.');
+        }
+
         $record = StudentPerformanceRecord::query()->updateOrCreate(
             [
                 'student_record_id' => $student->id,
@@ -149,23 +178,12 @@ class TeacherGradebookApiController extends Controller
                 'grade' => $this->buildGradeSummary($subjectGrades),
                 'subject_grades' => $subjectGrades,
                 'comment' => $validated['comment'] ?? null,
+                'status' => StudentPerformanceRecord::STATUS_DRAFT,
             ],
         );
 
-        $student->loadMissing('guardians');
-
-        foreach ($student->guardians as $guardian) {
-            UserNotificationCenter::createForUser(
-                $guardian,
-                'New learner update available',
-                "{$actor->name} uploaded {$assessmentPeriod->name} subject grades for {$student->full_name}. Open your dashboard to review the latest comment and scores.",
-                'info',
-                '/dashboard',
-            );
-        }
-
         return response()->json([
-            'message' => 'Learner grade record saved successfully.',
+            'message' => 'Learner grade draft saved successfully. Submit the grades to publish them to school leadership.',
             'student' => $this->serializeStudent(
                 $student->fresh([
                     'performanceRecords' => fn ($query) => $query->with([
@@ -182,8 +200,193 @@ class TeacherGradebookApiController extends Controller
                 'grade_summary' => $record->grade,
                 'subject_grades' => $record->subject_grades ?? [],
                 'comment' => $record->comment,
+                'status' => $record->status,
                 'updated_at' => $record->updated_at?->toIso8601String(),
             ],
+        ]);
+    }
+
+    public function submit(Request $request): JsonResponse
+    {
+        $actor = $request->user();
+
+        abort_unless($actor && $actor->isTeacher(), 403);
+
+        $scope = $this->resolveScope($request, $actor);
+
+        if ($scope['school_track'] === '' || $scope['class_name'] === '') {
+            return response()->json([
+                'message' => 'Choose a class before submitting learner grades.',
+            ], 422);
+        }
+
+        $studentsInScope = StudentRecord::query()
+            ->where('school_id', $actor->school_id)
+            ->where('school_track', $scope['school_track'])
+            ->where('class_name', $scope['class_name'])
+            ->get(['id', 'full_name', 'school_track']);
+
+        $periodIds = GradeAssessmentPeriod::query()
+            ->where('school_id', $actor->school_id)
+            ->pluck('id');
+
+        $missingStudents = [];
+
+        foreach ($studentsInScope as $student) {
+            foreach ($periodIds as $periodId) {
+                $record = StudentPerformanceRecord::query()
+                    ->where('student_record_id', $student->id)
+                    ->where('assessment_period_id', $periodId)
+                    ->first();
+
+                if (! $record || ! $this->hasCompleteSubjectGrades($record->subject_grades, $student->school_track)) {
+                    $missingStudents[] = $student->full_name;
+                    break;
+                }
+            }
+        }
+
+        if (count($missingStudents) > 0) {
+            $preview = implode(', ', array_slice($missingStudents, 0, 5));
+            $extra = count($missingStudents) > 5
+                ? ' and ' . (count($missingStudents) - 5) . ' more learner(s)'
+                : '';
+
+            return response()->json([
+                'message' => "Grades are still missing for {$preview}{$extra}. Fill in every subject grade for all learners before submitting.",
+            ], 422);
+        }
+
+        $records = StudentPerformanceRecord::query()
+            ->whereHas('student', function ($query) use ($actor, $scope): void {
+                $query
+                    ->where('school_id', $actor->school_id)
+                    ->where('school_track', $scope['school_track'])
+                    ->where('class_name', $scope['class_name']);
+            })
+            ->draft()
+            ->get();
+
+        if ($records->isEmpty()) {
+            return response()->json([
+                'message' => 'There are no draft grades to submit for this class yet. Save grades first, then submit them.',
+            ], 422);
+        }
+
+        StudentPerformanceRecord::query()
+            ->whereIn('id', $records->pluck('id'))
+            ->update(['status' => StudentPerformanceRecord::STATUS_SUBMITTED]);
+
+        return response()->json([
+            'message' => "{$records->count()} grade record(s) submitted successfully. They will only be visible to guardians once the head teacher approves them.",
+            'submitted_count' => $records->count(),
+        ]);
+    }
+
+    public function approve(Request $request): JsonResponse
+    {
+        $actor = $request->user();
+
+        abort_unless($actor && $actor->canManageTimetables(), 403);
+
+        $scope = $this->resolveScope($request, $actor);
+
+        if ($scope['school_track'] === '' || $scope['class_name'] === '') {
+            return response()->json([
+                'message' => 'Choose a class before approving learner grades.',
+            ], 422);
+        }
+
+        $records = StudentPerformanceRecord::query()
+            ->whereHas('student', function ($query) use ($actor, $scope): void {
+                $query
+                    ->where('school_id', $actor->school_id)
+                    ->where('school_track', $scope['school_track'])
+                    ->where('class_name', $scope['class_name']);
+            })
+            ->submitted()
+            ->get();
+
+        if ($records->isEmpty()) {
+            return response()->json([
+                'message' => 'There are no submitted grades waiting for approval in this class.',
+            ], 422);
+        }
+
+        $approvedStudents = $records
+            ->loadMissing('student', 'assessmentPeriod:id,name')
+            ->groupBy('student_record_id');
+
+        StudentPerformanceRecord::query()
+            ->whereIn('id', $records->pluck('id'))
+            ->update(['status' => StudentPerformanceRecord::STATUS_APPROVED]);
+
+        foreach ($approvedStudents as $studentId => $group) {
+            $student = $group->first()->student;
+
+            $periodNames = $group
+                ->map(fn ($record) => $record->assessmentPeriod?->name ?? 'General')
+                ->unique()
+                ->values()
+                ->implode(', ');
+
+            foreach ($student->guardians as $guardian) {
+                UserNotificationCenter::createForUser(
+                    $guardian,
+                    'Learner results approved',
+                    "Your ward's {$periodNames} grades for {$student->full_name} have been approved and are now available. Open your dashboard to review the scores and position.",
+                    'info',
+                    '/dashboard',
+                );
+            }
+        }
+
+        return response()->json([
+            'message' => "{$records->count()} grade record(s) approved and published to guardians.",
+            'approved_count' => $records->count(),
+        ]);
+    }
+
+    public function reopen(Request $request): JsonResponse
+    {
+        $actor = $request->user();
+
+        abort_unless($actor && $actor->canManageTimetables(), 403);
+
+        $scope = $this->resolveScope($request, $actor);
+
+        if ($scope['school_track'] === '' || $scope['class_name'] === '') {
+            return response()->json([
+                'message' => 'Choose a class before reopening grades.',
+            ], 422);
+        }
+
+        $records = StudentPerformanceRecord::query()
+            ->whereHas('student', function ($query) use ($actor, $scope): void {
+                $query
+                    ->where('school_id', $actor->school_id)
+                    ->where('school_track', $scope['school_track'])
+                    ->where('class_name', $scope['class_name']);
+            })
+            ->whereIn('status', [
+                StudentPerformanceRecord::STATUS_SUBMITTED,
+                StudentPerformanceRecord::STATUS_APPROVED,
+            ])
+            ->get();
+
+        if ($records->isEmpty()) {
+            return response()->json([
+                'message' => 'There are no submitted or approved grades to reopen in this class.',
+            ], 422);
+        }
+
+        StudentPerformanceRecord::query()
+            ->whereIn('id', $records->pluck('id'))
+            ->update(['status' => StudentPerformanceRecord::STATUS_DRAFT]);
+
+        return response()->json([
+            'message' => "{$records->count()} grade record(s) returned to draft. The teacher can now edit and submit them again.",
+            'reopened_count' => $records->count(),
         ]);
     }
 
@@ -263,6 +466,7 @@ class TeacherGradebookApiController extends Controller
                 'grade_summary' => $performance->grade,
                 'subject_grades' => $performance->subject_grades ?? [],
                 'comment' => $performance->comment,
+                'status' => $performance->status,
                 'updated_at' => $performance->updated_at?->toIso8601String(),
             ]);
 
@@ -291,6 +495,7 @@ class TeacherGradebookApiController extends Controller
                 'grade_summary' => $latestPerformance->grade,
                 'subject_grades' => $latestPerformance->subject_grades ?? [],
                 'comment' => $latestPerformance->comment,
+                'status' => $latestPerformance->status,
                 'updated_at' => $latestPerformance->updated_at?->toIso8601String(),
             ] : null,
             'performances' => $performances,
@@ -361,5 +566,23 @@ class TeacherGradebookApiController extends Controller
         }
 
         return $segments->implode('; ');
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>|null  $subjectGrades
+     */
+    private function hasCompleteSubjectGrades(?array $subjectGrades, string $schoolTrack): bool
+    {
+        if (empty($subjectGrades)) {
+            return false;
+        }
+
+        $gradesBySubject = collect($subjectGrades)
+            ->keyBy(fn (array $entry): int => (int) $entry['subject_id']);
+
+        return SchoolSubject::query()
+            ->where('school_track', $schoolTrack)
+            ->get('id')
+            ->every(fn ($subject): bool => trim((string) ($gradesBySubject->get($subject->id)['grade'] ?? '')) !== '');
     }
 }

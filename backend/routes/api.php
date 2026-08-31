@@ -125,6 +125,9 @@ Route::middleware(['auth:sanctum', 'timetable-manager'])->prefix('management')->
     Route::post('/gradebook-assessment-periods', [ManagementGradeAssessmentPeriodApiController::class, 'store']);
     Route::delete('/gradebook-assessment-periods/{period}', [ManagementGradeAssessmentPeriodApiController::class, 'destroy']);
 
+    Route::post('/gradebook/approve', [TeacherGradebookApiController::class, 'approve']);
+    Route::post('/gradebook/reopen', [TeacherGradebookApiController::class, 'reopen']);
+
     Route::get('/register-schedule', [ManagementRegisterScheduleApiController::class, 'show']);
     Route::put('/register-schedule', [ManagementRegisterScheduleApiController::class, 'update']);
     Route::get('/register-reports', [ManagementRegisterReportApiController::class, 'index']);
@@ -149,6 +152,7 @@ Route::middleware(['auth:sanctum', 'portal'])->prefix('teacher')->group(function
     Route::get('/timetables', [TeacherTimetableApiController::class, 'index']);
     Route::get('/gradebook', [TeacherGradebookApiController::class, 'index']);
     Route::put('/gradebook/students/{student}/performance', [TeacherGradebookApiController::class, 'upsert']);
+    Route::post('/gradebook/submit', [TeacherGradebookApiController::class, 'submit']);
     Route::get('/register-reports', [TeacherRegisterReportApiController::class, 'index']);
     Route::put('/register-reports/current', [TeacherRegisterReportApiController::class, 'storeOrUpdateCurrent']);
     Route::put('/register-reports/{report}', [TeacherRegisterReportApiController::class, 'update']);
