@@ -149,7 +149,7 @@ const Home = () => {
                                 </h1>
                                 <p className="max-w-2xl text-lg text-white/90 sm:text-xl">
                                     Phunziro Class Management System (PCMS) unifies primary and secondary
-                                    attendance flows, student insight, discipline,
+                                    attendance flows, student insight,
                                     timetable control, and fee tracking in one fast
                                     headless interface.
                                 </p>
@@ -169,50 +169,7 @@ const Home = () => {
                             </div>
                         </div>
 
-                        <div className="relative">
-                            <div className="absolute inset-x-10 top-8 h-56 rounded-full bg-[rgba(var(--accent-rgb),0.14)] blur-3xl" />
-                            <div className="relative overflow-hidden rounded-[36px] border border-[var(--line)] bg-[var(--surface-card)] p-6 shadow-[0_30px_80px_var(--shadow-strong)] backdrop-blur sm:p-8">
-                                <div className="grid gap-4 sm:grid-cols-2">
-                                    {[
-                                        {
-                                            label: 'Today',
-                                            value: '92.4%',
-                                            note: 'Register completion across all tracked classes',
-                                        },
-                                        {
-                                            label: 'Escalations',
-                                            value: '07',
-                                            note: 'Late chronic absence or missing submission alerts',
-                                        },
-                                        {
-                                            label: 'Outstanding',
-                                            value: 'MWK 4.8M',
-                                            note: 'Live tuition balance awaiting follow-up',
-                                        },
-                                        {
-                                            label: 'Timetable load',
-                                            value: '116',
-                                            note: 'Scheduled lessons mapped to staff and sections',
-                                        },
-                                    ].map(item => (
-                                        <div
-                                            key={item.label}
-                                            tabIndex={0}
-                                            className="rounded-3xl border border-[var(--line)] bg-[var(--surface-raised)] p-5 transition-transform duration-200 ease-out transform-gpu hover:-translate-y-1 hover:scale-105 cursor-pointer focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)]">
-                                            <p className="text-xs uppercase tracking-[0.24em] text-[var(--muted)]">
-                                                {item.label}
-                                            </p>
-                                            <p className="mt-3 font-[var(--font-display)] text-4xl text-[var(--ink)]">
-                                                {item.value}
-                                            </p>
-                                            <p className="mt-3 text-sm text-[var(--muted)]">
-                                                {item.note}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
+
                     </section>
                 </div>
             </div>
