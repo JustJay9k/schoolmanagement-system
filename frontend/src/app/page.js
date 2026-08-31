@@ -286,7 +286,7 @@ const Home = () => {
                         </div>
 
                         <div className="p-7 sm:p-9">
-                            <div className="rounded-[28px] bg-[var(--ink)] p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] sm:p-7">
+                            <div className="rounded-[28px] border border-teal-100/[0.16] bg-[linear-gradient(135deg,#082f2b_0%,#101820_58%,#2a2111_100%)] p-6 text-white shadow-[0_20px_55px_rgba(18,50,57,0.2),inset_0_1px_0_rgba(255,255,255,0.14)] sm:p-7">
                                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                     <div>
                                         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/60">
@@ -296,7 +296,7 @@ const Home = () => {
                                             Capture, validate, report.
                                         </h3>
                                     </div>
-                                    <div className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold text-white/80">
+                                    <div className="rounded-full border border-amber-200/20 bg-amber-300/[0.12] px-4 py-2 text-xs font-semibold text-amber-100">
                                         Live school day
                                     </div>
                                 </div>
@@ -305,9 +305,9 @@ const Home = () => {
                                     {workflowSteps.map((step, index) => (
                                         <li
                                             key={step}
-                                            className="grid grid-cols-[2.25rem_1fr] items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.08] p-4"
+                                            className="grid grid-cols-[2.25rem_1fr] items-start gap-3 rounded-2xl border border-teal-100/[0.14] bg-white/[0.08] p-4"
                                         >
-                                            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm font-bold text-[var(--ink)]">
+                                            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-300 text-sm font-bold text-[#1f1606]">
                                                 {index + 1}
                                             </span>
                                             <span className="pt-1 text-sm leading-relaxed text-white/[0.82]">
@@ -355,17 +355,19 @@ const Home = () => {
             {/* ═══════════════ ABOUT ═══════════════ */}
             <section
                 id="about"
-                className="scroll-mt-20 border-t border-white/10 bg-[#0f1720]"
+                className="relative overflow-hidden scroll-mt-20 border-t border-teal-200/10 bg-[linear-gradient(135deg,#082f2b_0%,#101820_54%,#2a2111_100%)]"
             >
-                <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+                <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.055)_1px,transparent_1px),linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:84px_84px] opacity-35" />
+                <div className="absolute inset-x-0 top-0 h-32 bg-[linear-gradient(180deg,rgba(244,241,234,0.14),transparent)]" />
+                <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
                     <div className="mx-auto max-w-2xl text-center">
-                        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--accent)]">
+                        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-amber-300">
                             About PCMS
                         </p>
                         <h2 className="mt-4 font-[var(--font-display)] text-4xl text-white sm:text-5xl">
                             Purpose-built for Malawian schools
                         </h2>
-                        <p className="mt-5 text-white/80 sm:text-lg">
+                        <p className="mt-5 text-teal-50/[0.82] sm:text-lg">
                             PCMS was designed from the ground up for the
                             realities of K-12 education — unreliable
                             connectivity, shared devices, multi-role staff, and
@@ -378,15 +380,15 @@ const Home = () => {
                         {aboutFeatures.map(feature => (
                             <div
                                 key={feature.title}
-                                className="group rounded-[28px] border border-white/12 bg-white/6 p-6 shadow-[0_12px_32px_rgba(0,0,0,0.3)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--accent)] hover:shadow-[0_24px_56px_rgba(0,0,0,0.5)]"
+                                className="group rounded-[28px] border border-teal-100/[0.18] bg-[linear-gradient(180deg,rgba(255,255,255,0.13),rgba(255,255,255,0.055))] p-6 shadow-[0_16px_44px_rgba(0,0,0,0.28)] backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-amber-200/[0.45] hover:bg-white/12 hover:shadow-[0_26px_70px_rgba(0,0,0,0.42)]"
                             >
-                                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/12 text-[var(--accent)] transition-colors duration-300 group-hover:bg-white/18">
+                                <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-200/20 bg-amber-300/[0.12] text-amber-300 transition-colors duration-300 group-hover:bg-amber-300/[0.18]">
                                     {feature.icon}
                                 </div>
                                 <h3 className="mt-5 font-[var(--font-display)] text-lg font-semibold text-white">
                                     {feature.title}
                                 </h3>
-                                <p className="mt-3 text-sm leading-relaxed text-white/75">
+                                <p className="mt-3 text-sm leading-relaxed text-teal-50/[0.76]">
                                     {feature.description}
                                 </p>
                             </div>
@@ -495,20 +497,22 @@ const Home = () => {
             {/* ═══════════════ CONTACT ═══════════════ */}
             <section
                 id="contact"
-                className="scroll-mt-20 border-t border-white/10 bg-[#0f1720]"
+                className="relative overflow-hidden scroll-mt-20 border-t border-amber-200/10 bg-[linear-gradient(135deg,#2a2111_0%,#101820_46%,#082f2b_100%)]"
             >
-                <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+                <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:84px_84px] opacity-30" />
+                <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(251,191,36,0.55),transparent)]" />
+                <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
                     <div className="grid gap-16 lg:grid-cols-[1fr_1.2fr] lg:items-start">
                         {/* Left – info */}
                         <div className="space-y-8">
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--accent)]">
+                                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-amber-300">
                                     Contact us
                                 </p>
                                 <h2 className="mt-4 font-[var(--font-display)] text-4xl text-white sm:text-5xl">
                                     Get in touch
                                 </h2>
-                                <p className="mt-5 max-w-md text-white/80">
+                                <p className="mt-5 max-w-md text-teal-50/[0.82]">
                                     Have questions about PCMS, need a demo, or
                                     want to discuss enterprise pricing?
                                     We&apos;d love to hear from you.
@@ -579,9 +583,9 @@ const Home = () => {
                                 ].map(item => (
                                     <div
                                         key={item.label}
-                                        className="flex items-center gap-4 text-sm text-white/85"
+                                        className="flex items-center gap-4 rounded-2xl border border-teal-100/[0.14] bg-white/[0.055] p-3 text-sm text-teal-50/[0.86] shadow-[0_12px_30px_rgba(0,0,0,0.18)]"
                                     >
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/12 text-[var(--accent)]">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-amber-200/20 bg-amber-300/[0.12] text-amber-300">
                                             {item.icon}
                                         </div>
                                         <span>{item.label}</span>
@@ -591,7 +595,7 @@ const Home = () => {
                         </div>
 
                         {/* Right – form */}
-                        <div className="rounded-[32px] border border-white/12 bg-white/6 p-8 shadow-[0_18px_45px_rgba(0,0,0,0.3)]">
+                        <div className="rounded-[32px] border border-teal-100/[0.18] bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.06))] p-8 shadow-[0_24px_70px_rgba(0,0,0,0.34)] backdrop-blur">
                             <form
                                 onSubmit={e => e.preventDefault()}
                                 className="space-y-6"
@@ -607,7 +611,7 @@ const Home = () => {
                                         <input
                                             id="contact-first"
                                             type="text"
-                                            className="w-full rounded-2xl border border-white/15 bg-white/6 px-4 py-3 text-sm text-white outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--focus-ring)]"
+                                            className="w-full rounded-2xl border border-teal-100/[0.18] bg-[#071f1f]/45 px-4 py-3 text-sm text-white outline-none transition placeholder:text-teal-50/40 focus:border-amber-300 focus:ring-4 focus:ring-amber-300/20"
                                             placeholder="Jane"
                                         />
                                     </div>
@@ -621,7 +625,7 @@ const Home = () => {
                                         <input
                                             id="contact-last"
                                             type="text"
-                                            className="w-full rounded-2xl border border-white/15 bg-white/6 px-4 py-3 text-sm text-white outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--focus-ring)]"
+                                            className="w-full rounded-2xl border border-teal-100/[0.18] bg-[#071f1f]/45 px-4 py-3 text-sm text-white outline-none transition placeholder:text-teal-50/40 focus:border-amber-300 focus:ring-4 focus:ring-amber-300/20"
                                             placeholder="Mbewe"
                                         />
                                     </div>
@@ -637,7 +641,7 @@ const Home = () => {
                                     <input
                                         id="contact-email"
                                         type="email"
-                                        className="w-full rounded-2xl border border-white/15 bg-white/6 px-4 py-3 text-sm text-white outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--focus-ring)]"
+                                        className="w-full rounded-2xl border border-teal-100/[0.18] bg-[#071f1f]/45 px-4 py-3 text-sm text-white outline-none transition placeholder:text-teal-50/40 focus:border-amber-300 focus:ring-4 focus:ring-amber-300/20"
                                         placeholder="jane@school.mw"
                                     />
                                 </div>
@@ -652,7 +656,7 @@ const Home = () => {
                                     <textarea
                                         id="contact-message"
                                         rows={5}
-                                        className="w-full resize-none rounded-2xl border border-white/15 bg-white/6 px-4 py-3 text-sm text-white outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--focus-ring)]"
+                                        className="w-full resize-none rounded-2xl border border-teal-100/[0.18] bg-[#071f1f]/45 px-4 py-3 text-sm text-white outline-none transition placeholder:text-teal-50/40 focus:border-amber-300 focus:ring-4 focus:ring-amber-300/20"
                                         placeholder="Tell us about your school and what you need…"
                                     />
                                 </div>
