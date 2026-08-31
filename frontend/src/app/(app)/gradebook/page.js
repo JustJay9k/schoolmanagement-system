@@ -238,31 +238,54 @@ export default function GradebookPage() {
             full_name: student.full_name,
             school_track_label: student.school_track_label,
             class_name: student.class_name,
+            classKey: `${student.school_track}::${student.class_name}`,
             average: computeStudentOverallAverage(student),
         }))
 
-        const sorted = [...entries].sort((a, b) => {
-            if (a.average === null && b.average === null) return 0
-            if (a.average === null) return 1
-            if (b.average === null) return -1
+        const groups = {}
 
-            return b.average - a.average
-        })
+        for (const entry of entries) {
+            ;(groups[entry.classKey] ??= []).push(entry)
+        }
 
-        let rank = 0
-        let lastAverage = null
+        const ranked = []
 
-        return sorted.map(entry => {
-            if (entry.average !== null && entry.average !== lastAverage) {
-                rank++
-                lastAverage = entry.average
+        for (const group of Object.values(groups)) {
+            const sorted = [...group].sort((a, b) => {
+                if (a.average === null && b.average === null) return 0
+                if (a.average === null) return 1
+                if (b.average === null) return -1
+
+                return b.average - a.average
+            })
+
+            let rank = 0
+            let lastAverage = null
+
+            for (const entry of sorted) {
+                if (entry.average !== null && entry.average !== lastAverage) {
+                    rank++
+                    lastAverage = entry.average
+                }
+
+                ranked.push({
+                    ...entry,
+                    position: entry.average !== null ? rank : null,
+                })
             }
+        }
 
-            return {
-                ...entry,
-                position: entry.average !== null ? rank : null,
-            }
-        })
+        return ranked
+    })()
+
+    const positionsByClass = (() => {
+        const groups = {}
+
+        for (const entry of positions) {
+            ;(groups[entry.classKey] ??= []).push(entry)
+        }
+
+        return Object.values(groups)
     })()
 
     const updatePeriodDraft = (studentId, periodId, field, value) => {
@@ -893,7 +916,7 @@ export default function GradebookPage() {
                     ))}
                 </section>
 
-                {positions.length > 0 ? (
+                {positionsByClass.length > 0 ? (
                     <article className={workspaceStyles.fullPanel}>
                         <div className={workspaceStyles.panelHeader}>
                             <div>
@@ -904,52 +927,61 @@ export default function GradebookPage() {
                             </div>
                         </div>
 
-                        <div className={workspaceStyles.tableWrap}>
-                            <table className={workspaceStyles.table}>
-                                <thead>
-                                    <tr>
-                                        <th>Pos</th>
-                                        <th>Learner</th>
-                                        <th>Class</th>
-                                        <th>Average</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {positions.map(entry => (
-                                        <tr key={entry.id}>
-                                            <td>
-                                                {entry.position != null ? (
-                                                    <strong className={styles.positionNumber}>
-                                                        {entry.position}
-                                                    </strong>
-                                                ) : (
-                                                    <span className={styles.positionUngraded}>—</span>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <strong>{entry.full_name}</strong>
-                                            </td>
-                                            <td>
-                                                <small className={styles.metaText}>
-                                                    {entry.school_track_label} | {entry.class_name}
-                                                </small>
-                                            </td>
-                                            <td>
-                                                {entry.average != null ? (
-                                                    <span className={styles.periodAverageValue}>
-                                                        {entry.average}%
-                                                    </span>
-                                                ) : (
-                                                    <span className={styles.positionUngraded}>
-                                                        Not graded
-                                                    </span>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        {positionsByClass.map(group => (
+                            <section
+                                key={group[0].classKey}
+                                className={styles.positionClassBlock}>
+                                <div className={styles.positionClassTitle}>
+                                    <span className={styles.positionClassLabel}>
+                                        {group[0].school_track_label} | {group[0].class_name}
+                                    </span>
+                                    <span className={styles.positionClassCount}>
+                                        {group.length} learner{group.length !== 1 ? 's' : ''}
+                                    </span>
+                                </div>
+
+                                <div className={workspaceStyles.tableWrap}>
+                                    <table className={workspaceStyles.table}>
+                                        <thead>
+                                            <tr>
+                                                <th>Pos</th>
+                                                <th>Learner</th>
+                                                <th>Average</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {group.map(entry => (
+                                                <tr key={entry.id}>
+                                                    <td>
+                                                        {entry.position != null ? (
+                                                            <strong className={styles.positionNumber}>
+                                                                {entry.position}
+                                                            </strong>
+                                                        ) : (
+                                                            <span className={styles.positionUngraded}>—</span>
+                                                        )}
+                                                    </td>
+                                                    <td>
+                                                        <strong>{entry.full_name}</strong>
+                                                    </td>
+                                                    <td>
+                                                        {entry.average != null ? (
+                                                            <span className={styles.periodAverageValue}>
+                                                                {entry.average}%
+                                                            </span>
+                                                        ) : (
+                                                            <span className={styles.positionUngraded}>
+                                                                Not graded
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
+                        ))}
                     </article>
                 ) : null}
 

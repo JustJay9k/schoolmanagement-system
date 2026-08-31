@@ -189,6 +189,36 @@
     color: var(--muted);
 }
 
+.positionClassBlock {
+    padding-top: 1.25rem;
+    margin-top: 1.25rem;
+    border-top: 1px solid var(--line);
+}
+
+.positionClassBlock:first-of-type {
+    padding-top: 0;
+    margin-top: 0;
+    border-top: 0;
+}
+
+.positionClassTitle {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.positionClassLabel {
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.positionClassCount {
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
 .emptyState {
     color: var(--muted);
 }

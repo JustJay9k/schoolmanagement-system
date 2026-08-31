@@ -92,7 +92,11 @@
     display: grid;
     place-items: center;
     border-radius: 1rem;
-    background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+    background: linear-gradient(
+        180deg,
+        var(--accent) 0%,
+        var(--accent-strong) 100%
+    );
     color: var(--accent-contrast);
     box-shadow: 0 14px 30px var(--shadow-soft);
     transition:
@@ -233,7 +237,11 @@
 }
 
 .navLinkActive {
-    background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+    background: linear-gradient(
+        180deg,
+        var(--accent) 0%,
+        var(--accent-strong) 100%
+    );
     color: var(--accent-contrast);
     box-shadow: 0 16px 32px var(--shadow-strong);
 }
@@ -345,16 +353,21 @@
     gap: 0.5rem;
     min-height: 2.75rem;
     border: 1px solid var(--line);
-    border-radius: 0.8rem;
+    border-radius: 1rem;
     background: var(--surface-card-strong);
-    padding: 0.62rem 0.78rem;
-    font-size: 0.8rem;
+    padding: 0.85rem 1rem;
+    font-size: 0.92rem;
     font-weight: 700;
     color: var(--ink);
 }
 
 .logoutButton {
+    width: 100%;
+    min-height: 2.75rem;
     justify-content: center;
+    border-radius: 0.8rem;
+    padding: 0.65rem 0.78rem;
+    font-size: 0.8rem;
 }
 
 .logoutLabel {
@@ -421,7 +434,8 @@
     justify-content: flex-start;
     height: 100dvh;
     background: rgba(5, 10, 18, 0.52);
-    padding: max(0.5rem, env(safe-area-inset-top)) 0.5rem max(0.5rem, env(safe-area-inset-bottom));
+    padding: max(0.5rem, env(safe-area-inset-top)) 0.5rem
+        max(0.5rem, env(safe-area-inset-bottom));
     backdrop-filter: blur(6px);
 }
 
@@ -579,7 +593,7 @@
     }
 
     .sidebarCollapsed .logoutButton {
-        padding-inline: 0.85rem;
+        padding-inline: 0.58rem;
     }
 
     .sidebarCollapsed .logoutLabel {
@@ -595,7 +609,8 @@
         justify-content: center;
     }
 
-    .navLink {
+    .navLink,
+    .logoutButton {
         min-height: 2.45rem;
     }
 
@@ -607,7 +622,6 @@
         transform: translateX(0);
     }
 
-    .logoutButton,
     .mobileButton {
         min-height: 0;
     }
