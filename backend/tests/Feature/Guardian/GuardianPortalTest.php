@@ -33,6 +33,9 @@ class GuardianPortalTest extends TestCase
             'class_name' => 'Form 2',
             'full_name' => 'Brian Chirwa',
             'guardian_name' => 'Mr Chirwa',
+            'fees_balance' => 45000,
+            'books_paid' => true,
+            'uniform_paid' => false,
         ]);
 
         $period = GradeAssessmentPeriod::query()->create([
@@ -89,6 +92,9 @@ class GuardianPortalTest extends TestCase
                 'child.performance_records.0.subject_grades.0.grade',
                 'A',
             )
+            ->assertJsonPath('child.fees_balance', 45000)
+            ->assertJsonPath('child.books_paid', true)
+            ->assertJsonPath('child.uniform_paid', false)
             ->assertJsonPath(
                 'child.performance_records.0.comment',
                 'Consistent work across the term.',

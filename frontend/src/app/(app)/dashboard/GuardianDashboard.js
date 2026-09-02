@@ -14,6 +14,15 @@ const formatTimestamp = value => {
     return new Date(value).toLocaleString()
 }
 
+const formatCurrency = value =>
+    new Intl.NumberFormat('en-MW', {
+        style: 'currency',
+        currency: 'MWK',
+        maximumFractionDigits: 0,
+    }).format(Number(value ?? 0))
+
+const formatPaidStatus = value => (value ? 'Paid' : 'Not paid')
+
 const renderSubjectGrades = record => {
     const subjectGrades = record?.subject_grades ?? []
 
@@ -26,7 +35,8 @@ const renderSubjectGrades = record => {
             {subjectGrades.map(subjectGrade => (
                 <div
                     key={`${record.id}-${subjectGrade.subject_id}`}
-                    className={styles.subjectGradeSummaryItem}>
+                    className={styles.subjectGradeSummaryItem}
+                >
                     <span>{subjectGrade.subject_name}</span>
                     <strong>{subjectGrade.grade}</strong>
                 </div>
@@ -36,7 +46,10 @@ const renderSubjectGrades = record => {
 }
 
 const GuardianDashboard = ({ user }) => {
-    const { data, isLoading } = useSWR(user ? '/api/guardian/child' : null, fetcher)
+    const { data, isLoading } = useSWR(
+        user ? '/api/guardian/child' : null,
+        fetcher,
+    )
 
     const child = data?.child ?? null
     const announcements = data?.announcements ?? []
@@ -73,7 +86,9 @@ const GuardianDashboard = ({ user }) => {
                 <div className={styles.managementCard}>
                     <p className={styles.metricLabel}>Latest grade update</p>
                     <p className={styles.managementValue}>
-                        {child.latest_grade_summary ?? child.latest_grade ?? 'Pending'}
+                        {child.latest_grade_summary ??
+                            child.latest_grade ??
+                            'Pending'}
                     </p>
                     <p className={styles.metricMeta}>
                         {child.latest_assessment_period_name
@@ -106,17 +121,53 @@ const GuardianDashboard = ({ user }) => {
                         {String(performanceRecords.length).padStart(2, '0')}
                     </p>
                     <p className={styles.metricMeta}>
-                        Uploaded comments and grade records visible to this account.
+                        Uploaded comments and grade records visible to this
+                        account.
                     </p>
                 </div>
 
                 <div className={styles.managementCard}>
                     <p className={styles.metricLabel}>School</p>
                     <p className={styles.managementValue}>
-                        {child.school_name ?? user?.school?.name ?? 'Assigned school'}
+                        {child.school_name ??
+                            user?.school?.name ??
+                            'Assigned school'}
                     </p>
                     <p className={styles.metricMeta}>
-                        Notifications and announcements continue in the notices menu.
+                        Notifications and announcements continue in the notices
+                        menu.
+                    </p>
+                </div>
+
+                <div className={styles.managementCard}>
+                    <p className={styles.metricLabel}>School fees balance</p>
+                    <p className={styles.managementValue}>
+                        {formatCurrency(child.fees_balance ?? 0)}
+                    </p>
+                    <p className={styles.metricMeta}>
+                        {Number(child.fees_balance ?? 0) > 0
+                            ? 'Outstanding balance recorded by finance.'
+                            : 'No outstanding school fees recorded.'}
+                    </p>
+                </div>
+
+                <div className={styles.managementCard}>
+                    <p className={styles.metricLabel}>Books payment</p>
+                    <p className={styles.managementValue}>
+                        {formatPaidStatus(Boolean(child.books_paid))}
+                    </p>
+                    <p className={styles.metricMeta}>
+                        Status recorded by the finance office.
+                    </p>
+                </div>
+
+                <div className={styles.managementCard}>
+                    <p className={styles.metricLabel}>Uniform payment</p>
+                    <p className={styles.managementValue}>
+                        {formatPaidStatus(Boolean(child.uniform_paid))}
+                    </p>
+                    <p className={styles.metricMeta}>
+                        Status recorded by the finance office.
                     </p>
                 </div>
             </section>
@@ -125,10 +176,16 @@ const GuardianDashboard = ({ user }) => {
                 <div className={styles.panel}>
                     <div className={styles.panelHeader}>
                         <div>
-                            <p className={styles.panelEyebrow}>Learner Profile</p>
-                            <h2 className={styles.panelTitle}>Basic information</h2>
+                            <p className={styles.panelEyebrow}>
+                                Learner Profile
+                            </p>
+                            <h2 className={styles.panelTitle}>
+                                Basic information
+                            </h2>
                         </div>
-                        <span className={styles.groupBadge}>{child.class_name}</span>
+                        <span className={styles.groupBadge}>
+                            {child.class_name}
+                        </span>
                     </div>
 
                     <div className={styles.bioDataGrid}>
@@ -137,7 +194,10 @@ const GuardianDashboard = ({ user }) => {
                             ['Age', child.age ?? 'N/A'],
                             ['Sex', child.sex ?? 'N/A'],
                             ['Birth date', child.date_of_birth ?? 'N/A'],
-                            ['Guardian name', child.guardian_name ?? user?.name ?? 'N/A'],
+                            [
+                                'Guardian name',
+                                child.guardian_name ?? user?.name ?? 'N/A',
+                            ],
                             ['Residence', child.residence ?? 'N/A'],
                         ].map(([label, value]) => (
                             <div key={label} className={styles.bioDataCard}>
@@ -154,8 +214,8 @@ const GuardianDashboard = ({ user }) => {
                                 'No teacher comment has been uploaded yet.'}
                         </strong>
                         <small>
-                            Review the full history below as more teacher updates are
-                            submitted.
+                            Review the full history below as more teacher
+                            updates are submitted.
                         </small>
                     </div>
                 </div>
@@ -176,8 +236,9 @@ const GuardianDashboard = ({ user }) => {
                                 <div>
                                     <strong>No notices yet</strong>
                                     <p>
-                                        Older notifications will also appear in the
-                                        notifications menu once they are sent.
+                                        Older notifications will also appear in
+                                        the notifications menu once they are
+                                        sent.
                                     </p>
                                 </div>
                                 <span className={styles.alertTag}>Inbox</span>
@@ -202,7 +263,9 @@ const GuardianDashboard = ({ user }) => {
             <section className={styles.panel}>
                 <div className={styles.panelHeader}>
                     <div>
-                        <p className={styles.panelEyebrow}>Performance History</p>
+                        <p className={styles.panelEyebrow}>
+                            Performance History
+                        </p>
                         <h2 className={styles.panelTitle}>
                             Teacher grades and comments
                         </h2>
@@ -226,8 +289,8 @@ const GuardianDashboard = ({ user }) => {
                             {performanceRecords.length === 0 ? (
                                 <tr>
                                     <td colSpan={7}>
-                                        No grades or teacher comments have been uploaded
-                                        yet.
+                                        No grades or teacher comments have been
+                                        uploaded yet.
                                     </td>
                                 </tr>
                             ) : (
@@ -249,8 +312,13 @@ const GuardianDashboard = ({ user }) => {
                                                 : '—'}
                                         </td>
                                         <td>{renderSubjectGrades(record)}</td>
-                                        <td>{record.comment || 'No comment added.'}</td>
-                                        <td>{formatTimestamp(record.updated_at)}</td>
+                                        <td>
+                                            {record.comment ||
+                                                'No comment added.'}
+                                        </td>
+                                        <td>
+                                            {formatTimestamp(record.updated_at)}
+                                        </td>
                                     </tr>
                                 ))
                             )}
