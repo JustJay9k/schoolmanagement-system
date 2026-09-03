@@ -325,13 +325,30 @@ const icons = {
             />
         </>
     ),
+    logout: (
+        <>
+            <path
+                d="M10.2 6H6.8A1.8 1.8 0 005 7.8v8.4A1.8 1.8 0 006.8 18h3.4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M13.5 8.5L17 12l-3.5 3.5M8.8 12H17"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </>
+    ),
 }
 
 const NavIcon = ({ name }) => (
-    <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-        className={styles.navIcon}>
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={styles.navIcon}>
         {icons[name]}
     </svg>
 )
@@ -357,8 +374,7 @@ const Navigation = ({ user, sidebarCollapsed, onToggleSidebar }) => {
     const activeHref = navItems
         .filter(
             item =>
-                pathname === item.href ||
-                pathname.startsWith(`${item.href}/`),
+                pathname === item.href || pathname.startsWith(`${item.href}/`),
         )
         .sort((left, right) => right.href.length - left.href.length)[0]?.href
     const isItemActive = href => href === activeHref
@@ -384,119 +400,141 @@ const Navigation = ({ user, sidebarCollapsed, onToggleSidebar }) => {
         const isCollapsed = sidebarCollapsed && !forceExpanded
 
         return (
-        <aside className={`${styles.sidebar} ${isCollapsed ? styles.sidebarCollapsed : ''}`}>
-            <div className={styles.brand}>
-                {isCollapsed ? (
-                    <button
-                        type="button"
-                        onClick={onToggleSidebar}
-                        aria-label="Expand sidebar"
-                        title="Expand sidebar"
-                        className={`${styles.brandMark} ${styles.brandMarkButton}`}>
-                        <span className={styles.brandMarkGlyph}>
-                            <SidebarToggleIcon />
-                        </span>
-                    </button>
-                ) : (
-                    <div className={styles.brandMark}>
-                        <ApplicationLogo className="h-8 w-8 fill-current" />
-                    </div>
-                )}
-                <div className={styles.brandHeader}>
-                    <div
-                        className={`${styles.brandCopy} ${
-                            isCollapsed ? styles.brandCopyCollapsed : ''
-                        }`}>
-                        <p className={styles.schoolName}>PCMS</p>
-                        <p className={styles.schoolMeta}>Phunziro Class Management System</p>
-                    </div>
-                    {!isCollapsed ? (
+            <aside
+                className={`${styles.sidebar} ${isCollapsed ? styles.sidebarCollapsed : ''}`}
+            >
+                <div className={styles.brand}>
+                    {isCollapsed ? (
                         <button
                             type="button"
                             onClick={onToggleSidebar}
-                            aria-label="Collapse sidebar"
-                            title="Collapse sidebar"
-                            className={styles.sidebarToggle}>
-                            <span className={styles.sidebarToggleGlyph}>
+                            aria-label="Expand sidebar"
+                            title="Expand sidebar"
+                            className={`${styles.brandMark} ${styles.brandMarkButton}`}
+                        >
+                            <span className={styles.brandMarkGlyph}>
                                 <SidebarToggleIcon />
                             </span>
                         </button>
-                    ) : null}
-                </div>
-            </div>
-
-            <nav className={styles.navList}>
-                {navItems.map(item => {
-                    const active = isItemActive(item.href)
-                    const showNotificationBadge =
-                        item.href === '/notifications' && unreadNotifications > 0
-
-                    return (
-                        <Link
-                            key={item.label}
-                            href={item.href}
-                            onClick={() => setOpen(false)}
-                            className={`${styles.navLink} ${active ? styles.navLinkActive : ''} ${
-                                isCollapsed ? styles.navLinkCollapsed : ''
-                            }`}>
-                            <span className={styles.navIconWrap}>
-                                <NavIcon name={item.icon} />
-                                {showNotificationBadge && isCollapsed ? (
-                                    <span className={styles.navBadgeDot} />
-                                ) : null}
-                            </span>
-                            <span
-                                className={`${styles.navLabel} ${
-                                    isCollapsed ? styles.navLabelCollapsed : ''
-                                }`}>
-                                <span>{item.label}</span>
-                                {showNotificationBadge ? (
-                                    <span className={styles.navBadge}>
-                                        {unreadNotifications}
-                                    </span>
-                                ) : null}
-                            </span>
-                        </Link>
-                    )
-                })}
-            </nav>
-
-            <div className={`${styles.profileCard} ${isCollapsed ? styles.profileCardCollapsed : ''}`}>
-                <div className={styles.avatar}>
-                    {user?.profile_photo_url ? (
-                        <Image
-                            src={user.profile_photo_url}
-                            alt={`${user?.name ?? 'User'} profile`}
-                            className={styles.avatarImage}
-                            fill
-                            sizes="32px"
-                            unoptimized
-                        />
                     ) : (
-                        (user?.name ?? 'U')
-                            .split(' ')
-                            .slice(0, 2)
-                            .map(part => part[0])
-                            .join('')
+                        <div className={styles.brandMark}>
+                            <ApplicationLogo className="h-8 w-8 fill-current" />
+                        </div>
                     )}
-                </div>
-                <div
-                    className={`${styles.profileCopy} ${
-                        isCollapsed ? styles.profileCopyCollapsed : ''
-                    }`}>
-                    <div>
-                        <p className={styles.profileName}>{user?.name}</p>
-                        <p className={styles.profileRole}>{formatRoleLabel(user?.role)}</p>
+                    <div className={styles.brandHeader}>
+                        <div
+                            className={`${styles.brandCopy} ${
+                                isCollapsed ? styles.brandCopyCollapsed : ''
+                            }`}
+                        >
+                            <p className={styles.schoolName}>PCMS</p>
+                            <p className={styles.schoolMeta}>
+                                Phunziro Class Management System
+                            </p>
+                        </div>
+                        {!isCollapsed ? (
+                            <button
+                                type="button"
+                                onClick={onToggleSidebar}
+                                aria-label="Collapse sidebar"
+                                title="Collapse sidebar"
+                                className={styles.sidebarToggle}
+                            >
+                                <span className={styles.sidebarToggleGlyph}>
+                                    <SidebarToggleIcon />
+                                </span>
+                            </button>
+                        ) : null}
                     </div>
                 </div>
-            </div>
 
-            <button onClick={logout} className={styles.logoutButton}>
-                <span className={`${styles.logoutLabel} ${isCollapsed ? styles.logoutLabelCollapsed : ''}`}>
-                    Logout
-                </span>
-            </button>
-        </aside>
+                <nav className={styles.navList}>
+                    {navItems.map(item => {
+                        const active = isItemActive(item.href)
+                        const showNotificationBadge =
+                            item.href === '/notifications' &&
+                            unreadNotifications > 0
+
+                        return (
+                            <Link
+                                key={item.label}
+                                href={item.href}
+                                onClick={() => setOpen(false)}
+                                className={`${styles.navLink} ${active ? styles.navLinkActive : ''} ${
+                                    isCollapsed ? styles.navLinkCollapsed : ''
+                                }`}
+                            >
+                                <span className={styles.navIconWrap}>
+                                    <NavIcon name={item.icon} />
+                                    {showNotificationBadge && isCollapsed ? (
+                                        <span className={styles.navBadgeDot} />
+                                    ) : null}
+                                </span>
+                                <span
+                                    className={`${styles.navLabel} ${
+                                        isCollapsed
+                                            ? styles.navLabelCollapsed
+                                            : ''
+                                    }`}
+                                >
+                                    <span>{item.label}</span>
+                                    {showNotificationBadge ? (
+                                        <span className={styles.navBadge}>
+                                            {unreadNotifications}
+                                        </span>
+                                    ) : null}
+                                </span>
+                            </Link>
+                        )
+                    })}
+                </nav>
+
+                <div
+                    className={`${styles.profileCard} ${isCollapsed ? styles.profileCardCollapsed : ''}`}
+                >
+                    <div className={styles.avatar}>
+                        {user?.profile_photo_url ? (
+                            <Image
+                                src={user.profile_photo_url}
+                                alt={`${user?.name ?? 'User'} profile`}
+                                className={styles.avatarImage}
+                                fill
+                                sizes="32px"
+                                unoptimized
+                            />
+                        ) : (
+                            (user?.name ?? 'U')
+                                .split(' ')
+                                .slice(0, 2)
+                                .map(part => part[0])
+                                .join('')
+                        )}
+                    </div>
+                    <div
+                        className={`${styles.profileCopy} ${
+                            isCollapsed ? styles.profileCopyCollapsed : ''
+                        }`}
+                    >
+                        <div>
+                            <p className={styles.profileName}>{user?.name}</p>
+                            <p className={styles.profileRole}>
+                                {formatRoleLabel(user?.role)}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <button onClick={logout} className={styles.logoutButton}>
+                    <span className={styles.navIconWrap}>
+                        <NavIcon name="logout" />
+                    </span>
+                    <span
+                        className={`${styles.logoutLabel} ${isCollapsed ? styles.logoutLabelCollapsed : ''}`}
+                    >
+                        Logout
+                    </span>
+                </button>
+            </aside>
         )
     }
 
@@ -509,7 +547,9 @@ const Navigation = ({ user, sidebarCollapsed, onToggleSidebar }) => {
                     </div>
                     <div>
                         <p className={styles.schoolName}>PCMS</p>
-                        <p className={styles.schoolMeta}>{activeItem?.label ?? 'Workspace'}</p>
+                        <p className={styles.schoolMeta}>
+                            {activeItem?.label ?? 'Workspace'}
+                        </p>
                     </div>
                 </Link>
 
@@ -518,7 +558,8 @@ const Navigation = ({ user, sidebarCollapsed, onToggleSidebar }) => {
                     onClick={() => setOpen(true)}
                     className={styles.mobileButton}
                     aria-label="Open navigation menu"
-                    aria-expanded={open}>
+                    aria-expanded={open}
+                >
                     <span className={styles.mobileButtonIcon}>
                         <SidebarToggleIcon />
                     </span>
@@ -529,7 +570,8 @@ const Navigation = ({ user, sidebarCollapsed, onToggleSidebar }) => {
             <div
                 className={`${styles.desktopSidebar} ${
                     sidebarCollapsed ? styles.desktopSidebarCollapsed : ''
-                }`}>
+                }`}
+            >
                 <Sidebar />
             </div>
 
@@ -537,11 +579,13 @@ const Navigation = ({ user, sidebarCollapsed, onToggleSidebar }) => {
                 <div
                     className={styles.mobileOverlay}
                     role="presentation"
-                    onClick={() => setOpen(false)}>
+                    onClick={() => setOpen(false)}
+                >
                     <div className={styles.mobileOverlayInner}>
                         <div
                             className={styles.mobileSidebarSlot}
-                            onClick={event => event.stopPropagation()}>
+                            onClick={event => event.stopPropagation()}
+                        >
                             <Sidebar forceExpanded />
                         </div>
                     </div>

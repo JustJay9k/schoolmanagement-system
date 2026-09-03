@@ -216,13 +216,13 @@ body::before {
 
 @media (min-width: 1024px) {
     body[data-sidebar-collapsed='false'] .appShellMain {
-        width: calc(100% - 16rem);
-        margin-left: 16rem;
+        width: calc(100% - 14.75rem);
+        margin-left: 14.75rem;
     }
 
     body[data-sidebar-collapsed='true'] .appShellMain {
-        width: calc(100% - 5.25rem);
-        margin-left: 5.25rem;
+        width: calc(100% - 4.85rem);
+        margin-left: 4.85rem;
     }
 }
 
