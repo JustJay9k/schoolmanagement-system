@@ -152,6 +152,7 @@ class TeacherGradebookApiController extends Controller
         }
 
         $validated = $request->validated();
+        $term = $validated['term'];
         $assessmentPeriod = GradeAssessmentPeriod::query()->findOrFail(
             (int) $validated['assessment_period_id'],
         );
@@ -164,6 +165,7 @@ class TeacherGradebookApiController extends Controller
         $record = StudentPerformanceRecord::query()
             ->where('student_record_id', $student->id)
             ->where('assessment_period_id', $assessmentPeriod->id)
+            ->where('term', $term)
             ->first();
 
         if ($record && $record->status !== StudentPerformanceRecord::STATUS_DRAFT) {
@@ -174,6 +176,7 @@ class TeacherGradebookApiController extends Controller
             [
                 'student_record_id' => $student->id,
                 'assessment_period_id' => $assessmentPeriod->id,
+                'term' => $term,
             ],
             [
                 'teacher_id' => $actor->id,
@@ -197,6 +200,8 @@ class TeacherGradebookApiController extends Controller
             'performance' => [
                 'id' => $record->id,
                 'assessment_period_id' => $record->assessment_period_id,
+                'assessment_period_term' => $record->term,
+                'assessment_period_term_label' => $this->termLabel($record->term),
                 'assessment_period_name' => $assessmentPeriod->name,
                 'grade' => $record->grade,
                 'grade_summary' => $record->grade,
@@ -235,15 +240,18 @@ class TeacherGradebookApiController extends Controller
         $missingStudents = [];
 
         foreach ($studentsInScope as $student) {
-            foreach ($periodIds as $periodId) {
-                $record = StudentPerformanceRecord::query()
-                    ->where('student_record_id', $student->id)
-                    ->where('assessment_period_id', $periodId)
-                    ->first();
+            foreach (array_keys(StudentPerformanceRecord::termLabels()) as $term) {
+                foreach ($periodIds as $periodId) {
+                    $record = StudentPerformanceRecord::query()
+                        ->where('student_record_id', $student->id)
+                        ->where('assessment_period_id', $periodId)
+                        ->where('term', $term)
+                        ->first();
 
-                if (! $record || ! $this->hasCompleteSubjectGrades($record->subject_grades, $student->school_track, $actor->school_id)) {
-                    $missingStudents[] = $student->full_name;
-                    break;
+                    if (! $record || ! $this->hasCompleteSubjectGrades($record->subject_grades, $student->school_track, $actor->school_id)) {
+                        $missingStudents[] = $student->full_name;
+                        break 2;
+                    }
                 }
             }
         }
@@ -454,7 +462,8 @@ class TeacherGradebookApiController extends Controller
     {
         $performances = $student->performanceRecords
             ->sortBy(fn (StudentPerformanceRecord $record): string => sprintf(
-                '%05d-%s',
+                '%02d-%05d-%s',
+                $this->termSortOrder($record->term),
                 (int) ($record->assessmentPeriod?->position ?? PHP_INT_MAX),
                 (string) ($record->assessmentPeriod?->name ?? ''),
             ))
@@ -462,6 +471,8 @@ class TeacherGradebookApiController extends Controller
             ->map(fn (StudentPerformanceRecord $performance): array => [
                 'id' => $performance->id,
                 'assessment_period_id' => $performance->assessment_period_id,
+                'assessment_period_term' => $performance->term,
+                'assessment_period_term_label' => $this->termLabel($performance->term),
                 'assessment_period_name' => $performance->assessmentPeriod?->name ?? 'General',
                 'teacher_name' => $performance->teacher?->name ?? 'Teacher',
                 'grade' => $performance->grade,
@@ -491,6 +502,8 @@ class TeacherGradebookApiController extends Controller
             'performance' => $latestPerformance ? [
                 'id' => $latestPerformance->id,
                 'assessment_period_id' => $latestPerformance->assessment_period_id,
+                'assessment_period_term' => $latestPerformance->term,
+                'assessment_period_term_label' => $this->termLabel($latestPerformance->term),
                 'assessment_period_name' => $latestPerformance->assessmentPeriod?->name ?? 'General',
                 'teacher_name' => $latestPerformance->teacher?->name ?? 'Teacher',
                 'grade' => $latestPerformance->grade,
@@ -509,6 +522,23 @@ class TeacherGradebookApiController extends Controller
         $performances = $student['performances'] ?? [];
 
         return is_array($performances) && count($performances) > 0;
+    }
+
+    private function termSortOrder(?string $term): int
+    {
+        return match ($term) {
+            StudentPerformanceRecord::TERM_FIRST => 1,
+            StudentPerformanceRecord::TERM_SECOND => 2,
+            StudentPerformanceRecord::TERM_THIRD => 3,
+            default => 4,
+        };
+    }
+
+    private function termLabel(?string $term): string
+    {
+        return $term && isset(StudentPerformanceRecord::termLabels()[$term])
+            ? StudentPerformanceRecord::termLabels()[$term]
+            : 'First Term';
     }
 
     /**

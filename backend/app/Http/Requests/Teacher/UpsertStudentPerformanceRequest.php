@@ -4,6 +4,7 @@ namespace App\Http\Requests\Teacher;
 
 use App\Models\GradeAssessmentPeriod;
 use App\Models\SchoolSubject;
+use App\Models\StudentPerformanceRecord;
 use App\Models\StudentRecord;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -20,6 +21,7 @@ class UpsertStudentPerformanceRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
+            'term' => is_string($this->input('term')) ? trim($this->input('term')) : $this->input('term'),
             'comment' => is_string($this->input('comment')) ? trim($this->input('comment')) : $this->input('comment'),
             'subject_grades' => collect($this->input('subject_grades', []))
                 ->map(fn ($entry): array => [
@@ -35,6 +37,7 @@ class UpsertStudentPerformanceRequest extends FormRequest
     {
         return [
             'assessment_period_id' => ['required', 'integer', Rule::exists('grade_assessment_periods', 'id')],
+            'term' => ['required', 'string', Rule::in(array_keys(StudentPerformanceRecord::termLabels()))],
             'subject_grades' => ['required', 'array', 'min:1'],
             'subject_grades.*.subject_id' => ['required', 'integer', 'distinct', Rule::exists('school_subjects', 'id')],
             'subject_grades.*.grade' => ['required', 'string', 'max:120'],

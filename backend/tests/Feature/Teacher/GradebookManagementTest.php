@@ -88,11 +88,12 @@ class GradebookManagementTest extends TestCase
         $this->englishId = $english->id;
     }
 
-    private function saveDraft(): void
+    private function saveDraft(string $term = 'first'): void
     {
         $this->actingAs($this->teacher)
             ->putJson("/api/teacher/gradebook/students/{$this->student->id}/performance", [
                 'assessment_period_id' => $this->midTerm->id,
+                'term' => $term,
                 'subject_grades' => [
                     ['subject_id' => $this->mathematicsId, 'grade' => '82%'],
                     ['subject_id' => $this->englishId, 'grade' => 'A'],
@@ -116,12 +117,15 @@ class GradebookManagementTest extends TestCase
 
     public function test_teacher_saves_draft_then_submits_and_head_teacher_approves_for_guardians(): void
     {
-        $this->saveDraft();
+        $this->saveDraft('first');
+        $this->saveDraft('second');
+        $this->saveDraft('third');
 
         $this->assertDatabaseHas('student_performance_records', [
             'student_record_id' => $this->student->id,
             'teacher_id' => $this->teacher->id,
             'assessment_period_id' => $this->midTerm->id,
+            'term' => 'first',
             'grade' => 'English: A; Mathematics: 82%',
             'status' => 'draft',
         ]);
@@ -138,7 +142,7 @@ class GradebookManagementTest extends TestCase
         $this->actingAs($this->teacher)
             ->postJson('/api/teacher/gradebook/submit')
             ->assertOk()
-            ->assertJsonPath('submitted_count', 1);
+            ->assertJsonPath('submitted_count', 3);
 
         $this->assertDatabaseHas('student_performance_records', [
             'student_record_id' => $this->student->id,
@@ -152,7 +156,7 @@ class GradebookManagementTest extends TestCase
         $this->actingAs($this->headTeacher)
             ->getJson('/api/teacher/gradebook')
             ->assertOk()
-            ->assertJsonCount(1, 'students.0.performances')
+            ->assertJsonCount(3, 'students.0.performances')
             ->assertJsonPath('students.0.performances.0.status', 'submitted');
 
         $this->actingAs($this->headTeacher)
@@ -161,7 +165,7 @@ class GradebookManagementTest extends TestCase
                 'class_name' => 'Standard 4',
             ])
             ->assertOk()
-            ->assertJsonPath('approved_count', 1);
+            ->assertJsonPath('approved_count', 3);
 
         $this->assertDatabaseHas('user_notifications', [
             'user_id' => $this->guardian->id,
@@ -171,6 +175,8 @@ class GradebookManagementTest extends TestCase
         $this->actingAs($this->guardian)
             ->getJson('/api/guardian/child')
             ->assertOk()
+            ->assertJsonPath('child.performance_records.0.assessment_period_term', 'first')
+            ->assertJsonPath('child.performance_records.0.assessment_period_term_label', 'First Term')
             ->assertJsonPath('child.performance_records.0.assessment_period_name', 'Mid Term Results')
             ->assertJsonPath('child.performance_records.0.grade_summary', 'English: A; Mathematics: 82%')
             ->assertJsonPath('child.performance_records.0.subject_grades.0.grade', 'A')
@@ -181,6 +187,7 @@ class GradebookManagementTest extends TestCase
         $this->actingAs($this->teacher)
             ->putJson("/api/teacher/gradebook/students/{$this->student->id}/performance", [
                 'assessment_period_id' => $this->midTerm->id,
+                'term' => 'first',
                 'subject_grades' => [
                     ['subject_id' => $this->mathematicsId, 'grade' => '90%'],
                     ['subject_id' => $this->englishId, 'grade' => 'B'],
@@ -195,6 +202,7 @@ class GradebookManagementTest extends TestCase
         $this->actingAs($this->headTeacher)
             ->putJson("/api/teacher/gradebook/students/{$this->student->id}/performance", [
                 'assessment_period_id' => $this->midTerm->id,
+                'term' => 'first',
                 'subject_grades' => [
                     ['subject_id' => $this->mathematicsId, 'grade' => '78%'],
                     ['subject_id' => $this->englishId, 'grade' => 'B'],
@@ -206,7 +214,9 @@ class GradebookManagementTest extends TestCase
 
     public function test_head_teacher_can_reopen_grades_for_the_teacher_to_edit_again(): void
     {
-        $this->saveDraft();
+        $this->saveDraft('first');
+        $this->saveDraft('second');
+        $this->saveDraft('third');
 
         $this->actingAs($this->teacher)
             ->postJson('/api/teacher/gradebook/submit')
@@ -222,7 +232,7 @@ class GradebookManagementTest extends TestCase
         $this->actingAs($this->guardian)
             ->getJson('/api/guardian/child')
             ->assertOk()
-            ->assertJsonCount(1, 'child.performance_records');
+            ->assertJsonCount(3, 'child.performance_records');
 
         $this->actingAs($this->headTeacher)
             ->postJson('/api/management/gradebook/reopen', [
@@ -230,7 +240,7 @@ class GradebookManagementTest extends TestCase
                 'class_name' => 'Standard 4',
             ])
             ->assertOk()
-            ->assertJsonPath('reopened_count', 1);
+            ->assertJsonPath('reopened_count', 3);
 
         $this->assertDatabaseHas('student_performance_records', [
             'student_record_id' => $this->student->id,
@@ -242,7 +252,7 @@ class GradebookManagementTest extends TestCase
             ->assertOk()
             ->assertJsonCount(0, 'child.performance_records');
 
-        $this->saveDraft();
+        $this->saveDraft('first');
 
         $this->assertDatabaseHas('student_performance_records', [
             'student_record_id' => $this->student->id,
@@ -255,6 +265,7 @@ class GradebookManagementTest extends TestCase
         $this->actingAs($this->teacher)
             ->putJson("/api/teacher/gradebook/students/{$this->student->id}/performance", [
                 'assessment_period_id' => $this->midTerm->id,
+                'term' => 'first',
                 'subject_grades' => [
                     ['subject_id' => $this->mathematicsId, 'grade' => '82%'],
                 ],
@@ -275,6 +286,7 @@ class GradebookManagementTest extends TestCase
         $this->actingAs($this->teacher)
             ->putJson("/api/teacher/gradebook/students/{$this->student->id}/performance", [
                 'assessment_period_id' => $this->midTerm->id,
+                'term' => 'first',
                 'subject_grades' => [
                     ['subject_id' => $this->mathematicsId, 'grade' => '72%'],
                     ['subject_id' => $this->englishId, 'grade' => 'B'],
@@ -286,6 +298,7 @@ class GradebookManagementTest extends TestCase
         $this->actingAs($this->teacher)
             ->putJson("/api/teacher/gradebook/students/{$this->student->id}/performance", [
                 'assessment_period_id' => $endTerm->id,
+                'term' => 'first',
                 'subject_grades' => [
                     ['subject_id' => $this->mathematicsId, 'grade' => '80%'],
                     ['subject_id' => $this->englishId, 'grade' => 'A'],
@@ -310,6 +323,7 @@ class GradebookManagementTest extends TestCase
         $this->actingAs($this->teacher)
             ->putJson("/api/teacher/gradebook/students/{$this->student->id}/performance", [
                 'assessment_period_id' => $this->midTerm->id,
+                'term' => 'first',
                 'subject_grades' => [
                     ['subject_id' => $this->mathematicsId, 'grade' => '82%'],
                     ['subject_id' => $this->englishId, 'grade' => 'A'],
@@ -317,6 +331,9 @@ class GradebookManagementTest extends TestCase
                 'comment' => 'Graded learner one.',
             ])
             ->assertOk();
+
+        $this->saveDraft('second');
+        $this->saveDraft('third');
 
         $this->actingAs($this->teacher)
             ->postJson('/api/teacher/gradebook/submit')
@@ -326,6 +343,7 @@ class GradebookManagementTest extends TestCase
         $this->actingAs($this->teacher)
             ->putJson("/api/teacher/gradebook/students/{$secondStudent->id}/performance", [
                 'assessment_period_id' => $this->midTerm->id,
+                'term' => 'first',
                 'subject_grades' => [
                     ['subject_id' => $this->mathematicsId, 'grade' => '68%'],
                     ['subject_id' => $this->englishId, 'grade' => 'C'],
@@ -334,9 +352,23 @@ class GradebookManagementTest extends TestCase
             ])
             ->assertOk();
 
+        foreach (['second', 'third'] as $term) {
+            $this->actingAs($this->teacher)
+                ->putJson("/api/teacher/gradebook/students/{$secondStudent->id}/performance", [
+                    'assessment_period_id' => $this->midTerm->id,
+                    'term' => $term,
+                    'subject_grades' => [
+                        ['subject_id' => $this->mathematicsId, 'grade' => '68%'],
+                        ['subject_id' => $this->englishId, 'grade' => 'C'],
+                    ],
+                    'comment' => 'Graded learner two.',
+                ])
+                ->assertOk();
+        }
+
         $this->actingAs($this->teacher)
             ->postJson('/api/teacher/gradebook/submit')
             ->assertOk()
-            ->assertJsonPath('submitted_count', 2);
+            ->assertJsonPath('submitted_count', 6);
     }
 }

@@ -9,62 +9,32 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $duplicates = DB::table('student_performance_records')
-            ->select(
-                'student_record_id',
-                'assessment_period_id',
-                DB::raw('COUNT(*) as aggregate'),
-            )
-            ->whereNotNull('assessment_period_id')
-            ->groupBy('student_record_id', 'assessment_period_id')
-            ->havingRaw('COUNT(*) > 1')
-            ->get();
-
-        foreach ($duplicates as $duplicate) {
-            $records = DB::table('student_performance_records')
-                ->where('student_record_id', $duplicate->student_record_id)
-                ->where('assessment_period_id', $duplicate->assessment_period_id)
-                ->orderByDesc('updated_at')
-                ->orderByDesc('id')
-                ->get();
-
-            $keepRecord = $records->first();
-
-            if (! $keepRecord) {
-                continue;
+        Schema::table('student_performance_records', function (Blueprint $table): void {
+            if (! Schema::hasColumn('student_performance_records', 'term')) {
+                $table->string('term', 20)->default('first')->after('assessment_period_id');
             }
-
-            $deleteIds = $records
-                ->skip(1)
-                ->pluck('id');
-
-            if ($deleteIds->isNotEmpty()) {
-                DB::table('student_performance_records')
-                    ->whereIn('id', $deleteIds->all())
-                    ->delete();
-            }
-        }
+        });
 
         $this->ensureForeignKeyIndexes();
 
-        if (! $this->hasIndex(
-            'student_performance_records',
-            'student_performance_student_period_unique',
-        )) {
+        if ($this->hasIndex('student_performance_records', 'student_performance_student_teacher_period_unique')) {
             Schema::table('student_performance_records', function (Blueprint $table): void {
-                $table->unique(
-                    ['student_record_id', 'assessment_period_id'],
-                    'student_performance_student_period_unique',
-                );
+                $table->dropUnique('student_performance_student_teacher_period_unique');
             });
         }
 
-        if ($this->hasIndex(
-            'student_performance_records',
-            'student_performance_student_teacher_period_unique',
-        )) {
+        if ($this->hasIndex('student_performance_records', 'student_performance_student_period_unique')) {
             Schema::table('student_performance_records', function (Blueprint $table): void {
-                $table->dropUnique('student_performance_student_teacher_period_unique');
+                $table->dropUnique('student_performance_student_period_unique');
+            });
+        }
+
+        if (! $this->hasIndex('student_performance_records', 'student_performance_student_period_term_unique')) {
+            Schema::table('student_performance_records', function (Blueprint $table): void {
+                $table->unique(
+                    ['student_record_id', 'assessment_period_id', 'term'],
+                    'student_performance_student_period_term_unique',
+                );
             });
         }
     }
@@ -73,26 +43,26 @@ return new class extends Migration
     {
         $this->ensureForeignKeyIndexes();
 
-        if ($this->hasIndex(
-            'student_performance_records',
-            'student_performance_student_period_unique',
-        )) {
+        if ($this->hasIndex('student_performance_records', 'student_performance_student_period_term_unique')) {
             Schema::table('student_performance_records', function (Blueprint $table): void {
-                $table->dropUnique('student_performance_student_period_unique');
+                $table->dropUnique('student_performance_student_period_term_unique');
             });
         }
 
-        if (! $this->hasIndex(
-            'student_performance_records',
-            'student_performance_student_teacher_period_unique',
-        )) {
+        if (! $this->hasIndex('student_performance_records', 'student_performance_student_period_unique')) {
             Schema::table('student_performance_records', function (Blueprint $table): void {
                 $table->unique(
-                    ['student_record_id', 'teacher_id', 'assessment_period_id'],
-                    'student_performance_student_teacher_period_unique',
+                    ['student_record_id', 'assessment_period_id'],
+                    'student_performance_student_period_unique',
                 );
             });
         }
+
+        Schema::table('student_performance_records', function (Blueprint $table): void {
+            if (Schema::hasColumn('student_performance_records', 'term')) {
+                $table->dropColumn('term');
+            }
+        });
     }
 
     private function ensureForeignKeyIndexes(): void

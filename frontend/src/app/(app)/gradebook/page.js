@@ -32,12 +32,17 @@ const createPerformanceDraft = performance => ({
     comment: performance?.comment ?? '',
 })
 
+const makePerformanceKey = (term, periodId) => `${term}:${periodId}`
+
 const createDrafts = (students, assessmentPeriods) =>
     Object.fromEntries(
         students.map(student => {
             const performanceMap = Object.fromEntries(
                 (student.performances ?? []).map(performance => [
-                    String(performance.assessment_period_id),
+                    makePerformanceKey(
+                        performance.assessment_period_term ?? 'first',
+                        performance.assessment_period_id,
+                    ),
                     createPerformanceDraft(performance),
                 ]),
             )
@@ -45,11 +50,19 @@ const createDrafts = (students, assessmentPeriods) =>
             return [
                 student.id,
                 Object.fromEntries(
-                    (assessmentPeriods ?? []).map(period => [
-                        String(period.id),
-                        performanceMap[String(period.id)] ??
-                            createPerformanceDraft(),
-                    ]),
+                    gradebookTerms.flatMap(term =>
+                        (assessmentPeriods ?? []).map(period => {
+                            const key = makePerformanceKey(
+                                term.value,
+                                period.id,
+                            )
+
+                            return [
+                                key,
+                                performanceMap[key] ?? createPerformanceDraft(),
+                            ]
+                        }),
+                    ),
                 ),
             ]
         }),
@@ -60,10 +73,11 @@ const getTrackSubjects = (options, schoolTrack) =>
 
 const getAssessmentPeriods = options => options?.assessmentPeriods ?? []
 
-const getPerformanceForPeriod = (student, periodId) =>
+const getPerformanceForPeriod = (student, periodId, term) =>
     (student.performances ?? []).find(
         performance =>
-            String(performance.assessment_period_id) === String(periodId),
+            String(performance.assessment_period_id) === String(periodId) &&
+            (performance.assessment_period_term ?? 'first') === term,
     )
 
 const studentHasSavedRecords = student =>
@@ -133,6 +147,18 @@ const computeAverage = values => {
     )
 }
 
+const gradebookTerms = [
+    { value: 'first', label: 'First Term' },
+    { value: 'second', label: 'Second Term' },
+    { value: 'third', label: 'Third Term' },
+]
+
+const defaultOpenTerms = {
+    first: true,
+    second: false,
+    third: false,
+}
+
 export default function GradebookPage() {
     const { user } = useAuth({ middleware: 'auth' })
     const { showToast } = useToast()
@@ -161,6 +187,7 @@ export default function GradebookPage() {
     const [confirmingApprove, setConfirmingApprove] = useState(null)
     const [confirmingReopen, setConfirmingReopen] = useState(null)
     const [reopening, setReopening] = useState(false)
+    const [openTerms, setOpenTerms] = useState(defaultOpenTerms)
 
     const loadGradebook = async activeFilters => {
         setLoading(true)
@@ -220,11 +247,9 @@ export default function GradebookPage() {
         : []
     const assessmentPeriods = getAssessmentPeriods(options)
     const managementMode = isManagementUser(user)
-    const tableColumnCount =
-        assessmentPeriods.length > 0 ? 1 + assessmentPeriods.length : 2
 
-    const computePeriodAverage = (studentId, periodId) => {
-        const draft = drafts[studentId]?.[String(periodId)]
+    const computePeriodAverage = (studentId, periodId, term) => {
+        const draft = drafts[studentId]?.[makePerformanceKey(term, periodId)]
         const subjectGrades = draft?.subjectGrades ?? {}
 
         return computeAverage(Object.values(subjectGrades))
@@ -233,11 +258,16 @@ export default function GradebookPage() {
     const computeStudentOverallAverage = student => {
         const allGrades = []
 
-        for (const period of assessmentPeriods) {
-            const draft = drafts[student.id]?.[String(period.id)]
+        for (const term of gradebookTerms) {
+            for (const period of assessmentPeriods) {
+                const draft =
+                    drafts[student.id]?.[
+                        makePerformanceKey(term.value, period.id)
+                    ]
 
-            if (draft?.subjectGrades) {
-                allGrades.push(...Object.values(draft.subjectGrades))
+                if (draft?.subjectGrades) {
+                    allGrades.push(...Object.values(draft.subjectGrades))
+                }
             }
         }
 
@@ -304,28 +334,38 @@ export default function GradebookPage() {
         return Object.values(groups)
     })()
 
-    const updatePeriodDraft = (studentId, periodId, field, value) => {
+    const updatePeriodDraft = (studentId, periodId, term, field, value) => {
+        const performanceKey = makePerformanceKey(term, periodId)
+
         setDrafts(current => ({
             ...current,
             [studentId]: {
                 ...current[studentId],
-                [String(periodId)]: {
-                    ...current[studentId]?.[String(periodId)],
+                [performanceKey]: {
+                    ...current[studentId]?.[performanceKey],
                     [field]: value,
                 },
             },
         }))
     }
 
-    const updateSubjectGradeDraft = (studentId, periodId, subjectId, value) => {
+    const updateSubjectGradeDraft = (
+        studentId,
+        periodId,
+        term,
+        subjectId,
+        value,
+    ) => {
+        const performanceKey = makePerformanceKey(term, periodId)
+
         setDrafts(current => ({
             ...current,
             [studentId]: {
                 ...current[studentId],
-                [String(periodId)]: {
-                    ...current[studentId]?.[String(periodId)],
+                [performanceKey]: {
+                    ...current[studentId]?.[performanceKey],
                     subjectGrades: {
-                        ...(current[studentId]?.[String(periodId)]
+                        ...(current[studentId]?.[performanceKey]
                             ?.subjectGrades ?? {}),
                         [String(subjectId)]: value,
                     },
@@ -334,9 +374,13 @@ export default function GradebookPage() {
         }))
     }
 
-    const hasDraftChanged = (student, periodId) => {
-        const draft = drafts[student.id]?.[String(periodId)]
-        const savedPerformance = getPerformanceForPeriod(student, periodId)
+    const hasDraftChanged = (student, periodId, term) => {
+        const draft = drafts[student.id]?.[makePerformanceKey(term, periodId)]
+        const savedPerformance = getPerformanceForPeriod(
+            student,
+            periodId,
+            term,
+        )
         const trackSubjects = getTrackSubjects(options, student.school_track)
 
         if (!draft) {
@@ -357,27 +401,27 @@ export default function GradebookPage() {
         )
     }
 
-    const getPeriodStatus = (student, periodId) =>
-        getPerformanceForPeriod(student, periodId)?.status ?? 'draft'
+    const getPeriodStatus = (student, periodId, term) =>
+        getPerformanceForPeriod(student, periodId, term)?.status ?? 'draft'
 
-    const isPeriodSubmitted = (student, periodId) =>
-        getPeriodStatus(student, periodId) === 'submitted'
+    const isPeriodSubmitted = (student, periodId, term) =>
+        getPeriodStatus(student, periodId, term) === 'submitted'
 
-    const isPeriodApproved = (student, periodId) =>
-        getPeriodStatus(student, periodId) === 'approved'
+    const isPeriodApproved = (student, periodId, term) =>
+        getPeriodStatus(student, periodId, term) === 'approved'
 
-    const isPeriodLocked = (student, periodId) => {
-        const status = getPeriodStatus(student, periodId)
+    const isPeriodLocked = (student, periodId, term) => {
+        const status = getPeriodStatus(student, periodId, term)
 
         return status === 'submitted' || status === 'approved'
     }
 
-    const savePerformance = async (studentId, periodId) => {
+    const savePerformance = async (studentId, periodId, term) => {
         const student = students.find(item => item.id === studentId)
-        const draft = drafts[studentId]?.[String(periodId)]
+        const draft = drafts[studentId]?.[makePerformanceKey(term, periodId)]
         const trackSubjects = getTrackSubjects(options, student?.school_track)
 
-        if (!student || !draft || isPeriodLocked(student, periodId)) {
+        if (!student || !draft || isPeriodLocked(student, periodId, term)) {
             return {
                 saved: false,
                 message:
@@ -419,6 +463,7 @@ export default function GradebookPage() {
             `/api/teacher/gradebook/students/${studentId}/performance`,
             {
                 assessment_period_id: periodId,
+                term,
                 subject_grades: subjectGradesPayload,
                 comment: draft.comment,
             },
@@ -463,13 +508,15 @@ export default function GradebookPage() {
         const changedCells = []
 
         for (const student of students) {
-            for (const period of assessmentPeriods) {
-                if (
-                    hasDraftChanged(student, period.id) &&
-                    !isPeriodLocked(student, period.id) &&
-                    !isPeriodApproved(student, period.id)
-                ) {
-                    changedCells.push([student.id, period.id])
+            for (const term of gradebookTerms) {
+                for (const period of assessmentPeriods) {
+                    if (
+                        hasDraftChanged(student, period.id, term.value) &&
+                        !isPeriodLocked(student, period.id, term.value) &&
+                        !isPeriodApproved(student, period.id, term.value)
+                    ) {
+                        changedCells.push([student.id, period.id, term.value])
+                    }
                 }
             }
         }
@@ -490,9 +537,13 @@ export default function GradebookPage() {
         let allSaved = true
 
         try {
-            for (const [studentId, periodId] of changedCells) {
+            for (const [studentId, periodId, term] of changedCells) {
                 try {
-                    const result = await savePerformance(studentId, periodId)
+                    const result = await savePerformance(
+                        studentId,
+                        periodId,
+                        term,
+                    )
 
                     if (result?.saved) {
                         savedCount++
@@ -546,22 +597,34 @@ export default function GradebookPage() {
                 continue
             }
 
-            for (const period of assessmentPeriods) {
-                if (isPeriodLocked(student, period.id)) {
-                    continue
+            let studentMissing = false
+
+            for (const term of gradebookTerms) {
+                for (const period of assessmentPeriods) {
+                    if (isPeriodLocked(student, period.id, term.value)) {
+                        continue
+                    }
+
+                    const draft =
+                        drafts[student.id]?.[
+                            makePerformanceKey(term.value, period.id)
+                        ]
+
+                    const hasAllSubjects = trackSubjects.every(
+                        subject =>
+                            (
+                                draft?.subjectGrades?.[String(subject.id)] ?? ''
+                            ).trim() !== '',
+                    )
+
+                    if (!hasAllSubjects) {
+                        missing.push(student.full_name)
+                        studentMissing = true
+                        break
+                    }
                 }
 
-                const draft = drafts[student.id]?.[String(period.id)]
-
-                const hasAllSubjects = trackSubjects.every(
-                    subject =>
-                        (
-                            draft?.subjectGrades?.[String(subject.id)] ?? ''
-                        ).trim() !== '',
-                )
-
-                if (!hasAllSubjects) {
-                    missing.push(student.full_name)
+                if (studentMissing) {
                     break
                 }
             }
@@ -633,12 +696,14 @@ export default function GradebookPage() {
     const pendingDraftCount = students.reduce((count, student) => {
         let cells = 0
 
-        for (const period of assessmentPeriods) {
-            if (
-                hasDraftChanged(student, period.id) &&
-                !isPeriodLocked(student, period.id)
-            ) {
-                cells++
+        for (const term of gradebookTerms) {
+            for (const period of assessmentPeriods) {
+                if (
+                    hasDraftChanged(student, period.id, term.value) &&
+                    !isPeriodLocked(student, period.id, term.value)
+                ) {
+                    cells++
+                }
             }
         }
 
@@ -719,7 +784,7 @@ export default function GradebookPage() {
                 assessmentForm,
             )
 
-            setAssessmentForm({ name: '' })
+            setAssessmentForm(current => ({ ...current, name: '' }))
             showToast({
                 type: 'success',
                 message:
@@ -811,6 +876,12 @@ export default function GradebookPage() {
             </button>
         </>
     )
+
+    const toggleTerm = term =>
+        setOpenTerms(current => ({
+            ...current,
+            [term]: !current[term],
+        }))
 
     const bottomPageActions = (
         <div className={styles.bottomActions}>
@@ -1182,11 +1253,14 @@ export default function GradebookPage() {
                                                             assessmentForm.name
                                                         }
                                                         onChange={event =>
-                                                            setAssessmentForm({
-                                                                name: event
-                                                                    .target
-                                                                    .value,
-                                                            })
+                                                            setAssessmentForm(
+                                                                current => ({
+                                                                    ...current,
+                                                                    name: event
+                                                                        .target
+                                                                        .value,
+                                                                }),
+                                                            )
                                                         }
                                                         placeholder="e.g. Mid Term Results"
                                                         required
@@ -1290,14 +1364,15 @@ export default function GradebookPage() {
                                                                     }
                                                                 </strong>
                                                                 <small>
-                                                                    Column{' '}
+                                                                    Applies to
+                                                                    First,
+                                                                    Second, and
+                                                                    Third Term
+                                                                    item{' '}
                                                                     {
                                                                         period.position
-                                                                    }{' '}
-                                                                    in the
-                                                                    teacher
-                                                                    gradebook
-                                                                    grid.
+                                                                    }
+                                                                    .
                                                                 </small>
                                                             </div>
                                                             <button
@@ -1458,365 +1533,470 @@ export default function GradebookPage() {
                                 </div>
                             ) : null}
 
-                            <article className={workspaceStyles.fullPanel}>
-                                <div className={workspaceStyles.panelHeader}>
-                                    <div>
-                                        <p
-                                            className={
-                                                workspaceStyles.panelEyebrow
-                                            }
-                                        >
-                                            Learner records
-                                        </p>
-                                        <h2
-                                            className={
-                                                workspaceStyles.panelTitle
-                                            }
-                                        >
-                                            Subject grades by examination period
-                                        </h2>
-                                    </div>
-                                </div>
+                            <div className={styles.termStack}>
+                                {gradebookTerms.map(term => {
+                                    const tableColumnCount =
+                                        assessmentPeriods.length > 0
+                                            ? 1 + assessmentPeriods.length
+                                            : 2
+                                    const isOpen = Boolean(
+                                        openTerms[term.value],
+                                    )
 
-                                {assessmentPeriods.length === 0 ? (
-                                    <p className={managementStyles.notice}>
-                                        No examination periods are configured
-                                        yet. Head teacher accounts should add at
-                                        least one criterion before teachers
-                                        start entering grades.
-                                    </p>
-                                ) : null}
-
-                                <div className={workspaceStyles.tableWrap}>
-                                    <table className={workspaceStyles.table}>
-                                        <thead>
-                                            <tr>
-                                                <th>Learner</th>
-                                                {assessmentPeriods.length ===
-                                                0 ? (
-                                                    <th>Assessment periods</th>
-                                                ) : (
-                                                    assessmentPeriods.map(
-                                                        period => (
-                                                            <th key={period.id}>
-                                                                {period.name}
-                                                            </th>
-                                                        ),
-                                                    )
-                                                )}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {loading ? (
-                                                <tr>
-                                                    <td
-                                                        colSpan={
-                                                            tableColumnCount
-                                                        }
+                                    return (
+                                        <article
+                                            key={term.value}
+                                            className={`${workspaceStyles.fullPanel} ${styles.termPanel}`}
+                                        >
+                                            <button
+                                                type="button"
+                                                className={
+                                                    styles.termHeaderButton
+                                                }
+                                                aria-expanded={isOpen}
+                                                onClick={() =>
+                                                    toggleTerm(term.value)
+                                                }
+                                            >
+                                                <div>
+                                                    <p
                                                         className={
-                                                            styles.emptyState
+                                                            workspaceStyles.panelEyebrow
                                                         }
                                                     >
-                                                        Loading learner grade
-                                                        records...
-                                                    </td>
-                                                </tr>
-                                            ) : students.length === 0 ? (
-                                                <tr>
-                                                    <td
-                                                        colSpan={
-                                                            tableColumnCount
-                                                        }
+                                                        Learner records
+                                                    </p>
+                                                    <h2
                                                         className={
-                                                            styles.emptyState
+                                                            workspaceStyles.panelTitle
                                                         }
                                                     >
-                                                        No learners match the
-                                                        current scope.
-                                                    </td>
-                                                </tr>
-                                            ) : (
-                                                students.map(student => {
-                                                    const trackSubjects =
-                                                        getTrackSubjects(
-                                                            options,
-                                                            student.school_track,
-                                                        )
+                                                        {term.label}
+                                                    </h2>
+                                                </div>
+                                                <span
+                                                    className={
+                                                        styles.termHeaderMeta
+                                                    }
+                                                >
+                                                    <span>
+                                                        {
+                                                            assessmentPeriods.length
+                                                        }{' '}
+                                                        criteria
+                                                    </span>
+                                                    <span
+                                                        className={
+                                                            styles.termToggleIcon
+                                                        }
+                                                        aria-hidden="true"
+                                                    >
+                                                        {isOpen ? '-' : '+'}
+                                                    </span>
+                                                </span>
+                                            </button>
 
-                                                    return (
-                                                        <tr key={student.id}>
-                                                            <td>
-                                                                <strong>
-                                                                    {
-                                                                        student.full_name
-                                                                    }
-                                                                </strong>
-                                                                <small
-                                                                    className={
-                                                                        styles.metaText
-                                                                    }
-                                                                >
-                                                                    {
-                                                                        student.school_track_label
-                                                                    }{' '}
-                                                                    |{' '}
-                                                                    {
-                                                                        student.class_name
-                                                                    }
-                                                                </small>
-                                                                <small
-                                                                    className={
-                                                                        styles.metaText
-                                                                    }
-                                                                >
-                                                                    Guardian:{' '}
-                                                                    {student.guardian_name ||
-                                                                        'Not recorded'}
-                                                                </small>
-                                                            </td>
+                                            {isOpen ? (
+                                                <div
+                                                    className={styles.termBody}
+                                                >
+                                                    {assessmentPeriods.length ===
+                                                    0 ? (
+                                                        <p
+                                                            className={
+                                                                managementStyles.notice
+                                                            }
+                                                        >
+                                                            No examination
+                                                            criteria are
+                                                            configured for this
+                                                            term yet. Head
+                                                            teacher accounts can
+                                                            add criteria above
+                                                            before teachers
+                                                            start entering
+                                                            grades.
+                                                        </p>
+                                                    ) : null}
 
-                                                            {assessmentPeriods.length ===
-                                                            0 ? (
-                                                                <td>
-                                                                    <div
-                                                                        className={
-                                                                            styles.subjectGradeEmpty
-                                                                        }
-                                                                    >
-                                                                        Waiting
-                                                                        for a
-                                                                        head
-                                                                        teacher
-                                                                        to add
-                                                                        grade
-                                                                        criteria.
-                                                                    </div>
-                                                                </td>
-                                                            ) : (
-                                                                assessmentPeriods.map(
-                                                                    period => {
-                                                                        const draft =
-                                                                            drafts[
-                                                                                student
-                                                                                    .id
-                                                                            ]?.[
-                                                                                String(
-                                                                                    period.id,
-                                                                                )
-                                                                            ] ??
-                                                                            createPerformanceDraft()
-                                                                        const savedPerformance =
-                                                                            getPerformanceForPeriod(
-                                                                                student,
-                                                                                period.id,
-                                                                            )
-                                                                        const status =
-                                                                            getPeriodStatus(
-                                                                                student,
-                                                                                period.id,
-                                                                            )
-                                                                        const locked =
-                                                                            status ===
-                                                                                'submitted' ||
-                                                                            status ===
-                                                                                'approved'
-                                                                        const readOnly =
-                                                                            locked ||
-                                                                            !isTeacherUser(
-                                                                                user,
-                                                                            )
-
-                                                                        return (
-                                                                            <td
-                                                                                key={`${student.id}-${period.id}`}
-                                                                            >
-                                                                                <div
-                                                                                    className={
-                                                                                        styles.periodCell
+                                                    <div
+                                                        className={
+                                                            workspaceStyles.tableWrap
+                                                        }
+                                                    >
+                                                        <table
+                                                            className={
+                                                                workspaceStyles.table
+                                                            }
+                                                        >
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>
+                                                                        Learner
+                                                                    </th>
+                                                                    {assessmentPeriods.length ===
+                                                                    0 ? (
+                                                                        <th>
+                                                                            Assessment
+                                                                            periods
+                                                                        </th>
+                                                                    ) : (
+                                                                        assessmentPeriods.map(
+                                                                            period => (
+                                                                                <th
+                                                                                    key={
+                                                                                        period.id
                                                                                     }
                                                                                 >
-                                                                                    {trackSubjects.length ===
-                                                                                    0 ? (
-                                                                                        <div
+                                                                                    {
+                                                                                        period.name
+                                                                                    }
+                                                                                </th>
+                                                                            ),
+                                                                        )
+                                                                    )}
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {loading ? (
+                                                                    <tr>
+                                                                        <td
+                                                                            colSpan={
+                                                                                tableColumnCount
+                                                                            }
+                                                                            className={
+                                                                                styles.emptyState
+                                                                            }
+                                                                        >
+                                                                            Loading
+                                                                            learner
+                                                                            grade
+                                                                            records...
+                                                                        </td>
+                                                                    </tr>
+                                                                ) : students.length ===
+                                                                  0 ? (
+                                                                    <tr>
+                                                                        <td
+                                                                            colSpan={
+                                                                                tableColumnCount
+                                                                            }
+                                                                            className={
+                                                                                styles.emptyState
+                                                                            }
+                                                                        >
+                                                                            No
+                                                                            learners
+                                                                            match
+                                                                            the
+                                                                            current
+                                                                            scope.
+                                                                        </td>
+                                                                    </tr>
+                                                                ) : (
+                                                                    students.map(
+                                                                        student => {
+                                                                            const trackSubjects =
+                                                                                getTrackSubjects(
+                                                                                    options,
+                                                                                    student.school_track,
+                                                                                )
+
+                                                                            return (
+                                                                                <tr
+                                                                                    key={
+                                                                                        student.id
+                                                                                    }
+                                                                                >
+                                                                                    <td>
+                                                                                        <strong>
+                                                                                            {
+                                                                                                student.full_name
+                                                                                            }
+                                                                                        </strong>
+                                                                                        <small
                                                                                             className={
-                                                                                                styles.subjectGradeEmpty
+                                                                                                styles.metaText
                                                                                             }
                                                                                         >
-                                                                                            No
-                                                                                            subjects
-                                                                                            are
-                                                                                            configured
-                                                                                            for{' '}
                                                                                             {
                                                                                                 student.school_track_label
+                                                                                            }{' '}
+                                                                                            |{' '}
+                                                                                            {
+                                                                                                student.class_name
                                                                                             }
-
-                                                                                            .
-                                                                                        </div>
-                                                                                    ) : (
-                                                                                        <div
+                                                                                        </small>
+                                                                                        <small
                                                                                             className={
-                                                                                                styles.subjectGradeList
+                                                                                                styles.metaText
                                                                                             }
                                                                                         >
-                                                                                            {trackSubjects.map(
-                                                                                                subject => (
-                                                                                                    <label
-                                                                                                        key={`${student.id}-${period.id}-${subject.id}`}
-                                                                                                        className={
-                                                                                                            styles.subjectGradeItem
-                                                                                                        }
+                                                                                            Guardian:{' '}
+                                                                                            {student.guardian_name ||
+                                                                                                'Not recorded'}
+                                                                                        </small>
+                                                                                    </td>
+
+                                                                                    {assessmentPeriods.length ===
+                                                                                    0 ? (
+                                                                                        <td>
+                                                                                            <div
+                                                                                                className={
+                                                                                                    styles.subjectGradeEmpty
+                                                                                                }
+                                                                                            >
+                                                                                                Waiting
+                                                                                                for
+                                                                                                a
+                                                                                                head
+                                                                                                teacher
+                                                                                                to
+                                                                                                add
+                                                                                                grade
+                                                                                                criteria.
+                                                                                            </div>
+                                                                                        </td>
+                                                                                    ) : (
+                                                                                        assessmentPeriods.map(
+                                                                                            period => {
+                                                                                                const performanceKey =
+                                                                                                    makePerformanceKey(
+                                                                                                        term.value,
+                                                                                                        period.id,
+                                                                                                    )
+                                                                                                const draft =
+                                                                                                    drafts[
+                                                                                                        student
+                                                                                                            .id
+                                                                                                    ]?.[
+                                                                                                        performanceKey
+                                                                                                    ] ??
+                                                                                                    createPerformanceDraft()
+                                                                                                const savedPerformance =
+                                                                                                    getPerformanceForPeriod(
+                                                                                                        student,
+                                                                                                        period.id,
+                                                                                                        term.value,
+                                                                                                    )
+                                                                                                const status =
+                                                                                                    getPeriodStatus(
+                                                                                                        student,
+                                                                                                        period.id,
+                                                                                                        term.value,
+                                                                                                    )
+                                                                                                const locked =
+                                                                                                    status ===
+                                                                                                        'submitted' ||
+                                                                                                    status ===
+                                                                                                        'approved'
+                                                                                                const readOnly =
+                                                                                                    locked ||
+                                                                                                    !isTeacherUser(
+                                                                                                        user,
+                                                                                                    )
+
+                                                                                                return (
+                                                                                                    <td
+                                                                                                        key={`${student.id}-${performanceKey}`}
                                                                                                     >
-                                                                                                        <span
+                                                                                                        <div
                                                                                                             className={
-                                                                                                                styles.subjectGradeLabel
+                                                                                                                styles.periodCell
                                                                                                             }
                                                                                                         >
-                                                                                                            {subject.code
-                                                                                                                ? `${subject.name} (${subject.code})`
-                                                                                                                : subject.name}
-                                                                                                        </span>
-                                                                                                        <Input
-                                                                                                            type="number"
-                                                                                                            min="0"
-                                                                                                            step="0.1"
-                                                                                                            disabled={
-                                                                                                                readOnly ||
-                                                                                                                Boolean(
-                                                                                                                    savingKey,
-                                                                                                                )
-                                                                                                            }
-                                                                                                            value={
-                                                                                                                draft
-                                                                                                                    .subjectGrades?.[
-                                                                                                                    String(
-                                                                                                                        subject.id,
+                                                                                                            {trackSubjects.length ===
+                                                                                                            0 ? (
+                                                                                                                <div
+                                                                                                                    className={
+                                                                                                                        styles.subjectGradeEmpty
+                                                                                                                    }
+                                                                                                                >
+                                                                                                                    No
+                                                                                                                    subjects
+                                                                                                                    are
+                                                                                                                    configured
+                                                                                                                    for{' '}
+                                                                                                                    {
+                                                                                                                        student.school_track_label
+                                                                                                                    }
+
+                                                                                                                    .
+                                                                                                                </div>
+                                                                                                            ) : (
+                                                                                                                <div
+                                                                                                                    className={
+                                                                                                                        styles.subjectGradeList
+                                                                                                                    }
+                                                                                                                >
+                                                                                                                    {trackSubjects.map(
+                                                                                                                        subject => (
+                                                                                                                            <label
+                                                                                                                                key={`${student.id}-${period.id}-${subject.id}`}
+                                                                                                                                className={
+                                                                                                                                    styles.subjectGradeItem
+                                                                                                                                }
+                                                                                                                            >
+                                                                                                                                <span
+                                                                                                                                    className={
+                                                                                                                                        styles.subjectGradeLabel
+                                                                                                                                    }
+                                                                                                                                >
+                                                                                                                                    {subject.code
+                                                                                                                                        ? `${subject.name} (${subject.code})`
+                                                                                                                                        : subject.name}
+                                                                                                                                </span>
+                                                                                                                                <Input
+                                                                                                                                    type="number"
+                                                                                                                                    min="0"
+                                                                                                                                    step="0.1"
+                                                                                                                                    disabled={
+                                                                                                                                        readOnly ||
+                                                                                                                                        Boolean(
+                                                                                                                                            savingKey,
+                                                                                                                                        )
+                                                                                                                                    }
+                                                                                                                                    value={
+                                                                                                                                        draft
+                                                                                                                                            .subjectGrades?.[
+                                                                                                                                            String(
+                                                                                                                                                subject.id,
+                                                                                                                                            )
+                                                                                                                                        ] ??
+                                                                                                                                        ''
+                                                                                                                                    }
+                                                                                                                                    onChange={event =>
+                                                                                                                                        updateSubjectGradeDraft(
+                                                                                                                                            student.id,
+                                                                                                                                            period.id,
+                                                                                                                                            term.value,
+                                                                                                                                            subject.id,
+                                                                                                                                            event
+                                                                                                                                                .target
+                                                                                                                                                .value,
+                                                                                                                                        )
+                                                                                                                                    }
+                                                                                                                                    placeholder="Grade"
+                                                                                                                                    className={
+                                                                                                                                        styles.tableField
+                                                                                                                                    }
+                                                                                                                                />
+                                                                                                                            </label>
+                                                                                                                        ),
+                                                                                                                    )}
+                                                                                                                </div>
+                                                                                                            )}
+
+                                                                                                            {trackSubjects.length >
+                                                                                                            0
+                                                                                                                ? (() => {
+                                                                                                                      const periodAverage =
+                                                                                                                          computePeriodAverage(
+                                                                                                                              student.id,
+                                                                                                                              period.id,
+                                                                                                                              term.value,
+                                                                                                                          )
+
+                                                                                                                      return periodAverage !==
+                                                                                                                          null ? (
+                                                                                                                          <div
+                                                                                                                              className={
+                                                                                                                                  styles.periodAverage
+                                                                                                                              }
+                                                                                                                          >
+                                                                                                                              <span
+                                                                                                                                  className={
+                                                                                                                                      styles.periodAverageLabel
+                                                                                                                                  }
+                                                                                                                              >
+                                                                                                                                  Average
+                                                                                                                              </span>
+                                                                                                                              <span
+                                                                                                                                  className={
+                                                                                                                                      styles.periodAverageValue
+                                                                                                                                  }
+                                                                                                                              >
+                                                                                                                                  {
+                                                                                                                                      periodAverage
+                                                                                                                                  }
+
+                                                                                                                                  %
+                                                                                                                              </span>
+                                                                                                                          </div>
+                                                                                                                      ) : null
+                                                                                                                  })()
+                                                                                                                : null}
+
+                                                                                                            <textarea
+                                                                                                                value={
+                                                                                                                    draft.comment
+                                                                                                                }
+                                                                                                                onChange={event =>
+                                                                                                                    updatePeriodDraft(
+                                                                                                                        student.id,
+                                                                                                                        period.id,
+                                                                                                                        term.value,
+                                                                                                                        'comment',
+                                                                                                                        event
+                                                                                                                            .target
+                                                                                                                            .value,
                                                                                                                     )
-                                                                                                                ] ??
-                                                                                                                ''
-                                                                                                            }
-                                                                                                            onChange={event =>
-                                                                                                                updateSubjectGradeDraft(
-                                                                                                                    student.id,
-                                                                                                                    period.id,
-                                                                                                                    subject.id,
-                                                                                                                    event
-                                                                                                                        .target
-                                                                                                                        .value,
-                                                                                                                )
-                                                                                                            }
-                                                                                                            placeholder="Grade"
-                                                                                                            className={
-                                                                                                                styles.tableField
-                                                                                                            }
-                                                                                                        />
-                                                                                                    </label>
-                                                                                                ),
-                                                                                            )}
-                                                                                        </div>
+                                                                                                                }
+                                                                                                                disabled={
+                                                                                                                    readOnly ||
+                                                                                                                    Boolean(
+                                                                                                                        savingKey,
+                                                                                                                    )
+                                                                                                                }
+                                                                                                                className={`${managementStyles.textarea} ${styles.commentField}`}
+                                                                                                                placeholder={`Comment for ${period.name}.`}
+                                                                                                            />
+
+                                                                                                            <small
+                                                                                                                className={
+                                                                                                                    styles.periodMeta
+                                                                                                                }
+                                                                                                            >
+                                                                                                                {status ===
+                                                                                                                'approved'
+                                                                                                                    ? `Approved on ${
+                                                                                                                          savedPerformance?.updated_at
+                                                                                                                              ? new Date(
+                                                                                                                                    savedPerformance.updated_at,
+                                                                                                                                ).toLocaleString()
+                                                                                                                              : ''
+                                                                                                                      }`
+                                                                                                                    : status ===
+                                                                                                                        'submitted'
+                                                                                                                      ? `Submitted ${
+                                                                                                                            savedPerformance?.updated_at
+                                                                                                                                ? `on ${new Date(savedPerformance.updated_at).toLocaleString()}`
+                                                                                                                                : ''
+                                                                                                                        } - awaiting approval`
+                                                                                                                      : savedPerformance?.updated_at
+                                                                                                                        ? `Draft saved ${new Date(savedPerformance.updated_at).toLocaleString()}`
+                                                                                                                        : 'Not saved yet'}
+                                                                                                            </small>
+                                                                                                        </div>
+                                                                                                    </td>
+                                                                                                )
+                                                                                            },
+                                                                                        )
                                                                                     )}
-
-                                                                                    {trackSubjects.length >
-                                                                                    0
-                                                                                        ? (() => {
-                                                                                              const periodAverage =
-                                                                                                  computePeriodAverage(
-                                                                                                      student.id,
-                                                                                                      period.id,
-                                                                                                  )
-
-                                                                                              return periodAverage !==
-                                                                                                  null ? (
-                                                                                                  <div
-                                                                                                      className={
-                                                                                                          styles.periodAverage
-                                                                                                      }
-                                                                                                  >
-                                                                                                      <span
-                                                                                                          className={
-                                                                                                              styles.periodAverageLabel
-                                                                                                          }
-                                                                                                      >
-                                                                                                          Average
-                                                                                                      </span>
-                                                                                                      <span
-                                                                                                          className={
-                                                                                                              styles.periodAverageValue
-                                                                                                          }
-                                                                                                      >
-                                                                                                          {
-                                                                                                              periodAverage
-                                                                                                          }
-                                                                                                          %
-                                                                                                      </span>
-                                                                                                  </div>
-                                                                                              ) : null
-                                                                                          })()
-                                                                                        : null}
-
-                                                                                    <textarea
-                                                                                        value={
-                                                                                            draft.comment
-                                                                                        }
-                                                                                        onChange={event =>
-                                                                                            updatePeriodDraft(
-                                                                                                student.id,
-                                                                                                period.id,
-                                                                                                'comment',
-                                                                                                event
-                                                                                                    .target
-                                                                                                    .value,
-                                                                                            )
-                                                                                        }
-                                                                                        disabled={
-                                                                                            readOnly ||
-                                                                                            Boolean(
-                                                                                                savingKey,
-                                                                                            )
-                                                                                        }
-                                                                                        className={`${managementStyles.textarea} ${styles.commentField}`}
-                                                                                        placeholder={`Comment for ${period.name}.`}
-                                                                                    />
-
-                                                                                    <small
-                                                                                        className={
-                                                                                            styles.periodMeta
-                                                                                        }
-                                                                                    >
-                                                                                        {status ===
-                                                                                        'approved'
-                                                                                            ? `Approved on ${
-                                                                                                  savedPerformance?.updated_at
-                                                                                                      ? new Date(
-                                                                                                            savedPerformance.updated_at,
-                                                                                                        ).toLocaleString()
-                                                                                                      : ''
-                                                                                              }`
-                                                                                            : status ===
-                                                                                                'submitted'
-                                                                                              ? `Submitted ${
-                                                                                                    savedPerformance?.updated_at
-                                                                                                        ? `on ${new Date(savedPerformance.updated_at).toLocaleString()}`
-                                                                                                        : ''
-                                                                                                } — awaiting approval`
-                                                                                              : savedPerformance?.updated_at
-                                                                                                ? `Draft saved ${new Date(savedPerformance.updated_at).toLocaleString()}`
-                                                                                                : 'Not saved yet'}
-                                                                                    </small>
-                                                                                </div>
-                                                                            </td>
-                                                                        )
-                                                                    },
-                                                                )
-                                                            )}
-                                                        </tr>
-                                                    )
-                                                })
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </article>
+                                                                                </tr>
+                                                                            )
+                                                                        },
+                                                                    )
+                                                                )}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            ) : null}
+                                        </article>
+                                    )
+                                })}
+                            </div>
                             {bottomPageActions}
                         </section>
                     </div>

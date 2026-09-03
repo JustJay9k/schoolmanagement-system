@@ -59,7 +59,7 @@ class GuardianChildApiController extends Controller
 
     /**
      * Compute the child's position (rank) and average score within their class,
-     * keyed by assessment_period_id.
+     * keyed by term and assessment_period_id.
      *
      * @return array<int, array{position: int|null, average: float|null, total_students: int}>
      */
@@ -88,7 +88,7 @@ class GuardianChildApiController extends Controller
 
         foreach ($classmates as $classmate) {
             foreach ($classmate->performanceRecords as $record) {
-                $periodId = $record->assessment_period_id;
+                $periodId = $this->performanceKey($record->term, $record->assessment_period_id);
 
                 $averagesByPeriod[$periodId][] = [
                     'student_record_id' => $classmate->id,
@@ -197,7 +197,7 @@ class GuardianChildApiController extends Controller
     {
         $performanceRecords = $student->performanceRecords
             ->map(function (StudentPerformanceRecord $record) use ($classPositions): array {
-                $standing = $classPositions[$record->assessment_period_id] ?? [
+                $standing = $classPositions[$this->performanceKey($record->term, $record->assessment_period_id)] ?? [
                     'position' => null,
                     'average' => null,
                     'total_students' => null,
@@ -206,6 +206,8 @@ class GuardianChildApiController extends Controller
                 return [
                     'id' => $record->id,
                     'assessment_period_id' => $record->assessment_period_id,
+                    'assessment_period_term' => $record->term,
+                    'assessment_period_term_label' => $this->termLabel($record->term),
                     'assessment_period_name' => $record->assessmentPeriod?->name ?? 'General',
                     'teacher_name' => $record->teacher?->name ?? 'Teacher',
                     'grade' => $record->grade,
@@ -240,6 +242,8 @@ class GuardianChildApiController extends Controller
             'latest_grade' => $performanceRecords[0]['grade'] ?? null,
             'latest_grade_summary' => $performanceRecords[0]['grade_summary'] ?? null,
             'latest_assessment_period_name' => $performanceRecords[0]['assessment_period_name'] ?? null,
+            'latest_assessment_period_term' => $performanceRecords[0]['assessment_period_term'] ?? null,
+            'latest_assessment_period_term_label' => $performanceRecords[0]['assessment_period_term_label'] ?? null,
             'latest_subject_grades' => $performanceRecords[0]['subject_grades'] ?? [],
             'latest_average_score' => $performanceRecords[0]['average_score'] ?? null,
             'latest_class_position' => $performanceRecords[0]['class_position'] ?? null,
@@ -248,5 +252,21 @@ class GuardianChildApiController extends Controller
             'latest_updated_at' => $performanceRecords[0]['updated_at'] ?? null,
             'performance_records' => $performanceRecords,
         ];
+    }
+
+    private function termLabel(?string $term): string
+    {
+        $labels = [
+            'first' => 'First Term',
+            'second' => 'Second Term',
+            'third' => 'Third Term',
+        ];
+
+        return $term && isset($labels[$term]) ? $labels[$term] : 'First Term';
+    }
+
+    private function performanceKey(?string $term, ?int $periodId): string
+    {
+        return ($term ?: 'first') . ':' . (int) $periodId;
     }
 }

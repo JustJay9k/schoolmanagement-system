@@ -13,15 +13,36 @@ class StudentPerformanceRecord extends Model
 
     public const STATUS_APPROVED = 'approved';
 
+    public const TERM_FIRST = 'first';
+
+    public const TERM_SECOND = 'second';
+
+    public const TERM_THIRD = 'third';
+
+    public const TERMS = [
+        self::TERM_FIRST => 'First Term',
+        self::TERM_SECOND => 'Second Term',
+        self::TERM_THIRD => 'Third Term',
+    ];
+
     protected $fillable = [
         'student_record_id',
         'teacher_id',
         'assessment_period_id',
+        'term',
         'grade',
         'subject_grades',
         'comment',
         'status',
     ];
+
+    /**
+     * @return array<string, string>
+     */
+    public static function termLabels(): array
+    {
+        return self::TERMS;
+    }
 
     protected function casts(): array
     {
