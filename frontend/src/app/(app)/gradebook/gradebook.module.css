@@ -3,6 +3,36 @@
     gap: 1rem;
 }
 
+.scrollArea {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding-bottom: 0.35rem;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--accent-rgb), 0.35) transparent;
+}
+
+.scrollArea::-webkit-scrollbar {
+    height: 0.75rem;
+}
+
+.scrollArea::-webkit-scrollbar-track {
+    border-radius: 999px;
+    background: var(--surface-card-muted);
+}
+
+.scrollArea::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background: rgba(var(--accent-rgb), 0.45);
+    background-clip: padding-box;
+}
+
+.scrollContent {
+    min-width: 68rem;
+}
+
 .tabSwitch {
     display: flex;
     flex-wrap: wrap;
@@ -37,7 +67,11 @@
 }
 
 .tabButtonActive {
-    background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+    background: linear-gradient(
+        180deg,
+        var(--accent) 0%,
+        var(--accent-strong) 100%
+    );
     color: var(--accent-contrast);
     box-shadow: 0 12px 22px var(--shadow-soft);
 }
@@ -231,4 +265,10 @@
     margin-top: 1.25rem;
     padding-top: 1.25rem;
     border-top: 1px solid var(--line);
+}
+
+@media (min-width: 1280px) {
+    .scrollContent {
+        min-width: 0;
+    }
 }
