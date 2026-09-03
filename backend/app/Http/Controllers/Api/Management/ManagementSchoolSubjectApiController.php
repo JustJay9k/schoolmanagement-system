@@ -8,12 +8,14 @@ use App\Http\Requests\Admin\UpdateSchoolSubjectRequest;
 use App\Models\SchoolSubject;
 use App\Support\SchoolContextOptions;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ManagementSchoolSubjectApiController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $subjects = SchoolSubject::query()
+            ->where('school_id', $request->user()?->school_id)
             ->with('creator:id,name')
             ->orderBy('school_track')
             ->orderBy('name')
@@ -42,6 +44,7 @@ class ManagementSchoolSubjectApiController extends Controller
             'name' => $validated['name'],
             'code' => $validated['code'] ?: null,
             'school_track' => $validated['school_track'],
+            'school_id' => $request->user()?->school_id,
             'created_by' => $request->user()?->id,
         ]);
 
@@ -53,6 +56,8 @@ class ManagementSchoolSubjectApiController extends Controller
 
     public function update(UpdateSchoolSubjectRequest $request, SchoolSubject $subject): JsonResponse
     {
+        abort_unless($subject->school_id === $request->user()?->school_id, 404);
+
         $validated = $request->validated();
 
         $subject->update([
@@ -67,8 +72,10 @@ class ManagementSchoolSubjectApiController extends Controller
         ]);
     }
 
-    public function destroy(SchoolSubject $subject): JsonResponse
+    public function destroy(Request $request, SchoolSubject $subject): JsonResponse
     {
+        abort_unless($subject->school_id === $request->user()?->school_id, 404);
+
         if ($subject->timetableEntries()->exists()) {
             return response()->json([
                 'message' => 'Validation failed.',

@@ -79,6 +79,7 @@ class ManagementTeacherSubjectAssignmentApiController extends Controller
                 ])
                 ->values(),
             'subjects' => SchoolSubject::query()
+                ->where('school_id', request()->user()?->school_id)
                 ->where('school_track', 'secondary')
                 ->orderBy('name')
                 ->get()

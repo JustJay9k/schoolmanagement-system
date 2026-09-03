@@ -12,8 +12,14 @@ class SchoolSubject extends Model
         'name',
         'code',
         'school_track',
+        'school_id',
         'created_by',
     ];
+
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(School::class, 'school_id');
+    }
 
     public function creator(): BelongsTo
     {

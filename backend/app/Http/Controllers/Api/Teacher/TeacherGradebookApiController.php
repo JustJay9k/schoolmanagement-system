@@ -66,6 +66,7 @@ class TeacherGradebookApiController extends Controller
         )->values();
 
         $subjectsByTrack = SchoolSubject::query()
+            ->where('school_id', $actor->school_id)
             ->orderBy('school_track')
             ->orderBy('name')
             ->get(['id', 'name', 'code', 'school_track'])
@@ -157,6 +158,7 @@ class TeacherGradebookApiController extends Controller
         $subjectGrades = $this->normalizeSubjectGrades(
             $validated['subject_grades'] ?? [],
             $student->school_track,
+            $student->school_id,
         );
 
         $record = StudentPerformanceRecord::query()
@@ -239,7 +241,7 @@ class TeacherGradebookApiController extends Controller
                     ->where('assessment_period_id', $periodId)
                     ->first();
 
-                if (! $record || ! $this->hasCompleteSubjectGrades($record->subject_grades, $student->school_track)) {
+                if (! $record || ! $this->hasCompleteSubjectGrades($record->subject_grades, $student->school_track, $actor->school_id)) {
                     $missingStudents[] = $student->full_name;
                     break;
                 }
@@ -516,11 +518,13 @@ class TeacherGradebookApiController extends Controller
     private function normalizeSubjectGrades(
         array $submittedSubjectGrades,
         string $schoolTrack,
+        ?int $schoolId,
     ): array {
         $gradesBySubjectId = collect($submittedSubjectGrades)
             ->keyBy(fn (array $entry): int => (int) $entry['subject_id']);
 
         return SchoolSubject::query()
+            ->where('school_id', $schoolId)
             ->where('school_track', $schoolTrack)
             ->orderBy('name')
             ->get(['id', 'name', 'code'])
@@ -571,7 +575,7 @@ class TeacherGradebookApiController extends Controller
     /**
      * @param  array<int, array<string, mixed>>|null  $subjectGrades
      */
-    private function hasCompleteSubjectGrades(?array $subjectGrades, string $schoolTrack): bool
+    private function hasCompleteSubjectGrades(?array $subjectGrades, string $schoolTrack, ?int $schoolId): bool
     {
         if (empty($subjectGrades)) {
             return false;
@@ -581,6 +585,7 @@ class TeacherGradebookApiController extends Controller
             ->keyBy(fn (array $entry): int => (int) $entry['subject_id']);
 
         return SchoolSubject::query()
+            ->where('school_id', $schoolId)
             ->where('school_track', $schoolTrack)
             ->get('id')
             ->every(fn ($subject): bool => trim((string) ($gradesBySubject->get($subject->id)['grade'] ?? '')) !== '');

@@ -74,12 +74,14 @@ class GradebookManagementTest extends TestCase
             'name' => 'Mathematics',
             'code' => 'MTH',
             'school_track' => 'primary',
+            'school_id' => $this->school->id,
         ]);
 
         $english = SchoolSubject::query()->create([
             'name' => 'English',
             'code' => 'ENG',
             'school_track' => 'primary',
+            'school_id' => $this->school->id,
         ]);
 
         $this->mathematicsId = $mathematics->id;

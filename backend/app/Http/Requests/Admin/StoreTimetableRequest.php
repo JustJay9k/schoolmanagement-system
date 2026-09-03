@@ -117,8 +117,8 @@ class StoreTimetableRequest extends FormRequest
                         ? SchoolSubject::query()->find($entry['subject_id'])
                         : null;
 
-                    if (! $subject || ($track !== '' && $subject->school_track !== $track)) {
-                        $validator->errors()->add($field.'.subject_id', 'Choose a subject that belongs to the selected school track.');
+                    if (! $subject || $subject->school_id !== $this->user()?->school_id || ($track !== '' && $subject->school_track !== $track)) {
+                        $validator->errors()->add($field.'.subject_id', 'Choose a subject that belongs to your school and the selected school track.');
                     }
                 });
             },

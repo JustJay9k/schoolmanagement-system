@@ -77,6 +77,7 @@ class DatabaseSeeder extends Seeder
         SchoolSubject::query()->updateOrCreate([
             'school_track' => 'primary',
             'name' => 'Mathematics',
+            'school_id' => $defaultSchool->id,
         ], [
             'code' => 'MATH',
         ]);
@@ -84,6 +85,7 @@ class DatabaseSeeder extends Seeder
         SchoolSubject::query()->updateOrCreate([
             'school_track' => 'secondary',
             'name' => 'English',
+            'school_id' => $defaultSchool->id,
         ], [
             'code' => 'ENG',
         ]);

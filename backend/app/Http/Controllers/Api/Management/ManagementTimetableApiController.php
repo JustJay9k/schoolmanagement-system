@@ -101,6 +101,7 @@ class ManagementTimetableApiController extends Controller
     private function options(): array
     {
         $subjectsByTrack = SchoolSubject::query()
+            ->where('school_id', request()->user()?->school_id)
             ->orderBy('school_track')
             ->orderBy('name')
             ->get()

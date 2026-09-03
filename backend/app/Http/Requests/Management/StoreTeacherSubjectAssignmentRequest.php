@@ -44,8 +44,8 @@ class StoreTeacherSubjectAssignmentRequest extends FormRequest
                     $validator->errors()->add('teacher_id', 'Choose an active secondary teacher account.');
                 }
 
-                if (! $subject || $subject->school_track !== 'secondary') {
-                    $validator->errors()->add('subject_id', 'Choose a subject that belongs to the secondary track.');
+                if (! $subject || $subject->school_id !== $this->user()?->school_id || $subject->school_track !== 'secondary') {
+                    $validator->errors()->add('subject_id', 'Choose a subject that belongs to your school and the secondary track.');
                 }
 
                 if ($className !== '' && ! SchoolContextOptions::isValidClassForTrack('secondary', $className, $this->user()?->school_id)) {

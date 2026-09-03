@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
+use App\Models\School;
 use App\Models\SchoolSubject;
 use App\Models\Timetable;
 use App\Models\TimetableEntry;
@@ -17,7 +18,11 @@ class TimetableManagementTest extends TestCase
 
     public function test_management_user_can_create_a_subject(): void
     {
-        $headTeacher = User::factory()->management()->create();
+        $school = School::query()->create(['name' => 'Lilongwe High']);
+
+        $headTeacher = User::factory()->management()->create([
+            'school_id' => $school->id,
+        ]);
 
         $this->actingAs($headTeacher)
             ->postJson('/api/management/subjects', [
@@ -30,7 +35,45 @@ class TimetableManagementTest extends TestCase
         $this->assertDatabaseHas('school_subjects', [
             'name' => 'Agriculture',
             'school_track' => 'secondary',
+            'school_id' => $school->id,
         ]);
+    }
+
+    public function test_subjects_are_isolated_per_school(): void
+    {
+        $schoolA = School::query()->create(['name' => 'North Academy']);
+        $schoolB = School::query()->create(['name' => 'South Academy']);
+
+        $headTeacherA = User::factory()->management()->create([
+            'school_id' => $schoolA->id,
+        ]);
+
+        $schoolBSubject = SchoolSubject::query()->create([
+            'name' => 'Physics',
+            'code' => 'PHY',
+            'school_track' => 'secondary',
+            'school_id' => $schoolB->id,
+        ]);
+
+        SchoolSubject::query()->create([
+            'name' => 'Biology',
+            'code' => 'BIO',
+            'school_track' => 'secondary',
+            'school_id' => $schoolA->id,
+        ]);
+
+        $this->actingAs($headTeacherA)
+            ->getJson('/api/management/subjects')
+            ->assertOk()
+            ->assertJsonFragment(['name' => 'Biology'])
+            ->assertJsonMissing(['name' => 'Physics']);
+
+        $this->actingAs($headTeacherA)
+            ->putJson("/api/management/subjects/{$schoolBSubject->id}", [
+                'name' => 'Physics',
+                'school_track' => 'secondary',
+            ])
+            ->assertNotFound();
     }
 
     public function test_management_user_can_create_a_timetable_and_assign_it_to_a_teacher(): void

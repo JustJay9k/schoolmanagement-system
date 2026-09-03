@@ -69,6 +69,7 @@ class UpsertStudentPerformanceRequest extends FormRequest
             }
 
             $subjects = SchoolSubject::query()
+                ->where('school_id', $student->school_id)
                 ->where('school_track', $student->school_track)
                 ->orderBy('name')
                 ->get(['id']);

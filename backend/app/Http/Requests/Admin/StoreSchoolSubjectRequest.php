@@ -17,7 +17,9 @@ class StoreSchoolSubjectRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255', Rule::unique('school_subjects', 'name')->where(
-                fn ($query) => $query->where('school_track', $this->input('school_track'))
+                fn ($query) => $query
+                    ->where('school_track', $this->input('school_track'))
+                    ->where('school_id', $this->user()?->school_id)
             )],
             'code' => ['nullable', 'string', 'max:50'],
             'school_track' => ['required', Rule::in(SchoolContextOptions::trackValues())],

@@ -18,7 +18,9 @@ class UpdateSchoolSubjectRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255', Rule::unique('school_subjects', 'name')
                 ->ignore($this->route('subject'))
-                ->where(fn ($query) => $query->where('school_track', $this->input('school_track')))],
+                ->where(fn ($query) => $query
+                    ->where('school_track', $this->input('school_track'))
+                    ->where('school_id', $this->user()?->school_id))],
             'code' => ['nullable', 'string', 'max:50'],
             'school_track' => ['required', Rule::in(SchoolContextOptions::trackValues())],
         ];
