@@ -147,6 +147,18 @@ const computeAverage = values => {
     )
 }
 
+const gradeFallsOutsidePercentageRange = grade => {
+    const text = (grade ?? '').trim()
+
+    if (text === '') {
+        return false
+    }
+
+    const value = Number(text)
+
+    return Number.isFinite(value) && (value < 0 || value > 100)
+}
+
 const gradebookTerms = [
     { value: 'first', label: 'First Term' },
     { value: 'second', label: 'Second Term' },
@@ -459,6 +471,18 @@ export default function GradebookPage() {
             }
         }
 
+        if (
+            subjectGradesPayload.some(subjectGrade =>
+                gradeFallsOutsidePercentageRange(subjectGrade.grade),
+            )
+        ) {
+            return {
+                saved: false,
+                message:
+                    'Grades must be percentages from 0 to 100. Correct any invalid value before saving.',
+            }
+        }
+
         const response = await axios.put(
             `/api/teacher/gradebook/students/${studentId}/performance`,
             {
@@ -633,6 +657,54 @@ export default function GradebookPage() {
         return missing
     }
 
+    const findGradesOutsidePercentageRange = () => {
+        const invalid = []
+
+        for (const student of students) {
+            const trackSubjects = getTrackSubjects(
+                options,
+                student.school_track,
+            )
+
+            if (trackSubjects.length === 0) {
+                continue
+            }
+
+            let studentInvalid = false
+
+            for (const term of gradebookTerms) {
+                for (const period of assessmentPeriods) {
+                    if (isPeriodLocked(student, period.id, term.value)) {
+                        continue
+                    }
+
+                    const draft =
+                        drafts[student.id]?.[
+                            makePerformanceKey(term.value, period.id)
+                        ]
+
+                    const hasInvalidValue = trackSubjects.some(subject =>
+                        gradeFallsOutsidePercentageRange(
+                            draft?.subjectGrades?.[String(subject.id)] ?? '',
+                        ),
+                    )
+
+                    if (hasInvalidValue) {
+                        invalid.push(student.full_name)
+                        studentInvalid = true
+                        break
+                    }
+                }
+
+                if (studentInvalid) {
+                    break
+                }
+            }
+        }
+
+        return invalid
+    }
+
     const missingGradesMessage = missing => {
         const preview = missing.slice(0, 5).join(', ')
         const extra =
@@ -643,15 +715,35 @@ export default function GradebookPage() {
         return `Grades are still missing for ${preview}${extra}. Fill in every subject grade for all learners before submitting.`
     }
 
+    const gradesOutsidePercentageRangeMessage = invalid => {
+        const preview = invalid.slice(0, 5).join(', ')
+        const extra =
+            invalid.length > 5
+                ? ` and ${invalid.length - 5} more learner(s)`
+                : ''
+
+        return `Invalid grade percentages were found for ${preview}${extra}. Correct every value to be between 0 and 100 before saving or submitting.`
+    }
+
     const submitGrades = async () => {
         try {
             const missing = findMissingGrades()
+            const invalid = findGradesOutsidePercentageRange()
 
             if (missing.length > 0) {
                 setConfirmingSubmit(null)
                 showToast({
                     type: 'error',
                     message: missingGradesMessage(missing),
+                })
+                return
+            }
+
+            if (invalid.length > 0) {
+                setConfirmingSubmit(null)
+                showToast({
+                    type: 'error',
+                    message: gradesOutsidePercentageRangeMessage(invalid),
                 })
                 return
             }
@@ -1849,6 +1941,7 @@ export default function GradebookPage() {
                                                                                                                                 <Input
                                                                                                                                     type="number"
                                                                                                                                     min="0"
+                                                                                                                                    max="100"
                                                                                                                                     step="0.1"
                                                                                                                                     disabled={
                                                                                                                                         readOnly ||
@@ -1865,17 +1958,28 @@ export default function GradebookPage() {
                                                                                                                                         ] ??
                                                                                                                                         ''
                                                                                                                                     }
-                                                                                                                                    onChange={event =>
+                                                                                                                                    onChange={event => {
+                                                                                                                                        const nextValue =
+                                                                                                                                            event
+                                                                                                                                                .target
+                                                                                                                                                .value
+
+                                                                                                                                        if (
+                                                                                                                                            gradeFallsOutsidePercentageRange(
+                                                                                                                                                nextValue,
+                                                                                                                                            )
+                                                                                                                                        ) {
+                                                                                                                                            return
+                                                                                                                                        }
+
                                                                                                                                         updateSubjectGradeDraft(
                                                                                                                                             student.id,
                                                                                                                                             period.id,
                                                                                                                                             term.value,
                                                                                                                                             subject.id,
-                                                                                                                                            event
-                                                                                                                                                .target
-                                                                                                                                                .value,
+                                                                                                                                            nextValue,
                                                                                                                                         )
-                                                                                                                                    }
+                                                                                                                                    }}
                                                                                                                                     placeholder="Grade"
                                                                                                                                     className={
                                                                                                                                         styles.tableField
