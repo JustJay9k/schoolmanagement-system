@@ -96,7 +96,7 @@ class RegistrationTest extends TestCase
         ]);
     }
 
-    public function test_guardian_can_register_against_an_existing_student_record(): void
+    public function test_guardian_can_register_against_an_existing_student_record_by_name(): void
     {
         $school = School::query()->create([
             'name' => 'Zomba Academy',
@@ -107,14 +107,16 @@ class RegistrationTest extends TestCase
             'school_track' => 'primary',
             'class_name' => 'Standard 3',
             'full_name' => 'Martha Kalua',
+            'guardian_name' => 'Mrs Kalua',
+            'guardian_email' => 'kalua@example.com',
         ]);
 
         $response = $this->post('/register', [
             'account_type' => 'guardian',
             'name' => 'Mrs Kalua',
-            'email' => 'guardian@example.com',
+            'email' => 'kalua@example.com',
             'school_id' => $school->id,
-            'child_id' => $student->id,
+            'child_name' => 'Martha Kalua',
             'password' => 'password',
             'password_confirmation' => 'password',
         ]);
@@ -122,14 +124,83 @@ class RegistrationTest extends TestCase
         $this->assertAuthenticated();
         $response->assertNoContent();
         $this->assertDatabaseHas('users', [
-            'email' => 'guardian@example.com',
+            'email' => 'kalua@example.com',
             'role' => UserRole::Guardian->value,
             'school_id' => $school->id,
             'linked_student_record_id' => $student->id,
         ]);
     }
 
-    public function test_registration_options_include_students_grouped_by_school(): void
+    public function test_guardian_can_register_using_student_code(): void
+    {
+        $school = School::query()->create([
+            'name' => 'Blantyre Academy',
+        ]);
+
+        $student = StudentRecord::query()->create([
+            'school_id' => $school->id,
+            'school_track' => 'secondary',
+            'class_name' => 'Form 2',
+            'full_name' => 'Brian Chirwa',
+            'student_code' => 'F2-0099',
+            'guardian_name' => 'Mr Chirwa',
+            'guardian_email' => 'chirwa@example.com',
+        ]);
+
+        $response = $this->post('/register', [
+            'account_type' => 'guardian',
+            'name' => 'Parent Chirwa',
+            'email' => 'parent.chirwa@example.com',
+            'school_id' => $school->id,
+            'child_name' => 'F2-0099',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertNoContent();
+        $this->assertDatabaseHas('users', [
+            'email' => 'parent.chirwa@example.com',
+            'role' => UserRole::Guardian->value,
+            'school_id' => $school->id,
+            'linked_student_record_id' => $student->id,
+        ]);
+    }
+
+    public function test_guardian_cannot_link_a_child_that_is_not_their_own(): void
+    {
+        $school = School::query()->create([
+            'name' => 'Lilongwe Academy',
+        ]);
+
+        StudentRecord::query()->create([
+            'school_id' => $school->id,
+            'school_track' => 'secondary',
+            'class_name' => 'Form 1',
+            'full_name' => 'Brian Chirwa',
+            'student_code' => 'F1-0088',
+            'guardian_name' => 'Mr Chirwa',
+            'guardian_email' => 'chirwa@example.com',
+        ]);
+
+        $response = $this->postJson('/register', [
+            'account_type' => 'guardian',
+            'name' => 'Stranger Danger',
+            'email' => 'stranger@example.com',
+            'school_id' => $school->id,
+            'child_name' => 'Brian Chirwa',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['child_name']);
+
+        $this->assertGuest();
+    }
+
+    public function test_registration_options_does_not_expose_student_records(): void
     {
         $school = School::query()->create([
             'name' => 'Zomba Academy',
@@ -143,10 +214,9 @@ class RegistrationTest extends TestCase
             'student_code' => 'STU-33',
         ]);
 
-        $this->getJson('/register/options')
-            ->assertOk()
-            ->assertJsonPath("studentsBySchool.{$school->id}.0.label", 'Martha Kalua')
-            ->assertJsonPath("studentsBySchool.{$school->id}.0.class_name", 'Standard 3')
-            ->assertJsonPath("studentsBySchool.{$school->id}.0.student_code", 'STU-33');
+        $response = $this->getJson('/register/options');
+
+        $response->assertOk();
+        $response->assertJsonMissingPath('studentsBySchool');
     }
 }

@@ -29,11 +29,6 @@ class RegisteredUserController extends Controller
         $schools = School::query()
             ->orderBy('name')
             ->get(['id', 'name']);
-        $students = StudentRecord::query()
-            ->orderBy('school_id')
-            ->orderBy('full_name')
-            ->get(['id', 'school_id', 'full_name', 'class_name', 'school_track', 'student_code']);
-
         return response()->json([
             'tracks' => SchoolContextOptions::tracks(),
             'classesByTrack' => SchoolContextOptions::defaultClassesByTrack(),
@@ -54,16 +49,6 @@ class RegisteredUserController extends Controller
                 ->mapWithKeys(fn (School $school): array => [
                     (string) $school->id => SchoolContextOptions::takenClassesByTrackForSchool($school->id),
                 ]),
-            'studentsBySchool' => $students
-                ->groupBy('school_id')
-                ->map(fn ($items) => $items->map(fn (StudentRecord $student): array => [
-                    'value' => (string) $student->id,
-                    'label' => $student->full_name,
-                    'class_name' => $student->class_name,
-                    'school_track' => $student->school_track,
-                    'student_code' => $student->student_code,
-                ])->values())
-                ->toArray(),
         ]);
     }
 
@@ -86,6 +71,8 @@ class RegisteredUserController extends Controller
             'assigned_class_name' => ['nullable', 'string', Rule::in(SchoolContextOptions::allClasses($schoolIdForValidation))],
             'child_id' => ['nullable', 'integer', 'exists:student_records,id'],
             'child_name' => ['nullable', 'string', 'max:255'],
+            'student_code' => ['nullable', 'string', 'max:100'],
+            'child_identifier' => ['nullable', 'string', 'max:255'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -94,8 +81,12 @@ class RegisteredUserController extends Controller
             $schoolId = $this->resolveSchoolIdFromRequest($request);
             $track = $request->string('school_track')->toString();
             $className = $request->string('assigned_class_name')->toString();
+            $childIdentifier = Str::squish(
+                $request->string('child_identifier')->toString()
+                ?: ($request->string('child_name')->toString()
+                ?: $request->string('student_code')->toString())
+            );
             $childId = $request->integer('child_id');
-            $childName = Str::squish($request->string('child_name')->toString());
 
             if (! $request->input('school_id') && Str::squish($request->string('school_name')->toString()) === '') {
                 $validator->errors()->add('school_id', 'Choose an existing school or enter a new school name.');
@@ -106,18 +97,31 @@ class RegisteredUserController extends Controller
                     $validator->errors()->add('school_id', 'Guardians must choose the school already linked to the learner record.');
                 }
 
-                if (! $childId && $childName === '') {
-                    $validator->errors()->add('child_id', 'Choose the learner from the school record list.');
+                if (! $childId && $childIdentifier === '') {
+                    $validator->errors()->add('child_name', 'Enter your child\'s full name or student code.');
+                    return;
                 }
 
-                if (
-                    $schoolId !== null &&
-                    ! $this->resolveLinkedStudentRecord($schoolId, $childName, $childId)
-                ) {
-                    $validator->errors()->add(
-                        $childId ? 'child_id' : 'child_name',
-                        'No learner matching that selection was found in the selected school.',
-                    );
+                if ($schoolId !== null) {
+                    $student = $this->resolveLinkedStudentRecord($schoolId, $childIdentifier, $childId ?: null);
+
+                    if (! $student) {
+                        $validator->errors()->add(
+                            'child_name',
+                            'No learner matching that name or student code was found in the selected school.',
+                        );
+                        return;
+                    }
+
+                    $guardianName = Str::squish($request->string('name')->toString());
+                    $guardianEmail = Str::squish($request->string('email')->toString());
+
+                    if (! $this->canGuardianLinkStudent($student, $guardianName, $guardianEmail, $childIdentifier)) {
+                        $validator->errors()->add(
+                            'child_name',
+                            'You cannot link a learner that is not your own. Please enter the student code or ensure your guardian details match the school\'s records.',
+                        );
+                    }
                 }
 
                 return;
@@ -154,10 +158,15 @@ class RegisteredUserController extends Controller
         $validated = $validator->validate();
         $accountType = $validated['account_type'];
         $school = $this->resolveSchoolFromRequest($request, $accountType === 'teacher');
+        $childIdentifier = Str::squish(
+            $request->string('child_identifier')->toString()
+            ?: ($request->string('child_name')->toString()
+            ?: $request->string('student_code')->toString())
+        );
         $linkedStudent = $accountType === 'guardian' && $school
             ? $this->resolveLinkedStudentRecord(
                 $school->id,
-                $validated['child_name'] ?? '',
+                $childIdentifier,
                 isset($validated['child_id']) ? (int) $validated['child_id'] : null,
             )
             : null;
@@ -239,14 +248,36 @@ class RegisteredUserController extends Controller
 
     private function resolveLinkedStudentRecord(
         ?int $schoolId,
-        string $childName,
+        string $identifier,
         ?int $childId = null,
     ): ?StudentRecord
     {
-        $childName = Str::squish($childName);
+        $identifier = Str::squish($identifier);
 
         if ($schoolId === null) {
             return null;
+        }
+
+        if ($identifier !== '') {
+            $lowerIdentifier = Str::lower($identifier);
+
+            $studentByCode = StudentRecord::query()
+                ->where('school_id', $schoolId)
+                ->whereRaw('LOWER(student_code) = ?', [$lowerIdentifier])
+                ->first();
+
+            if ($studentByCode) {
+                return $studentByCode;
+            }
+
+            $studentByName = StudentRecord::query()
+                ->where('school_id', $schoolId)
+                ->whereRaw('LOWER(full_name) = ?', [$lowerIdentifier])
+                ->first();
+
+            if ($studentByName) {
+                return $studentByName;
+            }
         }
 
         if ($childId) {
@@ -256,13 +287,56 @@ class RegisteredUserController extends Controller
                 ->first();
         }
 
-        if ($childName === '') {
-            return null;
+        return null;
+    }
+
+    private function canGuardianLinkStudent(
+        StudentRecord $student,
+        string $guardianName,
+        string $guardianEmail,
+        string $providedIdentifier,
+    ): bool
+    {
+        // If the guardian provided the child's exact school-issued student code, authorization is confirmed
+        $studentCode = Str::squish((string) $student->student_code);
+        if ($studentCode !== '' && Str::lower($studentCode) === Str::lower(Str::squish($providedIdentifier))) {
+            return true;
         }
 
-        return StudentRecord::query()
-            ->where('school_id', $schoolId)
-            ->whereRaw('LOWER(full_name) = ?', [Str::lower($childName)])
-            ->first();
+        $recordGuardianEmail = Str::squish((string) $student->guardian_email);
+        $recordGuardianName = Str::squish((string) $student->guardian_name);
+
+        // If the student record has neither guardian email nor guardian name on file, allow linking
+        if ($recordGuardianEmail === '' && $recordGuardianName === '') {
+            return true;
+        }
+
+        // Check guardian email match
+        if ($recordGuardianEmail !== '' && Str::lower($recordGuardianEmail) === Str::lower($guardianEmail)) {
+            return true;
+        }
+
+        // Check guardian name match (exact or matching family surname / significant name tokens)
+        if ($recordGuardianName !== '') {
+            if (Str::lower($recordGuardianName) === Str::lower($guardianName)) {
+                return true;
+            }
+
+            $titles = ['mr', 'mrs', 'ms', 'miss', 'dr', 'prof', 'pastor', 'rev'];
+            $extractTokens = function (string $name) use ($titles): array {
+                $rawTokens = preg_split('/[\s,\.\-_]+/', Str::lower($name)) ?: [];
+                return array_values(array_filter($rawTokens, fn (string $t) => strlen($t) >= 3 && ! in_array($t, $titles, true)));
+            };
+
+            $recordTokens = $extractTokens($recordGuardianName);
+            $userTokens = $extractTokens($guardianName);
+
+            if (! empty($recordTokens) && ! empty($userTokens) && ! empty(array_intersect($recordTokens, $userTokens))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
+

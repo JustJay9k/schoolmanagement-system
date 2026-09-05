@@ -9,7 +9,7 @@ import PasswordInput from '@/components/PasswordInput'
 import { useAuth } from '@/hooks/auth'
 import axios from '@/lib/axios'
 import Link from 'next/link'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const Page = () => {
     const { register } = useAuth({
@@ -26,10 +26,7 @@ const Page = () => {
     const [schoolName, setSchoolName] = useState('')
     const [schoolTrack, setSchoolTrack] = useState('')
     const [assignedClassName, setAssignedClassName] = useState('')
-    const [childId, setChildId] = useState('')
-    const [childSearch, setChildSearch] = useState('')
-    const [childPickerOpen, setChildPickerOpen] = useState(false)
-    const guardianSearchRef = useRef(null)
+    const [childIdentifier, setChildIdentifier] = useState('')
     const [registrationOptions, setRegistrationOptions] = useState({
         schools: [],
         tracks: {},
@@ -37,7 +34,6 @@ const Page = () => {
         classesByTrackBySchool: {},
         availableClassesByTrackBySchool: {},
         takenClassesByTrackBySchool: {},
-        studentsBySchool: {},
     })
     const [isLoadingOptions, setIsLoadingOptions] = useState(true)
     const [errors, setErrors] = useState([])
@@ -64,7 +60,6 @@ const Page = () => {
                         response.data?.availableClassesByTrackBySchool ?? {},
                     takenClassesByTrackBySchool:
                         response.data?.takenClassesByTrackBySchool ?? {},
-                    studentsBySchool: response.data?.studentsBySchool ?? {},
                 })
             } catch (error) {
                 if (!isMounted) {
@@ -119,35 +114,6 @@ const Page = () => {
     const showClassPicker = !isGuardianRegistration && schoolTrack !== ''
     const requiresClassSelection =
         !isGuardianRegistration && schoolTrack === 'primary'
-    const availableStudents =
-        isGuardianRegistration && schoolId !== ''
-            ? registrationOptions.studentsBySchool?.[schoolId] ?? []
-            : []
-    const filteredStudents = availableStudents.filter(student => {
-        const query = childSearch.trim().toLowerCase()
-
-        if (query === '') {
-            return true
-        }
-
-        return [student.label, student.class_name, student.student_code]
-            .filter(Boolean)
-            .some(value => value.toLowerCase().includes(query))
-    })
-
-    useEffect(() => {
-        const handleClickOutside = event => {
-            if (!guardianSearchRef.current?.contains(event.target)) {
-                setChildPickerOpen(false)
-            }
-        }
-
-        document.addEventListener('mousedown', handleClickOutside)
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside)
-        }
-    }, [])
 
     const submitForm = event => {
         event.preventDefault()
@@ -160,8 +126,8 @@ const Page = () => {
             school_name: schoolName,
             school_track: schoolTrack,
             assigned_class_name: assignedClassName,
-            child_id: childId === '' ? null : Number(childId),
-            child_name: childSearch,
+            child_name: childIdentifier.trim(),
+            child_identifier: childIdentifier.trim(),
             password,
             password_confirmation: passwordConfirmation,
             setErrors,
@@ -176,7 +142,7 @@ const Page = () => {
             <form onSubmit={submitForm}>
                 <div className="mb-5 rounded-3xl border border-[var(--line)] bg-[var(--surface-raised)] px-4 py-4 text-sm text-[var(--muted)] shadow-sm">
                     {isGuardianRegistration
-                        ? 'Guardian accounts must choose the existing school and type the learner name exactly as it appears in the student record. Once linked, the dashboard will show the learner profile, uploaded grades, and teacher comments.'
+                        ? 'Guardian accounts must choose an existing school and enter their child\'s full name or school-issued student code. For privacy and security, guardians can only link to their own child.'
                         : 'New self-registrations create teacher accounts. Start by choosing the school you work for, then choose whether you belong to the primary or secondary section and set your class responsibility. Primary teachers must choose one class. Secondary teachers can register as subject teachers with no form class, or optionally claim one form class.'}
                 </div>
 
@@ -189,9 +155,7 @@ const Page = () => {
                             type="button"
                             onClick={() => {
                                 setAccountType('teacher')
-                                setChildId('')
-                                setChildSearch('')
-                                setChildPickerOpen(false)
+                                setChildIdentifier('')
                             }}
                             className={`rounded-2xl border px-4 py-3 text-left text-sm shadow-sm transition ${
                                 accountType === 'teacher'
@@ -213,8 +177,7 @@ const Page = () => {
                                 setSchoolName('')
                                 setSchoolTrack('')
                                 setAssignedClassName('')
-                                setChildId('')
-                                setChildSearch('')
+                                setChildIdentifier('')
                             }}
                             className={`rounded-2xl border px-4 py-3 text-left text-sm shadow-sm transition ${
                                 accountType === 'guardian'
@@ -272,9 +235,7 @@ const Page = () => {
                             setSchoolId(event.target.value)
                             setSchoolName('')
                             setAssignedClassName('')
-                            setChildId('')
-                            setChildSearch('')
-                            setChildPickerOpen(false)
+                            setChildIdentifier('')
                         }}
                         className="block w-full rounded-2xl border border-[var(--line)] bg-[var(--surface-field)] px-4 py-3 text-sm text-[var(--ink)] shadow-sm outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--focus-ring)]"
                         required={schoolName.trim() === ''}>
@@ -291,79 +252,37 @@ const Page = () => {
 
                 {isGuardianRegistration ? (
                     <div className="mt-4">
-                        <Label htmlFor="childSearch">Child Full Name</Label>
+                        <Label htmlFor="childIdentifier">
+                            Child Full Name or Student Code
+                        </Label>
 
-                        <div ref={guardianSearchRef} className="relative mt-1">
-                            <Input
-                                id="childSearch"
-                                type="text"
-                                value={childSearch}
-                                className="block w-full"
-                                onChange={event => {
-                                    setChildSearch(event.target.value)
-                                    setChildId('')
-                                    setChildPickerOpen(true)
-                                }}
-                                onFocus={() => setChildPickerOpen(true)}
-                                placeholder={
-                                    schoolId === ''
-                                        ? 'Choose a school first'
-                                        : 'Search and select the learner'
-                                }
-                                required
-                                disabled={schoolId === ''}
-                                autoComplete="off"
-                            />
-
-                            {childPickerOpen && schoolId !== '' ? (
-                                <div className="absolute z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-2xl border border-[var(--line)] bg-[var(--surface-raised)] p-2 shadow-xl">
-                                    {availableStudents.length === 0 ? (
-                                        <p className="px-3 py-2 text-sm text-[var(--muted)]">
-                                            No learners are saved for this school yet.
-                                        </p>
-                                    ) : filteredStudents.length === 0 ? (
-                                        <p className="px-3 py-2 text-sm text-[var(--muted)]">
-                                            No learner matches that search.
-                                        </p>
-                                    ) : (
-                                        filteredStudents.slice(0, 12).map(student => (
-                                            <button
-                                                key={student.value}
-                                                type="button"
-                                                onMouseDown={event =>
-                                                    event.preventDefault()
-                                                }
-                                                onClick={() => {
-                                                    setChildId(student.value)
-                                                    setChildSearch(student.label)
-                                                    setChildPickerOpen(false)
-                                                }}
-                                                className="flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm transition hover:bg-[var(--surface-tint)]">
-                                                <span className="font-semibold text-[var(--ink)]">
-                                                    {student.label}
-                                                </span>
-                                                <span className="text-xs text-[var(--muted)]">
-                                                    {student.class_name}
-                                                    {student.student_code
-                                                        ? ` | ${student.student_code}`
-                                                        : ''}
-                                                </span>
-                                            </button>
-                                        ))
-                                    )}
-                                </div>
-                            ) : null}
-                        </div>
+                        <Input
+                            id="childIdentifier"
+                            type="text"
+                            value={childIdentifier}
+                            className="block mt-1 w-full"
+                            onChange={event =>
+                                setChildIdentifier(event.target.value)
+                            }
+                            placeholder={
+                                schoolId === ''
+                                    ? 'Choose a school first'
+                                    : 'e.g. Brian Chirwa or STU-0012'
+                            }
+                            required
+                            disabled={schoolId === ''}
+                            autoComplete="off"
+                        />
 
                         <p className="mt-2 text-sm text-[var(--muted)]">
-                            Guardians must choose an existing school, then search
-                            and select the learner from the saved student list.
+                            Enter your child&apos;s full name or school-issued student code. For privacy and security, guardians can only link to their own child.
                         </p>
 
                         <InputError
                             messages={[
-                                ...(errors.child_id ?? []),
                                 ...(errors.child_name ?? []),
+                                ...(errors.child_identifier ?? []),
+                                ...(errors.child_id ?? []),
                             ]}
                             className="mt-2"
                         />
@@ -534,7 +453,7 @@ const Page = () => {
                                 : schoolId === '' &&
                                   schoolName.trim() === '') ||
                             (isGuardianRegistration
-                                ? childId === ''
+                                ? childIdentifier.trim() === ''
                                 : schoolTrack === '' ||
                                   (requiresClassSelection &&
                                       assignedClassName === ''))
