@@ -23,6 +23,7 @@ class AuthenticatedSessionController extends Controller
         }
         $request->user()?->forceFill([
             'last_login_at' => now(),
+            'email_verified_at' => $request->user()?->email_verified_at ?? now(),
         ])->save();
 
         if ($request->is('api/*') || $request->expectsJson()) {

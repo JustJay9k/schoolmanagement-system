@@ -184,6 +184,7 @@ class RegisteredUserController extends Controller
             'assigned_class_name' => $accountType === 'teacher'
                 ? ($validated['assigned_class_name'] ?? null)
                 : null,
+            'email_verified_at' => now(),
             'password' => Hash::make($request->string('password')),
         ]);
         UserNotificationCenter::welcome($user);

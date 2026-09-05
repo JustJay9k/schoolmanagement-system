@@ -292,15 +292,11 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
             router.push('/login')
         }
 
-        if (middleware === 'auth' && user && !user.email_verified_at) {
-            router.push('/verify-email')
-        }
-
         if (
             window.location.pathname === '/verify-email' &&
-            user?.email_verified_at
+            user
         ) {
-            router.push(redirectIfAuthenticated)
+            router.push(redirectIfAuthenticated || '/dashboard')
         }
     }, [user, error])
 
