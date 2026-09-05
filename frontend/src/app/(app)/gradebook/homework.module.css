@@ -445,3 +445,177 @@
     object-fit: cover;
     display: block;
 }
+
+/* ── Term Grades Section ──────────────────────────────────── */
+
+.termStack {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.termCard {
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--surface-card-muted);
+    overflow: hidden;
+    transition: box-shadow 180ms ease;
+}
+
+.termCard:focus-within {
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.termCardHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.85rem 1rem;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.termCardLabel {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: var(--ink);
+}
+
+.termGradeBadge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.2rem 0.52rem;
+    font-size: 0.65rem;
+    font-weight: 800;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+}
+
+.termNoBadge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.2rem 0.52rem;
+    font-size: 0.65rem;
+    font-weight: 800;
+    background: color-mix(in srgb, var(--muted) 12%, var(--surface-card-soft));
+    color: var(--muted);
+}
+
+.termCardBody {
+    display: grid;
+    gap: 0.65rem;
+    padding: 0 1rem 1rem;
+    border-top: 1px solid var(--line);
+    padding-top: 0.85rem;
+    animation: termBodyIn 160ms ease both;
+}
+
+@keyframes termBodyIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.termEmptyNote {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+    line-height: 1.55;
+    padding: 0.25rem 0;
+}
+
+.termRecordCard {
+    display: grid;
+    gap: 0.6rem;
+    border: 1px solid var(--line);
+    border-radius: 0.85rem;
+    background: var(--panel);
+    padding: 0.8rem 0.95rem;
+}
+
+.termRecordHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.termRecordPeriod {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--ink);
+}
+
+.termRecordTeacher {
+    margin: 0.18rem 0 0;
+    font-size: 0.76rem;
+    color: var(--muted);
+}
+
+.termRecordStats {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.averageChip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.22rem 0.55rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    background: color-mix(in srgb, #2563eb 14%, var(--surface-card-soft));
+    color: #1d4ed8;
+}
+
+.positionChip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.22rem 0.55rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+    color: var(--accent-contrast);
+}
+
+.subjectTable {
+    font-size: 0.82rem;
+}
+
+.subjectTable th {
+    font-size: 0.62rem;
+}
+
+.subjectGradeValue {
+    font-weight: 800;
+    color: var(--accent-strong);
+}
+
+.termCommentBox {
+    display: grid;
+    gap: 0.3rem;
+    border-left: 3px solid var(--accent);
+    padding: 0.55rem 0.75rem;
+    border-radius: 0 0.6rem 0.6rem 0;
+    background: var(--accent-soft);
+}
+
+.termCommentLabel {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+}
+
+.termCommentText {
+    margin: 0;
+    font-size: 0.84rem;
+    color: var(--ink);
+    line-height: 1.55;
+}

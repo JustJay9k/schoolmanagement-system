@@ -14,6 +14,198 @@ import Input from '@/components/Input'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useToast } from '@/components/ToastProvider'
 
+const TERMS = [
+    { key: 'first', label: 'First Term' },
+    { key: 'second', label: 'Second Term' },
+    { key: 'third', label: 'Third Term' },
+]
+
+function ChevronIcon({ open }) {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className={`${workspaceStyles.chevron} ${open ? workspaceStyles.chevronOpen : ''}`}
+            aria-hidden="true">
+            <path
+                fillRule="evenodd"
+                d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
+                clipRule="evenodd"
+            />
+        </svg>
+    )
+}
+
+function TermGradesSection({ performanceRecords, isLoading }) {
+    const [openTerms, setOpenTerms] = useState({ first: true, second: false, third: false })
+
+    const recordsByTerm = useMemo(() => {
+        const map = { first: [], second: [], third: [] }
+        ;(performanceRecords ?? []).forEach(record => {
+            const term = record.assessment_period_term ?? 'first'
+            if (map[term]) map[term].push(record)
+        })
+        return map
+    }, [performanceRecords])
+
+    const totalGrades = (performanceRecords ?? []).length
+
+    const toggleTerm = key =>
+        setOpenTerms(current => ({ ...current, [key]: !current[key] }))
+
+    return (
+        <section className={workspaceStyles.fullPanel}>
+            <div className={workspaceStyles.panelHeader}>
+                <div>
+                    <p className={workspaceStyles.panelEyebrow}>Academic results</p>
+                    <h2 className={workspaceStyles.panelTitle}>Term grades</h2>
+                </div>
+            </div>
+
+            {isLoading ? (
+                <p className={managementStyles.notice}>Loading grades...</p>
+            ) : totalGrades === 0 ? (
+                <p className={managementStyles.notice}>
+                    No grades have been recorded for your child yet. Grades will appear here once
+                    the school publishes results for each term.
+                </p>
+            ) : (
+                <div className={homeworkStyles.termStack}>
+                    {TERMS.map(({ key, label }) => {
+                        const records = recordsByTerm[key] ?? []
+                        const isOpen = openTerms[key] ?? false
+
+                        return (
+                            <article key={key} className={homeworkStyles.termCard}>
+                                <button
+                                    id={`term-grades-${key}`}
+                                    type="button"
+                                    className={workspaceStyles.collapseTrigger}
+                                    onClick={() => toggleTerm(key)}
+                                    aria-expanded={isOpen}>
+                                    <div className={homeworkStyles.termCardHeader}>
+                                        <span className={homeworkStyles.termCardLabel}>{label}</span>
+                                        <span
+                                            className={
+                                                records.length > 0
+                                                    ? homeworkStyles.termGradeBadge
+                                                    : homeworkStyles.termNoBadge
+                                            }>
+                                            {records.length > 0
+                                                ? `${records.length} record${records.length === 1 ? '' : 's'}`
+                                                : 'No grades yet'}
+                                        </span>
+                                    </div>
+                                    <div className={workspaceStyles.collapseRight}>
+                                        <ChevronIcon open={isOpen} />
+                                    </div>
+                                </button>
+
+                                {isOpen ? (
+                                    <div className={homeworkStyles.termCardBody}>
+                                        {records.length === 0 ? (
+                                            <p className={homeworkStyles.termEmptyNote}>
+                                                No grades have been entered for {label} yet.
+                                            </p>
+                                        ) : (
+                                            records.map(record => (
+                                                <div
+                                                    key={record.id}
+                                                    className={homeworkStyles.termRecordCard}>
+                                                    <div className={homeworkStyles.termRecordHeader}>
+                                                        <div>
+                                                            <p className={homeworkStyles.termRecordPeriod}>
+                                                                {record.assessment_period_name}
+                                                            </p>
+                                                            <p className={homeworkStyles.termRecordTeacher}>
+                                                                Teacher: {record.teacher_name}
+                                                            </p>
+                                                        </div>
+                                                        <div className={homeworkStyles.termRecordStats}>
+                                                            {record.average_score != null ? (
+                                                                <span className={homeworkStyles.averageChip}>
+                                                                    Avg {record.average_score}%
+                                                                </span>
+                                                            ) : null}
+                                                            {record.class_position != null ? (
+                                                                <span className={homeworkStyles.positionChip}>
+                                                                    #{record.class_position} of{' '}
+                                                                    {record.total_class_students}
+                                                                </span>
+                                                            ) : null}
+                                                        </div>
+                                                    </div>
+
+                                                    {record.grade ? (
+                                                        <div className={homeworkStyles.gradePanel}>
+                                                            <span className={homeworkStyles.gradePanelLabel}>
+                                                                Overall grade
+                                                            </span>
+                                                            <span className={homeworkStyles.gradePanelValue}>
+                                                                {record.grade}
+                                                            </span>
+                                                        </div>
+                                                    ) : null}
+
+                                                    {(record.subject_grades ?? []).length > 0 ? (
+                                                        <div className={workspaceStyles.tableWrap}>
+                                                            <table className={`${workspaceStyles.table} ${homeworkStyles.subjectTable}`}>
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Subject</th>
+                                                                        <th>Grade</th>
+                                                                        <th>Remarks</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {record.subject_grades.map((sg, idx) => (
+                                                                        <tr key={idx}>
+                                                                            <td>
+                                                                                <strong>{sg.subject}</strong>
+                                                                            </td>
+                                                                            <td>
+                                                                                <span
+                                                                                    className={homeworkStyles.subjectGradeValue}>
+                                                                                    {sg.grade ?? '—'}
+                                                                                </span>
+                                                                            </td>
+                                                                            <td>
+                                                                                <small>
+                                                                                    {sg.remarks || '—'}
+                                                                                </small>
+                                                                            </td>
+                                                                        </tr>
+                                                                    ))}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    ) : null}
+
+                                                    {record.comment ? (
+                                                        <div className={homeworkStyles.termCommentBox}>
+                                                            <span className={homeworkStyles.termCommentLabel}>
+                                                                Teacher&apos;s comment
+                                                            </span>
+                                                            <p className={homeworkStyles.termCommentText}>
+                                                                {record.comment}
+                                                            </p>
+                                                        </div>
+                                                    ) : null}
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                ) : null}
+                            </article>
+                        )
+                    })}
+                </div>
+            )}
+        </section>
+    )
+}
+
 const fetcher = url => axios.get(url).then(response => response.data)
 
 const formatDate = value => (value ? new Date(value).toLocaleString() : null)
@@ -442,6 +634,14 @@ export default function GuardianHomeworkPage() {
         fetcher,
     )
 
+    const {
+        data: childData,
+        isLoading: childLoading,
+    } = useSWR(
+        isGuardian ? '/api/guardian/child' : null,
+        fetcher,
+    )
+
     const [openQuestions, setOpenQuestions] = useState({})
     const [openSubmissions, setOpenSubmissions] = useState({})
 
@@ -656,6 +856,13 @@ export default function GuardianHomeworkPage() {
                     </div>
                 ) : null}
             </section>
+
+            {isGuardian ? (
+                <TermGradesSection
+                    performanceRecords={childData?.child?.performance_records ?? null}
+                    isLoading={childLoading}
+                />
+            ) : null}
         </WorkspacePageShell>
     )
 }
