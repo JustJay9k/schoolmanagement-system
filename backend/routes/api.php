@@ -88,6 +88,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 
     Route::get('/school-structure', [AdminSchoolStructureApiController::class, 'show']);
     Route::put('/school-structure', [AdminSchoolStructureApiController::class, 'update']);
+    Route::put('/school-structure/active-term', [AdminSchoolStructureApiController::class, 'updateActiveTerm']);
 
     Route::get('/deleted-records/students', [AdminDeletedStudentRecordApiController::class, 'index']);
     Route::patch('/deleted-records/students/{student}/restore', [AdminDeletedStudentRecordApiController::class, 'restore']);
@@ -103,6 +104,7 @@ Route::middleware(['auth:sanctum', 'timetable-manager'])->prefix('management')->
 
     Route::get('/school-structure', [AdminSchoolStructureApiController::class, 'show']);
     Route::put('/school-structure', [AdminSchoolStructureApiController::class, 'update']);
+    Route::put('/school-structure/active-term', [AdminSchoolStructureApiController::class, 'updateActiveTerm']);
 
     Route::get('/students', [ManagementStudentRecordApiController::class, 'index']);
     Route::post('/students', [ManagementStudentRecordApiController::class, 'store']);

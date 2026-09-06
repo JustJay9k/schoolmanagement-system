@@ -27,6 +27,7 @@ class UpsertStudentPerformanceRequest extends FormRequest
                 ->map(fn ($entry): array => [
                     'subject_id' => isset($entry['subject_id']) ? (int) $entry['subject_id'] : null,
                     'grade' => is_string($entry['grade'] ?? null) ? trim($entry['grade']) : ($entry['grade'] ?? null),
+                    'remarks' => is_string($entry['remarks'] ?? null) ? trim($entry['remarks']) : ($entry['remarks'] ?? null),
                 ])
                 ->values()
                 ->all(),
@@ -41,6 +42,7 @@ class UpsertStudentPerformanceRequest extends FormRequest
             'subject_grades' => ['required', 'array', 'min:1'],
             'subject_grades.*.subject_id' => ['required', 'integer', 'distinct', Rule::exists('school_subjects', 'id')],
             'subject_grades.*.grade' => ['required', 'string', 'max:120'],
+            'subject_grades.*.remarks' => ['nullable', 'string', 'max:500'],
             'comment' => ['nullable', 'string', 'max:2000'],
         ];
     }

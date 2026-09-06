@@ -212,7 +212,17 @@ class GuardianChildApiController extends Controller
                     'teacher_name' => $record->teacher?->name ?? 'Teacher',
                     'grade' => $record->grade,
                     'grade_summary' => $record->grade,
-                    'subject_grades' => $record->subject_grades ?? [],
+                    'subject_grades' => collect($record->subject_grades ?? [])
+                        ->map(fn (array $subjectGrade): array => [
+                            'subject_id' => $subjectGrade['subject_id'] ?? null,
+                            'subject' => $subjectGrade['subject_name'] ?? $subjectGrade['subject'] ?? 'Subject',
+                            'subject_name' => $subjectGrade['subject_name'] ?? null,
+                            'subject_code' => $subjectGrade['subject_code'] ?? null,
+                            'grade' => $subjectGrade['grade'] ?? '',
+                            'remarks' => trim((string) ($subjectGrade['remarks'] ?? '')),
+                        ])
+                        ->values()
+                        ->all(),
                     'average_score' => $standing['average'],
                     'class_position' => $standing['position'],
                     'total_class_students' => $standing['total_students'],

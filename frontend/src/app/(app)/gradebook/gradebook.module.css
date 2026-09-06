@@ -309,6 +309,34 @@
     line-height: 1;
 }
 
+.termBadgeActive,
+.termBadgeInactive,
+.termBadgeNeutral {
+    display: inline-block;
+    margin-top: 0.5rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    padding: 0.28rem 0.62rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.termBadgeActive {
+    border-color: var(--status-success-border);
+    background: var(--status-success-bg);
+    color: var(--status-success-ink, var(--accent-strong));
+}
+
+.termBadgeInactive {
+    background: var(--surface-card-soft);
+    color: var(--muted);
+}
+
+.termBadgeNeutral {
+    background: var(--surface-tint);
+    color: var(--accent-strong);
+}
+
 .termBody {
     margin-top: 1.15rem;
 }

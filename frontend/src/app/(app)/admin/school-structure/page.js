@@ -44,6 +44,12 @@ const tracks = [
     },
 ]
 
+const terms = [
+    { value: 'first', label: 'First Term' },
+    { value: 'second', label: 'Second Term' },
+    { value: 'third', label: 'Third Term' },
+]
+
 export default function SchoolStructurePage() {
     const { user } = useAuth({ middleware: 'auth' })
     const [teacherCountsByTrack, setTeacherCountsByTrack] = useState(null)
@@ -51,10 +57,13 @@ export default function SchoolStructurePage() {
         primary_classes: '',
         secondary_classes: '',
     })
+    const [activeTerm, setActiveTerm] = useState('first')
     const [errors, setErrors] = useState({})
     const [status, setStatus] = useState(null)
+    const [termStatus, setTermStatus] = useState(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
+    const [savingTerm, setSavingTerm] = useState(false)
     const classesByTrack = useMemo(
         () => ({
             primary: toClassList(form.primary_classes),
@@ -77,6 +86,7 @@ export default function SchoolStructurePage() {
             const response = await axios.get(getSchoolStructureEndpoint(user))
 
             setTeacherCountsByTrack(response.data?.teacherCountsByTrack ?? null)
+            setActiveTerm(response.data?.activeTerm ?? 'first')
             setForm({
                 primary_classes: toTextareaValue(
                     response.data?.classesByTrack?.primary,
@@ -132,6 +142,34 @@ export default function SchoolStructurePage() {
             })
         } finally {
             setSaving(false)
+        }
+    }
+
+    const submitActiveTerm = async event => {
+        event.preventDefault()
+        setSavingTerm(true)
+        setTermStatus(null)
+
+        try {
+            const endpoint = `${getSchoolStructureEndpoint(user)}/active-term`
+            const response = await axios.put(endpoint, { term: activeTerm })
+
+            setActiveTerm(response.data?.activeTerm ?? activeTerm)
+            setTermStatus({
+                type: 'success',
+                message:
+                    response.data?.message ??
+                    'Active term updated successfully.',
+            })
+        } catch (error) {
+            setTermStatus({
+                type: 'error',
+                message:
+                    error?.response?.data?.message ??
+                    'Unable to update the active term.',
+            })
+        } finally {
+            setSavingTerm(false)
         }
     }
 
@@ -280,6 +318,74 @@ export default function SchoolStructurePage() {
                     </p>
                 </aside>
             </section>
+
+            <form onSubmit={submitActiveTerm} className={adminStyles.structureEditor}>
+                <div className={adminStyles.editorHeader}>
+                    <div>
+                        <p className={workspaceStyles.panelEyebrow}>Grading period</p>
+                        <h2>Active term</h2>
+                        <p>
+                            Choose which term teachers are currently entering grades for.
+                            Teachers can only save grades for the active term until you switch it.
+                        </p>
+                    </div>
+                    <div className={adminStyles.actions}>
+                        <Button disabled={savingTerm || loading}>
+                            {savingTerm ? 'Saving...' : 'Save active term'}
+                        </Button>
+                    </div>
+                </div>
+
+                {termStatus ? (
+                    <div
+                        className={`${adminStyles.statusBanner} ${
+                            termStatus.type === 'error'
+                                ? adminStyles.statusBannerError
+                                : adminStyles.statusBannerSuccess
+                        }`}>
+                        <div>
+                            <strong>
+                                {termStatus.type === 'error'
+                                    ? 'Active term was not saved'
+                                    : 'Active term saved'}
+                            </strong>
+                            <p>{termStatus.message}</p>
+                        </div>
+                    </div>
+                ) : null}
+
+                <div className={adminStyles.termPickerGrid}>
+                    {terms.map(term => {
+                        const isActive = term.value === activeTerm
+
+                        return (
+                            <label
+                                key={term.value}
+                                className={`${adminStyles.termOptionCard} ${
+                                    isActive ? adminStyles.termOptionCardActive : ''
+                                }`}>
+                                <input
+                                    type="radio"
+                                    name="active_term"
+                                    value={term.value}
+                                    checked={isActive}
+                                    onChange={() => setActiveTerm(term.value)}
+                                    className={adminStyles.termOptionInput}
+                                />
+                                <span className={adminStyles.termOptionDot} aria-hidden="true" />
+                                <span className={adminStyles.termOptionLabel}>{term.label}</span>
+                                {isActive ? (
+                                    <span
+                                        className={adminStyles.termOptionBadge}>
+                                        Active
+                                    </span>
+                                ) : null}
+                            </label>
+                        )
+                    })}
+                </div>
+                <InputError messages={errors.term} />
+            </form>
 
             <form onSubmit={submitForm} className={adminStyles.structureEditor}>
                 <div className={adminStyles.editorHeader}>

@@ -11,6 +11,9 @@ final class SchoolContextOptions
 {
     public const STRUCTURE_KEY = 'school_structure';
     public const REGISTER_SCHEDULE_KEY = 'register_schedule';
+    public const ACTIVE_TERM_KEY = 'active_term';
+
+    public const DEFAULT_ACTIVE_TERM = 'first';
 
     /**
      * @return array<string, string>
@@ -161,6 +164,59 @@ final class SchoolContextOptions
     public static function trackValues(): array
     {
         return array_keys(self::tracks());
+    }
+
+    /**
+     * Resolve the term teachers may currently grade for a given school.
+     */
+    public static function activeTerm(?int $schoolId = null): string
+    {
+        if (! Schema::hasTable('school_settings')) {
+            return self::DEFAULT_ACTIVE_TERM;
+        }
+
+        $query = SchoolSetting::query()->where('key', self::ACTIVE_TERM_KEY);
+
+        if (Schema::hasColumn('school_settings', 'school_id')) {
+            $query->where('school_id', $schoolId);
+        }
+
+        $storedValue = $query->value('value');
+
+        $normalized = self::normalizeActiveTerm(is_string($storedValue) ? $storedValue : null);
+
+        if ($normalized) {
+            return $normalized;
+        }
+
+        return self::DEFAULT_ACTIVE_TERM;
+    }
+
+    /**
+     * Persist the term teachers may currently grade for a given school.
+     */
+    public static function saveActiveTerm(?string $term, ?int $schoolId = null): string
+    {
+        $normalized = self::normalizeActiveTerm($term) ?? self::DEFAULT_ACTIVE_TERM;
+
+        $identity = ['key' => self::ACTIVE_TERM_KEY];
+
+        if (Schema::hasColumn('school_settings', 'school_id')) {
+            $identity['school_id'] = $schoolId;
+        }
+
+        SchoolSetting::query()->updateOrCreate($identity, [
+            'value' => $normalized,
+        ]);
+
+        return $normalized;
+    }
+
+    private static function normalizeActiveTerm(?string $term): ?string
+    {
+        $terms = \App\Models\StudentPerformanceRecord::termLabels();
+
+        return is_string($term) && isset($terms[$term]) ? $term : null;
     }
 
     /**

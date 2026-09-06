@@ -27,8 +27,17 @@ const createSubjectGradeMap = subjectGrades =>
         ]),
     )
 
+const createSubjectRemarkMap = subjectGrades =>
+    Object.fromEntries(
+        (subjectGrades ?? []).map(subjectGrade => [
+            String(subjectGrade.subject_id),
+            subjectGrade.remarks ?? '',
+        ]),
+    )
+
 const createPerformanceDraft = performance => ({
     subjectGrades: createSubjectGradeMap(performance?.subject_grades ?? []),
+    subjectRemarks: createSubjectRemarkMap(performance?.subject_grades ?? []),
     comment: performance?.comment ?? '',
 })
 
@@ -221,6 +230,25 @@ export default function GradebookPage() {
             setDrafts(createDrafts(nextStudents, nextAssessmentPeriods))
             setLoadError(null)
 
+            const nextActiveTerm = nextOptions?.activeTerm ?? 'first'
+
+            setOpenTerms(current => {
+                const isCurrentDefault = Object.values(current).every(
+                    (open, index) =>
+                        open === Object.values(defaultOpenTerms)[index],
+                )
+
+                if (!isCurrentDefault) {
+                    return current
+                }
+
+                return {
+                    first: nextActiveTerm === 'first',
+                    second: nextActiveTerm === 'second',
+                    third: nextActiveTerm === 'third',
+                }
+            })
+
             if (nextScope) {
                 setFilters(current => {
                     const nextFilters = {
@@ -259,6 +287,10 @@ export default function GradebookPage() {
         : []
     const assessmentPeriods = getAssessmentPeriods(options)
     const managementMode = isManagementUser(user)
+    const activeTerm = options?.activeTerm ?? 'first'
+    const editableTerms = managementMode
+        ? gradebookTerms
+        : gradebookTerms.filter(term => term.value === activeTerm)
 
     const computePeriodAverage = (studentId, periodId, term) => {
         const draft = drafts[studentId]?.[makePerformanceKey(term, periodId)]
@@ -386,6 +418,31 @@ export default function GradebookPage() {
         }))
     }
 
+    const updateSubjectRemarkDraft = (
+        studentId,
+        periodId,
+        term,
+        subjectId,
+        value,
+    ) => {
+        const performanceKey = makePerformanceKey(term, periodId)
+
+        setDrafts(current => ({
+            ...current,
+            [studentId]: {
+                ...current[studentId],
+                [performanceKey]: {
+                    ...current[studentId]?.[performanceKey],
+                    subjectRemarks: {
+                        ...(current[studentId]?.[performanceKey]
+                            ?.subjectRemarks ?? {}),
+                        [String(subjectId)]: value,
+                    },
+                },
+            },
+        }))
+    }
+
     const hasDraftChanged = (student, periodId, term) => {
         const draft = drafts[student.id]?.[makePerformanceKey(term, periodId)]
         const savedPerformance = getPerformanceForPeriod(
@@ -402,6 +459,9 @@ export default function GradebookPage() {
         const savedSubjectGrades = createSubjectGradeMap(
             savedPerformance?.subject_grades ?? [],
         )
+        const savedSubjectRemarks = createSubjectRemarkMap(
+            savedPerformance?.subject_grades ?? [],
+        )
 
         return (
             draft.comment !== (savedPerformance?.comment ?? '') ||
@@ -409,6 +469,11 @@ export default function GradebookPage() {
                 subject =>
                     (draft.subjectGrades?.[String(subject.id)] ?? '') !==
                     (savedSubjectGrades[String(subject.id)] ?? ''),
+            ) ||
+            trackSubjects.some(
+                subject =>
+                    (draft.subjectRemarks?.[String(subject.id)]?.trim() ?? '') !==
+                    (savedSubjectRemarks[String(subject.id)] ?? ''),
             )
         )
     }
@@ -459,6 +524,7 @@ export default function GradebookPage() {
         const subjectGradesPayload = trackSubjects.map(subject => ({
             subject_id: subject.id,
             grade: draft.subjectGrades?.[String(subject.id)]?.trim() ?? '',
+            remarks: draft.subjectRemarks?.[String(subject.id)]?.trim() ?? '',
         }))
 
         if (
@@ -532,7 +598,7 @@ export default function GradebookPage() {
         const changedCells = []
 
         for (const student of students) {
-            for (const term of gradebookTerms) {
+            for (const term of editableTerms) {
                 for (const period of assessmentPeriods) {
                     if (
                         hasDraftChanged(student, period.id, term.value) &&
@@ -623,7 +689,7 @@ export default function GradebookPage() {
 
             let studentMissing = false
 
-            for (const term of gradebookTerms) {
+            for (const term of editableTerms) {
                 for (const period of assessmentPeriods) {
                     if (isPeriodLocked(student, period.id, term.value)) {
                         continue
@@ -672,7 +738,7 @@ export default function GradebookPage() {
 
             let studentInvalid = false
 
-            for (const term of gradebookTerms) {
+            for (const term of editableTerms) {
                 for (const period of assessmentPeriods) {
                     if (isPeriodLocked(student, period.id, term.value)) {
                         continue
@@ -788,7 +854,7 @@ export default function GradebookPage() {
     const pendingDraftCount = students.reduce((count, student) => {
         let cells = 0
 
-        for (const term of gradebookTerms) {
+        for (const term of editableTerms) {
             for (const period of assessmentPeriods) {
                 if (
                     hasDraftChanged(student, period.id, term.value) &&
@@ -949,7 +1015,10 @@ export default function GradebookPage() {
         (count, student) =>
             count +
             (student.performances ?? []).filter(
-                performance => performance.status === 'draft',
+                performance =>
+                    performance.status === 'draft' &&
+                    (performance.assessment_period_term ?? 'first') ===
+                        activeTerm,
             ).length,
         0,
     )
@@ -1665,6 +1734,23 @@ export default function GradebookPage() {
                                                     >
                                                         {term.label}
                                                     </h2>
+                                                    <span
+                                                        className={
+                                                            isTeacherUser(user) &&
+                                                            term.value === activeTerm
+                                                                ? styles.termBadgeActive
+                                                                : isTeacherUser(user)
+                                                                  ? styles.termBadgeInactive
+                                                                  : styles.termBadgeNeutral
+                                                        }
+                                                    >
+                                                        {isTeacherUser(user) &&
+                                                        term.value === activeTerm
+                                                            ? 'Active term - enter grades'
+                                                            : isTeacherUser(user)
+                                                              ? 'Not the active term - read only'
+                                                              : 'Read only view'}
+                                                    </span>
                                                 </div>
                                                 <span
                                                     className={
@@ -1882,11 +1968,13 @@ export default function GradebookPage() {
                                                                                                         'submitted' ||
                                                                                                     status ===
                                                                                                         'approved'
-                                                                                                const readOnly =
-                                                                                                    locked ||
-                                                                                                    !isTeacherUser(
-                                                                                                        user,
-                                                                                                    )
+const readOnly =
+                                                            locked ||
+                                                            !isTeacherUser(
+                                                                user,
+                                                            ) ||
+                                                            term.value !==
+                                                                activeTerm
 
                                                                                                 return (
                                                                                                     <td
@@ -1980,12 +2068,45 @@ export default function GradebookPage() {
                                                                                                                                             nextValue,
                                                                                                                                         )
                                                                                                                                     }}
-                                                                                                                                    placeholder="Grade"
-                                                                                                                                    className={
-                                                                                                                                        styles.tableField
-                                                                                                                                    }
-                                                                                                                                />
-                                                                                                                            </label>
+placeholder="Grade"
+                                                                                                                                     className={
+                                                                                                                                         styles.tableField
+                                                                                                                                     }
+                                                                                                                                 />
+                                                                                                                                 <Input
+                                                                                                                                     type="text"
+                                                                                                                                     maxLength={500}
+                                                                                                                                     disabled={
+                                                                                                                                         readOnly ||
+                                                                                                                                         Boolean(
+                                                                                                                                             savingKey,
+                                                                                                                                         )
+                                                                                                                                     }
+                                                                                                                                     value={
+                                                                                                                                         draft
+                                                                                                                                             .subjectRemarks?.[
+                                                                                                                                             String(
+                                                                                                                                                 subject.id,
+                                                                                                                                             )
+                                                                                                                                         ] ??
+                                                                                                                                         ''
+                                                                                                                                     }
+                                                                                                                                     onChange={event =>
+                                                                                                                                         updateSubjectRemarkDraft(
+                                                                                                                                             student.id,
+                                                                                                                                             period.id,
+                                                                                                                                             term.value,
+                                                                                                                                             subject.id,
+                                                                                                                                             event.target
+                                                                                                                                                 .value,
+                                                                                                                                         )
+                                                                                                                                     }
+                                                                                                                                     placeholder="Add remark (optional)"
+                                                                                                                                     className={
+                                                                                                                                         styles.tableField
+                                                                                                                                     }
+                                                                                                                                 />
+                                                                                                                             </label>
                                                                                                                         ),
                                                                                                                     )}
                                                                                                                 </div>

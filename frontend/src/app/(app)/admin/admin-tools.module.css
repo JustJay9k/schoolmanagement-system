@@ -586,6 +586,98 @@
     text-transform: uppercase;
 }
 
+.termPickerGrid {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.termOptionCard {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    cursor: pointer;
+    border: 1px solid var(--line);
+    border-radius: 0.95rem;
+    background: var(--surface-card-muted);
+    padding: 1rem 1.1rem;
+    transition:
+        border-color 140ms ease,
+        background-color 140ms ease,
+        box-shadow 140ms ease;
+}
+
+.termOptionCard:hover {
+    border-color: color-mix(in srgb, var(--accent) 32%, var(--line));
+}
+
+.termOptionCardActive {
+    border-color: var(--accent);
+    background:
+        linear-gradient(180deg, var(--surface-tint), transparent 45%),
+        var(--surface-card);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.termOptionInput {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.termOptionDot {
+    width: 1rem;
+    height: 1rem;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    border: 2px solid var(--line);
+    background: var(--surface-field);
+    position: relative;
+}
+
+.termOptionInput:checked + .termOptionDot {
+    border-color: var(--accent);
+}
+
+.termOptionInput:checked + .termOptionDot::after {
+    content: '';
+    position: absolute;
+    inset: 0.22rem;
+    border-radius: 999px;
+    background: var(--accent);
+}
+
+.termOptionCard:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.termOptionLabel {
+    color: var(--ink);
+    font-weight: 800;
+    font-size: 0.95rem;
+}
+
+.termOptionBadge {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface-tint);
+    color: var(--accent-strong);
+    padding: 0.32rem 0.68rem;
+    font-size: 0.74rem;
+    font-weight: 800;
+}
+
+@media (min-width: 900px) {
+    .termPickerGrid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
 .dangerText {
     color: var(--danger);
 }

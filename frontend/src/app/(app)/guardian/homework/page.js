@@ -162,7 +162,11 @@ function TermGradesSection({ performanceRecords, isLoading }) {
                                                                     {record.subject_grades.map((sg, idx) => (
                                                                         <tr key={idx}>
                                                                             <td>
-                                                                                <strong>{sg.subject}</strong>
+                                                                                <strong>
+                                                                                    {sg.subject_name ??
+                                                                                        sg.subject ??
+                                                                                        'Subject'}
+                                                                                </strong>
                                                                             </td>
                                                                             <td>
                                                                                 <span

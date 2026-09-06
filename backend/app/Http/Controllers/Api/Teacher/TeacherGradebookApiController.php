@@ -124,6 +124,7 @@ class TeacherGradebookApiController extends Controller
                 'subjectsByTrack' => $subjectsByTrack,
                 'assessmentPeriods' => $assessmentPeriods,
                 'registerScheduleByTrack' => SchoolContextOptions::registerScheduleByTrack(),
+                'activeTerm' => SchoolContextOptions::activeTerm($actor->school_id),
             ],
             'registerReport' => $currentRegisterReport ? [
                 'id' => $currentRegisterReport->id,
@@ -153,6 +154,13 @@ class TeacherGradebookApiController extends Controller
 
         $validated = $request->validated();
         $term = $validated['term'];
+
+        $activeTerm = SchoolContextOptions::activeTerm($student->school_id);
+
+        if ($term !== $activeTerm) {
+            abort(422, 'Grades can only be entered for the active term (' . $this->termLabel($activeTerm) . ').');
+        }
+
         $assessmentPeriod = GradeAssessmentPeriod::query()->findOrFail(
             (int) $validated['assessment_period_id'],
         );
@@ -239,19 +247,19 @@ class TeacherGradebookApiController extends Controller
 
         $missingStudents = [];
 
-        foreach ($studentsInScope as $student) {
-            foreach (array_keys(StudentPerformanceRecord::termLabels()) as $term) {
-                foreach ($periodIds as $periodId) {
-                    $record = StudentPerformanceRecord::query()
-                        ->where('student_record_id', $student->id)
-                        ->where('assessment_period_id', $periodId)
-                        ->where('term', $term)
-                        ->first();
+        $activeTerm = SchoolContextOptions::activeTerm($actor->school_id);
 
-                    if (! $record || ! $this->hasCompleteSubjectGrades($record->subject_grades, $student->school_track, $actor->school_id)) {
-                        $missingStudents[] = $student->full_name;
-                        break 2;
-                    }
+        foreach ($studentsInScope as $student) {
+            foreach ($periodIds as $periodId) {
+                $record = StudentPerformanceRecord::query()
+                    ->where('student_record_id', $student->id)
+                    ->where('assessment_period_id', $periodId)
+                    ->where('term', $activeTerm)
+                    ->first();
+
+                if (! $record || ! $this->hasCompleteSubjectGrades($record->subject_grades, $student->school_track, $actor->school_id)) {
+                    $missingStudents[] = $student->full_name;
+                    break;
                 }
             }
         }
@@ -274,6 +282,7 @@ class TeacherGradebookApiController extends Controller
                     ->where('school_track', $scope['school_track'])
                     ->where('class_name', $scope['class_name']);
             })
+            ->where('term', $activeTerm)
             ->draft()
             ->get();
 
@@ -567,6 +576,9 @@ class TeacherGradebookApiController extends Controller
                     'subject_code' => $subject->code,
                     'grade' => is_array($submittedGrade)
                         ? trim((string) ($submittedGrade['grade'] ?? ''))
+                        : '',
+                    'remarks' => is_array($submittedGrade)
+                        ? trim((string) ($submittedGrade['remarks'] ?? ''))
                         : '',
                 ];
             })
