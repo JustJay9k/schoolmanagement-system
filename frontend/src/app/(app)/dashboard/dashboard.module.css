@@ -241,14 +241,12 @@
 .metricLabel,
 .metricMeta,
 .columnHeading small,
-.fieldLabel span,
 .footerMeta {
     color: var(--muted);
 }
 
 .filterLabel,
-.panelEyebrow,
-.fieldLabel span {
+.panelEyebrow {
     font-size: 0.75rem;
     font-weight: 800;
     letter-spacing: 0.18em;
@@ -585,23 +583,8 @@
 
 .noteInput,
 .textField,
-.selectField,
-.textArea,
-.staticField {
-    width: 100%;
-    border: 1px solid var(--line);
-    border-radius: 0.95rem;
-    background: var(--surface-field);
-    padding: 0.82rem 0.92rem;
-    color: var(--ink);
-    font-size: 0.9rem;
-    outline: none;
-}
-
 .noteInput:focus,
-.textField:focus,
-.selectField:focus,
-.textArea:focus {
+.textField:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 4px var(--focus-ring);
 }
@@ -631,8 +614,7 @@
     color: var(--ink);
 }
 
-.footerMeta,
-.helperMessage {
+.footerMeta {
     margin: 0;
     font-size: 0.85rem;
 }
@@ -645,6 +627,10 @@
 
 .lowerGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lowerGridFullSpan {
+    grid-column: 1 / -1;
 }
 
 .panel {
@@ -748,8 +734,7 @@
 
 .scheduleList,
 .alertList,
-.timetableCards,
-.formGrid {
+.timetableCards {
     display: grid;
     gap: 0.8rem;
 }
@@ -788,23 +773,6 @@
     margin-top: 0.16rem;
     color: var(--muted);
     font-size: 0.78rem;
-}
-
-.fieldLabel {
-    display: grid;
-    gap: 0.45rem;
-}
-
-.staticField {
-    display: flex;
-    align-items: center;
-    min-height: 3rem;
-    font-weight: 700;
-}
-
-.textArea {
-    min-height: 8rem;
-    resize: vertical;
 }
 
 .managementStack {

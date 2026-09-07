@@ -361,11 +361,6 @@ const Dashboard = () => {
         tone: 'idle',
         message: 'Nothing submitted yet.',
     })
-    const [disciplineEntry, setDisciplineEntry] = useState({
-        incident: 'Late arrival',
-        note: '',
-    })
-    const [disciplineStatus, setDisciplineStatus] = useState('Awaiting teacher action.')
     const [submittingRegister, setSubmittingRegister] = useState(false)
     const { data: teacherDashboardData, isLoading: teacherDashboardLoading, mutate: mutateTeacherDashboard } =
         useSWR(
@@ -782,27 +777,6 @@ const Dashboard = () => {
         })
     }
 
-    const submitDiscipline = async event => {
-        event.preventDefault()
-
-        if (!activeStudent || !assignedFixture) {
-            setDisciplineStatus('Assign a teacher to a class before logging discipline.')
-            return
-        }
-
-        if (!disciplineEntry.note.trim()) {
-            setDisciplineStatus('Add an incident note before logging the case.')
-            return
-        }
-
-        setDisciplineStatus('Logging conduct entry...')
-        await simulateRequest(true)
-        setDisciplineStatus(
-            `${activeStudent.name} logged for ${disciplineEntry.incident.toLowerCase()}. Detention workflow sent to the backend queue.`,
-        )
-        setDisciplineEntry(current => ({ ...current, note: '' }))
-    }
-
     const renderTeacherView = () => (
         <>
             <section className={styles.metricsRow}>
@@ -993,7 +967,7 @@ const Dashboard = () => {
 
             {activeStudent ? (
                 <section className={styles.lowerGrid}>
-                    <div id="students" className={styles.panel}>
+                    <div id="students" className={`${styles.panel} ${styles.lowerGridFullSpan}`}>
                         <div className={styles.panelHeader}>
                             <div>
                                 <p className={styles.panelEyebrow}>Student Profile</p>
@@ -1035,62 +1009,6 @@ const Dashboard = () => {
                                 This summary uses the latest saved teacher comment for the learner.
                             </small>
                         </div>
-                    </div>
-
-                    <div id="discipline" className={styles.panel}>
-                        <div className={styles.panelHeader}>
-                            <div>
-                                <p className={styles.panelEyebrow}>Discipline Tracker</p>
-                                <h2 className={styles.panelTitle}>Log classroom conduct</h2>
-                            </div>
-                        </div>
-
-                        <form onSubmit={submitDiscipline} className={styles.formGrid}>
-                            <label className={styles.fieldLabel}>
-                                <span>Student</span>
-                                <div className={styles.staticField}>{activeStudent.name}</div>
-                            </label>
-
-                            <label className={styles.fieldLabel}>
-                                <span>Incident type</span>
-                                <select
-                                    value={disciplineEntry.incident}
-                                    onChange={event =>
-                                        setDisciplineEntry(current => ({
-                                            ...current,
-                                            incident: event.target.value,
-                                        }))
-                                    }
-                                    className={styles.selectField}>
-                                    <option>Late arrival</option>
-                                    <option>Uniform issue</option>
-                                    <option>Missed prep task</option>
-                                    <option>Disruptive conduct</option>
-                                </select>
-                            </label>
-
-                            <label className={styles.fieldLabel}>
-                                <span>Incident notes</span>
-                                <textarea
-                                    value={disciplineEntry.note}
-                                    onChange={event =>
-                                        setDisciplineEntry(current => ({
-                                            ...current,
-                                            note: event.target.value,
-                                        }))
-                                    }
-                                    rows={4}
-                                    className={styles.textArea}
-                                    placeholder="Describe the incident, detention, or parent action."
-                                />
-                            </label>
-
-                            <button type="submit" className={styles.primaryAction}>
-                                Log discipline entry
-                            </button>
-                        </form>
-
-                        <p className={styles.helperMessage}>{disciplineStatus}</p>
                     </div>
                 </section>
             ) : null}
