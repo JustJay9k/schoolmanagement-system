@@ -215,8 +215,102 @@
     accent-color: var(--accent);
 }
 
+.accordion {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.accordionItem {
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--surface-card-muted);
+    overflow: hidden;
+    transition: border-color 140ms ease;
+}
+
+.accordionItemActive {
+    border-color: var(--accent);
+}
+
+.accordionTrigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    padding: 0.95rem 1.05rem;
+    text-align: left;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.accordionIdentity {
+    display: grid;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.accordionIdentity strong {
+    font-size: 0.98rem;
+    color: var(--ink);
+}
+
+.accordionIdentity span {
+    color: var(--muted);
+    font-size: 0.88rem;
+}
+
+.accordionMeta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    white-space: nowrap;
+}
+
+.accordionDate {
+    color: var(--muted);
+    font-size: 0.84rem;
+}
+
+.accordionChevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1;
+    transition:
+        transform 160ms ease,
+        border-color 160ms ease,
+        color 160ms ease;
+}
+
+.accordionChevronOpen {
+    transform: rotate(90deg);
+    border-color: var(--accent);
+    color: var(--accent-strong);
+}
+
+.accordionBody {
+    display: grid;
+    gap: 1rem;
+    border-top: 1px solid var(--line);
+    padding: 1.05rem;
+}
+
 @media (max-width: 900px) {
     .reportLayout {
         grid-template-columns: 1fr;
+    }
+
+    .accordionTrigger {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }

@@ -488,39 +488,68 @@ export default function RegistersPage() {
                                     No register reports have been submitted or saved in this school yet.
                                 </p>
                             ) : (
-                                <div className={registerStyles.reportLayout}>
-                                    <div className={registerStyles.reportList}>
-                                        {managementReports.map(report => (
-                                            <button
+                                <div className={registerStyles.accordion}>
+                                    {managementReports.map(report => {
+                                        const isExpanded =
+                                            selectedManagementReportId === report.id
+
+                                        return (
+                                            <article
                                                 key={report.id}
-                                                type="button"
-                                                onClick={() =>
-                                                    setSelectedManagementReportId(report.id)
-                                                }
-                                                className={`${registerStyles.reportListButton} ${
-                                                    selectedManagementReportId === report.id
-                                                        ? registerStyles.reportListButtonActive
+                                                className={`${registerStyles.accordionItem} ${
+                                                    isExpanded
+                                                        ? registerStyles.accordionItemActive
                                                         : ''
                                                 }`}>
-                                                <div className={registerStyles.reportListTop}>
-                                                    <strong>{report.teacher_name}</strong>
-                                                    <span className={workspaceStyles.badge}>
-                                                        {report.status}
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setSelectedManagementReportId(
+                                                            isExpanded ? null : report.id,
+                                                        )
+                                                    }
+                                                    className={registerStyles.accordionTrigger}
+                                                    aria-expanded={isExpanded}
+                                                    aria-controls={`management-register-report-${report.id}`}>
+                                                    <span
+                                                        className={
+                                                            registerStyles.accordionIdentity
+                                                        }>
+                                                        <strong>{report.teacher_name}</strong>
+                                                        <span>
+                                                            {report.class_name} •{' '}
+                                                            {report.school_track}
+                                                        </span>
                                                     </span>
-                                                </div>
-                                                <p>
-                                                    {report.class_name} •{' '}
-                                                    {report.school_track}
-                                                </p>
-                                                <small>
-                                                    {formatReportDate(report.report_date)}
-                                                </small>
-                                            </button>
-                                        ))}
-                                    </div>
+                                                    <span
+                                                        className={
+                                                            registerStyles.accordionMeta
+                                                        }>
+                                                        <span className={workspaceStyles.badge}>
+                                                            {report.status}
+                                                        </span>
+                                                        <span
+                                                            className={
+                                                                registerStyles.accordionDate
+                                                            }>
+                                                            {formatReportDate(report.report_date)}
+                                                        </span>
+                                                        <span
+                                                            aria-hidden="true"
+                                                            className={`${registerStyles.accordionChevron} ${
+                                                                isExpanded
+                                                                    ? registerStyles.accordionChevronOpen
+                                                                    : ''
+                                                            }`}>
+                                                            ›
+                                                        </span>
+                                                    </span>
+                                                </button>
 
-                                    {selectedManagementReport ? (
-                                        <div className={registerStyles.reportDetail}>
+                                                {isExpanded ? (
+                                                    <div
+                                                        id={`management-register-report-${report.id}`}
+                                                        className={registerStyles.accordionBody}>
                                             <div className={registerStyles.reportSummaryGrid}>
                                                 {attendanceOptions.map(option => (
                                                     <div
@@ -619,8 +648,11 @@ export default function RegistersPage() {
                                                 </table>
                                             </div>
                                         </div>
-                                    ) : null}
-                                </div>
+                                            ) : null}
+                                        </article>
+                                    )
+                                })}
+                            </div>
                             )}
                         </article>
 

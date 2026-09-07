@@ -173,4 +173,80 @@ class RegisterReportWorkflowTest extends TestCase
             ->assertJsonCount(1, 'reports')
             ->assertJsonPath('reports.0.teacher_id', $teacherA->id);
     }
+
+    public function test_teacher_can_start_a_fresh_register_on_a_new_day_after_submitting_yesterday(): void
+    {
+        $school = School::query()->create([
+            'name' => 'Mulanje Academy',
+        ]);
+
+        $teacher = User::factory()->teacher()->create([
+            'school_id' => $school->id,
+            'school_track' => 'primary',
+            'assigned_class_name' => 'Standard 4',
+        ]);
+
+        $student = StudentRecord::query()->create([
+            'school_id' => $school->id,
+            'school_track' => 'primary',
+            'class_name' => 'Standard 4',
+            'full_name' => 'Tadala Nyirenda',
+            'student_code' => 'S001',
+        ]);
+
+        $yesterdayReport = RegisterReport::query()->create([
+            'school_id' => $school->id,
+            'teacher_id' => $teacher->id,
+            'teacher_name' => $teacher->name,
+            'school_track' => 'primary',
+            'class_name' => 'Standard 4',
+            'report_date' => now()->subDay()->toDateString(),
+            'status' => 'submitted',
+            'submitted_at' => now()->subDay(),
+            'periods' => [['label' => 'AM', 'start_time' => '07:30', 'end_time' => '08:00']],
+            'entries' => [[
+                'student_id' => $student->id,
+                'student_name' => $student->full_name,
+                'student_code' => $student->student_code,
+                'status' => 'P',
+                'note' => '',
+            ]],
+            'summary' => ['total_students' => 1, 'counts' => ['P' => 1, 'L' => 0, 'S' => 0, 'A' => 0, 'E' => 0]],
+        ]);
+
+        $response = $this->actingAs($teacher)
+            ->putJson('/api/teacher/register-reports/current', [
+                'school_track' => 'primary',
+                'class_name' => 'Standard 4',
+                'periods' => [['label' => 'AM', 'start_time' => '07:30', 'end_time' => '08:00']],
+                'entries' => [[
+                    'student_id' => $student->id,
+                    'status' => 'P',
+                    'note' => 'Fresh register for the new day.',
+                ]],
+            ])
+            ->assertOk()
+            ->assertJsonPath('report.status', 'draft')
+            ->assertJsonPath('report.report_date', now()->toDateString());
+
+        $todayReportId = $response->json('report.id');
+
+        $this->assertNotSame($yesterdayReport->id, $todayReportId);
+
+        $this->assertDatabaseHas('register_reports', [
+            'id' => $todayReportId,
+            'status' => 'draft',
+        ]);
+
+        $this->actingAs($teacher)
+            ->getJson('/api/teacher/gradebook')
+            ->assertOk()
+            ->assertJsonPath('registerReport.id', $todayReportId)
+            ->assertJsonPath('registerReport.status', 'draft');
+
+        $this->actingAs($teacher)
+            ->getJson('/api/teacher/register-reports')
+            ->assertOk()
+            ->assertJsonCount(2, 'reports');
+    }
 }
