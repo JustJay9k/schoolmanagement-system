@@ -93,6 +93,10 @@ const studentHasSavedRecords = student =>
     (student.performances ?? []).length > 0
 
 const parseGradeToNumber = grade => {
+    if (typeof grade === 'number' && Number.isFinite(grade)) {
+        return grade <= 100 ? grade : null
+    }
+
     const text = (grade ?? '').trim()
 
     if (!text) {
@@ -211,6 +215,11 @@ export default function GradebookPage() {
     const [openTerms, setOpenTerms] = useState(defaultOpenTerms)
     const [positionsTerm, setPositionsTerm] = useState('first')
     const activeTermRef = useRef(null)
+    const [promotionOpen, setPromotionOpen] = useState(false)
+    const [promotionSelected, setPromotionSelected] = useState([])
+    const [promotionBusy, setPromotionBusy] = useState(false)
+    const [confirmingPromotion, setConfirmingPromotion] = useState(false)
+    const [promotionStatus, setPromotionStatus] = useState(null)
 
     const loadGradebook = async activeFilters => {
         setLoading(true)
@@ -292,6 +301,30 @@ export default function GradebookPage() {
         loadGradebook(filters)
     }, [user, filters.school_track, filters.class_name])
 
+    const loadPromotionStatus = async () => {
+        if (!isTeacherUser(user)) {
+            return
+        }
+
+        try {
+            const response = await axios.get('/api/teacher/class-promotions/status', {
+                params: filters,
+            })
+
+            setPromotionStatus(response.data ?? null)
+        } catch {
+            setPromotionStatus(null)
+        }
+    }
+
+    useEffect(() => {
+        if (!user || !isTeacherUser(user)) {
+            return
+        }
+
+        loadPromotionStatus()
+    }, [user, filters.school_track, filters.class_name])
+
     const activeTrack = scope?.school_track ?? filters.school_track
     const availableClasses = activeTrack
         ? options?.classesByTrack?.[activeTrack] ?? []
@@ -322,6 +355,78 @@ export default function GradebookPage() {
         }
 
         return computeAverage(allGrades)
+    }
+
+    const computeThreeTermAverage = student => {
+        const termAverages = gradebookTerms
+            .map(term => computeTermAverage(student, term.value))
+            .filter(value => value !== null)
+
+        if (termAverages.length === 0) {
+            return null
+        }
+
+        return computeAverage(termAverages)
+    }
+
+    const canPromote =
+        isTeacherUser(user) &&
+        activeTerm === 'third' &&
+        Boolean(scope?.class_name) &&
+        Boolean(promotionStatus?.next_class) &&
+        promotionStatus?.active_term_is_third &&
+        !promotionStatus?.pending
+
+    const openPromotionModal = () => {
+        setPromotionSelected([])
+        setPromotionOpen(true)
+    }
+
+    const togglePromotionStudent = studentId => {
+        setPromotionSelected(current =>
+            current.includes(studentId)
+                ? current.filter(id => id !== studentId)
+                : [...current, studentId],
+        )
+    }
+
+    const selectAllPromotionStudents = () => {
+        setPromotionSelected(
+            promotionSelected.length === students.length
+                ? []
+                : students.map(student => student.id),
+        )
+    }
+
+    const submitPromotion = async () => {
+        setPromotionBusy(true)
+
+        try {
+            const response = await axios.post('/api/teacher/class-promotions', {
+                school_track: scope?.school_track,
+                class_name: scope?.class_name,
+                student_ids: promotionSelected,
+            })
+
+            showToast({
+                type: 'success',
+                message:
+                    response.data?.message ?? 'Promotion request submitted.',
+            })
+
+            setPromotionOpen(false)
+            setConfirmingPromotion(false)
+            await loadPromotionStatus()
+        } catch (error) {
+            showToast({
+                type: 'error',
+                message:
+                    error?.response?.data?.message ??
+                    'Unable to submit the promotion request.',
+            })
+        } finally {
+            setPromotionBusy(false)
+        }
     }
 
     const positions = (() => {
@@ -1084,6 +1189,16 @@ export default function GradebookPage() {
                     >
                         {submitting ? 'Submitting...' : 'Submit grades'}
                     </button>
+                    {canPromote ? (
+                        <button
+                            type="button"
+                            onClick={openPromotionModal}
+                            disabled={promotionBusy}
+                            className={workspaceStyles.secondaryButton}
+                        >
+                            {`Promote to ${promotionStatus?.next_class}`}
+                        </button>
+                    ) : null}
                 </>
             ) : isManagementUser(user) ? (
                 <>
@@ -2261,6 +2376,139 @@ placeholder="Grade"
                     <HomeworkManager />
                 )}
             </WorkspacePageShell>
+            {promotionOpen ? (
+                <div
+                    className={styles.promotionOverlay}
+                    onClick={() =>
+                        !promotionBusy && setPromotionOpen(false)
+                    }>
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="promotion-modal-title"
+                        className={styles.promotionCard}
+                        onClick={event => event.stopPropagation()}>
+                        <div className={styles.promotionHeader}>
+                            <div>
+                                <p className={workspaceStyles.panelEyebrow}>
+                                    Class promotion
+                                </p>
+                                <h2 id="promotion-modal-title">
+                                    {promotionStatus?.from_class
+                                        ? `Promote learners from ${promotionStatus.from_class}`
+                                        : 'Promote learners'}
+                                </h2>
+                                <p>
+                                    Select learners to move to{' '}
+                                    {promotionStatus?.next_class ?? 'the next class'}.
+                                    Their three-term averages are shown for reference.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setPromotionOpen(false)}
+                                disabled={promotionBusy}
+                                className={styles.promotionClose}
+                                aria-label="Close promotion dialog">
+                                Close
+                            </button>
+                        </div>
+
+                        <div className={styles.promotionToolbar}>
+                            <span className={styles.promotionCounter}>
+                                {promotionSelected.length} of {students.length}{' '}
+                                selected
+                            </span>
+                            <button
+                                type="button"
+                                onClick={selectAllPromotionStudents}
+                                disabled={promotionBusy}
+                                className={workspaceStyles.secondaryButton}>
+                                {promotionSelected.length === students.length
+                                    ? 'Clear all'
+                                    : 'Select all'}
+                            </button>
+                        </div>
+
+                        <div className={styles.promotionList}>
+                            <label className={styles.promotionRowHeader}>
+                                <span>Learner</span>
+                                <span>Three-term average</span>
+                            </label>
+                            {students.map(student => {
+                                const average = computeThreeTermAverage(student)
+                                const selected = promotionSelected.includes(
+                                    student.id,
+                                )
+
+                                return (
+                                    <label
+                                        key={student.id}
+                                        className={`${styles.promotionRow} ${
+                                            selected
+                                                ? styles.promotionRowSelected
+                                                : ''
+                                        }`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={selected}
+                                            onChange={() =>
+                                                togglePromotionStudent(student.id)
+                                            }
+                                            disabled={promotionBusy}
+                                            className={styles.promotionCheckbox}
+                                        />
+                                        <span className={styles.promotionName}>
+                                            {student.full_name}
+                                        </span>
+                                        <span className={styles.promotionAverage}>
+                                            {average !== null
+                                                ? `${average}%`
+                                                : 'No grades'}
+                                        </span>
+                                    </label>
+                                )
+                            })}
+                        </div>
+
+                        <div className={styles.promotionFooter}>
+                            <button
+                                type="button"
+                                onClick={() => setPromotionOpen(false)}
+                                disabled={promotionBusy}
+                                className={workspaceStyles.secondaryButton}>
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setConfirmingPromotion(true)}
+                                disabled={
+                                    promotionBusy ||
+                                    promotionSelected.length === 0
+                                }
+                                className={workspaceStyles.button}>
+                                Continue
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+            <ConfirmDialog
+                open={Boolean(confirmingPromotion)}
+                eyebrow="Confirm promotion"
+                title={`Promote ${promotionSelected.length} learner(s)?`}
+                message={`Send ${promotionSelected.length} learner(s) from ${
+                    promotionStatus?.from_class ?? scope?.class_name ?? ''
+                } to ${
+                    promotionStatus?.next_class ?? ''
+                } for head teacher approval? No learner is moved until the head teacher approves this list.`}
+                confirmLabel="Submit promotion"
+                busyLabel="Submitting..."
+                tone="default"
+                busy={promotionBusy}
+                onClose={() => setConfirmingPromotion(false)}
+                onConfirm={submitPromotion}
+            />
             <ConfirmDialog
                 open={Boolean(confirmingAssessment)}
                 eyebrow="Delete criterion"

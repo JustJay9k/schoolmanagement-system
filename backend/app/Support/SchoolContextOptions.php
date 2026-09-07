@@ -239,6 +239,22 @@ final class SchoolContextOptions
         return in_array($className, self::classesByTrack($schoolId)[$track] ?? [], true);
     }
 
+    public static function nextClass(?string $track, ?string $className, ?int $schoolId = null): ?string
+    {
+        if (! is_string($track) || ! is_string($className)) {
+            return null;
+        }
+
+        $classes = self::classesByTrack($schoolId)[$track] ?? [];
+        $index = array_search($className, $classes, true);
+
+        if ($index === false) {
+            return null;
+        }
+
+        return $classes[$index + 1] ?? null;
+    }
+
     /**
      * @return array<string, list<string>>
      */

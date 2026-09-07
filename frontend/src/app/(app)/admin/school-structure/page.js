@@ -64,6 +64,12 @@ export default function SchoolStructurePage() {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [savingTerm, setSavingTerm] = useState(false)
+    const [promotions, setPromotions] = useState([])
+    const [promotionsLoading, setPromotionsLoading] = useState(true)
+    const [approveModal, setApproveModal] = useState(null)
+    const [approveSelection, setApproveSelection] = useState([])
+    const [promotionBusy, setPromotionBusy] = useState(false)
+    const [promotionStatus, setPromotionStatus] = useState(null)
     const classesByTrack = useMemo(
         () => ({
             primary: toClassList(form.primary_classes),
@@ -114,6 +120,127 @@ export default function SchoolStructurePage() {
 
         loadStructure()
     }, [user])
+
+    const loadPromotions = async () => {
+        if (!isManagementUser(user)) {
+            return
+        }
+
+        try {
+            const response = await axios.get('/api/management/promotions')
+
+            setPromotions(response.data?.promotions ?? [])
+        } catch {
+            setPromotions([])
+        } finally {
+            setPromotionsLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        if (!user || !canManageSchoolStructure(user)) {
+            return
+        }
+
+        loadPromotions()
+    }, [user])
+
+    const openApproveModal = promotion => {
+        const allIds = (promotion.students ?? []).map(
+            entry => entry.student_id,
+        )
+
+        setApproveModal(promotion)
+        setApproveSelection(allIds)
+    }
+
+    const toggleApproveStudent = studentId => {
+        setApproveSelection(current =>
+            current.includes(studentId)
+                ? current.filter(id => id !== studentId)
+                : [...current, studentId],
+        )
+    }
+
+    const toggleAllApproveStudents = () => {
+        const allIds = (approveModal?.students ?? []).map(
+            entry => entry.student_id,
+        )
+
+        setApproveSelection(current =>
+            current.length === allIds.length ? [] : allIds,
+        )
+    }
+
+    const submitApproval = async () => {
+        if (!approveModal) {
+            return
+        }
+
+        setPromotionBusy(true)
+        setPromotionStatus(null)
+
+        try {
+            const response = await axios.post(
+                `/api/management/promotions/${approveModal.id}/approve`,
+                { student_ids: approveSelection },
+            )
+
+            setPromotionStatus({
+                type: 'success',
+                message:
+                    response.data?.message ??
+                    'Promotion approved and learners moved.',
+            })
+            setApproveModal(null)
+            setApproveSelection([])
+            await Promise.all([loadPromotions(), loadStructure()])
+        } catch (error) {
+            setPromotionStatus({
+                type: 'error',
+                message:
+                    error?.response?.data?.message ??
+                    'Unable to approve the promotion.',
+            })
+        } finally {
+            setPromotionBusy(false)
+        }
+    }
+
+    const submitRejection = async promotion => {
+        setPromotionBusy(true)
+        setPromotionStatus(null)
+
+        try {
+            const response = await axios.post(
+                `/api/management/promotions/${promotion.id}/reject`,
+            )
+
+            setPromotionStatus({
+                type: 'success',
+                message:
+                    response.data?.message ?? 'Promotion request rejected.',
+            })
+            await loadPromotions()
+        } catch (error) {
+            setPromotionStatus({
+                type: 'error',
+                message:
+                    error?.response?.data?.message ??
+                    'Unable to reject the promotion.',
+            })
+        } finally {
+            setPromotionBusy(false)
+        }
+    }
+
+    const formatPromotionDate = value => {
+        if (!value) {
+            return ''
+        }
+
+        return new Date(value).toLocaleString()
+    }
 
     const submitForm = async event => {
         event.preventDefault()
@@ -195,22 +322,23 @@ export default function SchoolStructurePage() {
     }
 
     return (
-        <WorkspacePageShell
-            eyebrow="School Setup"
-            title="School structure"
-            description="Build the class list teachers, students, registers, timetables, and gradebooks will use across the workspace."
-            actions={
-                <button
-                    type="button"
-                    onClick={loadStructure}
-                    aria-label="Refresh school structure"
-                    title="Refresh school structure"
-                    className={`${workspaceStyles.secondaryButton} ${adminStyles.iconButton}`}>
-                    <span className={adminStyles.srOnly}>Refresh school structure</span>
-                    <RefreshIcon />
-                </button>
-            }
-        >
+        <>
+            <WorkspacePageShell
+                eyebrow="School Setup"
+                title="School structure"
+                description="Build the class list teachers, students, registers, timetables, and gradebooks will use across the workspace."
+                actions={
+                    <button
+                        type="button"
+                        onClick={loadStructure}
+                        aria-label="Refresh school structure"
+                        title="Refresh school structure"
+                        className={`${workspaceStyles.secondaryButton} ${adminStyles.iconButton}`}>
+                        <span className={adminStyles.srOnly}>Refresh school structure</span>
+                        <RefreshIcon />
+                    </button>
+                }
+            >
             {status ? (
                 <section
                     className={`${adminStyles.statusBanner} ${
@@ -387,6 +515,201 @@ export default function SchoolStructurePage() {
                 <InputError messages={errors.term} />
             </form>
 
+            {isManagementUser(user) ? (
+                <section className={adminStyles.structureEditor}>
+                    <div className={adminStyles.editorHeader}>
+                        <div>
+                            <p className={workspaceStyles.panelEyebrow}>
+                                End of year
+                            </p>
+                            <h2>Promotion requests</h2>
+                            <p>
+                                Approve teacher promotion lists to move
+                                learners to their next class. Approved learners
+                                keep all their previous grades in the
+                                repository.
+                            </p>
+                        </div>
+                        <div className={adminStyles.actions}>
+                            <button
+                                type="button"
+                                onClick={loadPromotions}
+                                disabled={promotionsLoading || promotionBusy}
+                                className={`${workspaceStyles.secondaryButton} ${adminStyles.iconButton}`}>
+                                <span className={adminStyles.srOnly}>
+                                    Refresh promotion requests
+                                </span>
+                                <RefreshIcon />
+                            </button>
+                        </div>
+                    </div>
+
+                    {promotionStatus ? (
+                        <div
+                            className={`${adminStyles.statusBanner} ${
+                                promotionStatus.type === 'error'
+                                    ? adminStyles.statusBannerError
+                                    : adminStyles.statusBannerSuccess
+                            }`}>
+                            <div>
+                                <strong>
+                                    {promotionStatus.type === 'error'
+                                        ? 'Promotion was not processed'
+                                        : 'Promotion processed'}
+                                </strong>
+                                <p>{promotionStatus.message}</p>
+                            </div>
+                        </div>
+                    ) : null}
+
+                    {promotionsLoading ? (
+                        <p className={adminStyles.message}>
+                            Loading promotion requests...
+                        </p>
+                    ) : promotions.length === 0 ? (
+                        <p className={adminStyles.message}>
+                            No promotion requests yet. Teachers can submit a
+                            list once the Third Term is active.
+                        </p>
+                    ) : (
+                        <div className={adminStyles.promotionList}>
+                            {promotions.map(promotion => {
+                                const studentCount = (promotion.students ?? [])
+                                    .length
+                                const pending =
+                                    promotion.status === 'pending'
+                                const approved =
+                                    promotion.status === 'approved'
+
+                                return (
+                                    <article
+                                        key={promotion.id}
+                                        className={adminStyles.promotionCard}>
+                                        <div
+                                            className={
+                                                adminStyles.promotionCardHeader
+                                            }>
+                                            <div>
+                                                <p
+                                                    className={
+                                                        workspaceStyles.panelEyebrow
+                                                    }
+                                                >
+                                                    Submitted by{' '}
+                                                    {promotion.teacher_name}
+                                                </p>
+                                                <h3>
+                                                    {promotion.from_class} →{' '}
+                                                    {promotion.to_class}
+                                                </h3>
+                                                <p>
+                                                    {promotion.school_track_label}{' '}
+                                                    • {studentCount} learner(s){' '}
+                                                    • submitted{' '}
+                                                    {formatPromotionDate(
+                                                        promotion.submitted_at,
+                                                    )}
+                                                </p>
+                                            </div>
+                                            <span
+                                                className={[
+                                                    adminStyles.promotionStatus,
+                                                    promotion.status ===
+                                                        'pending'
+                                                        ? adminStyles.promotionStatusPending
+                                                        : promotion.status ===
+                                                            'approved'
+                                                          ? adminStyles.promotionStatusApproved
+                                                          : adminStyles.promotionStatusRejected,
+                                                ].join(' ')}>
+                                                {pending
+                                                    ? 'Awaiting approval'
+                                                    : approved
+                                                      ? 'Approved'
+                                                      : 'Rejected'}
+                                            </span>
+                                        </div>
+
+                                        <div className={adminStyles.promotionStudents}>
+                                            <span
+                                                className={
+                                                    adminStyles.promotionStudentsLabel
+                                                }>
+                                                Learners
+                                            </span>
+                                            {(promotion.students ?? []).map(
+                                                entry => (
+                                                    <div
+                                                        key={entry.student_id}
+                                                        className={
+                                                            adminStyles.promotionStudentRow
+                                                        }>
+                                                        <span>
+                                                            {entry.full_name}
+                                                        </span>
+                                                        <span>
+                                                            {entry.average !==
+                                                            null
+                                                                ? `${entry.average}%`
+                                                                : 'No grades'}
+                                                        </span>
+                                                    </div>
+                                                ),
+                                            )}
+                                        </div>
+
+                                        {pending ? (
+                                            <div
+                                                className={
+                                                    adminStyles.promotionActions
+                                                }>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        openApproveModal(
+                                                            promotion,
+                                                        )
+                                                    }
+                                                    disabled={promotionBusy}
+                                                    className={
+                                                        workspaceStyles.button
+                                                    }
+                                                >
+                                                    Review & approve
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        submitRejection(
+                                                            promotion,
+                                                        )
+                                                    }
+                                                    disabled={promotionBusy}
+                                                    className={`${workspaceStyles.secondaryButton} ${adminStyles.dangerSecondaryButton}`}>
+                                                    Reject
+                                                </button>
+                                            </div>
+                                        ) : approved ? (
+                                            <p
+                                                className={
+                                                    adminStyles.promotionMeta
+                                                }>
+                                                Approved by{' '}
+                                                {promotion.approved_by_name ??
+                                                    'head teacher'}{' '}
+                                                {formatPromotionDate(
+                                                    promotion.approved_at,
+                                                )}
+                                            </p>
+                                        ) : null}
+                                    </article>
+                                )
+                            })}
+                        </div>
+                    )}
+                </section>
+            ) : null}
+
             <form onSubmit={submitForm} className={adminStyles.structureEditor}>
                 <div className={adminStyles.editorHeader}>
                     <div>
@@ -485,6 +808,124 @@ export default function SchoolStructurePage() {
 
                 <InputError messages={errors.classes_by_track} />
             </form>
-        </WorkspacePageShell>
+            </WorkspacePageShell>
+
+            {approveModal ? (
+                <div
+                    className={adminStyles.modalOverlay}
+                    onClick={() =>
+                        !promotionBusy && setApproveModal(null)
+                    }>
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="approve-promotion-title"
+                        className={adminStyles.modalCard}
+                        onClick={event => event.stopPropagation()}>
+                        <div className={adminStyles.modalHeader}>
+                            <div>
+                                <p className={workspaceStyles.panelEyebrow}>
+                                    Approve promotion
+                                </p>
+                                <h2 id="approve-promotion-title">
+                                    {approveModal.from_class} →{' '}
+                                    {approveModal.to_class}
+                                </h2>
+                                <p>
+                                    Review the learners, then approve. Selected
+                                    learners are moved to{' '}
+                                    {approveModal.to_class} and keep all their
+                                    previous grades.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setApproveModal(null)}
+                                disabled={promotionBusy}
+                                className={adminStyles.modalClose}
+                                aria-label="Close approve promotion dialog">
+                                Close
+                            </button>
+                        </div>
+
+                        <div className={adminStyles.modalSelectRow}>
+                            <span>
+                                {approveSelection.length} of{' '}
+                                {(approveModal.students ?? []).length}{' '}
+                                selected
+                            </span>
+                            <button
+                                type="button"
+                                onClick={toggleAllApproveStudents}
+                                disabled={promotionBusy}
+                                className={workspaceStyles.secondaryButton}>
+                                {approveSelection.length ===
+                                (approveModal.students ?? []).length
+                                    ? 'Clear all'
+                                    : 'Select all'}
+                            </button>
+                        </div>
+
+                        <div className={adminStyles.modalStudentList}>
+                            {(approveModal.students ?? []).map(entry => {
+                                const selected = approveSelection.includes(
+                                    entry.student_id,
+                                )
+
+                                return (
+                                    <label
+                                        key={entry.student_id}
+                                        className={`${adminStyles.modalStudentRow} ${
+                                            selected
+                                                ? adminStyles.modalStudentRowSelected
+                                                : ''
+                                        }`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={selected}
+                                            onChange={() =>
+                                                toggleApproveStudent(
+                                                    entry.student_id,
+                                                )
+                                            }
+                                            disabled={promotionBusy}
+                                            className={
+                                                adminStyles.modalStudentCheckbox
+                                            }
+                                        />
+                                        <span>{entry.full_name}</span>
+                                        <span>
+                                            {entry.average !== null
+                                                ? `${entry.average}%`
+                                                : 'No grades'}
+                                        </span>
+                                    </label>
+                                )
+                            })}
+                        </div>
+
+                        <div className={adminStyles.modalActions}>
+                            <button
+                                type="button"
+                                onClick={() => setApproveModal(null)}
+                                disabled={promotionBusy}
+                                className={workspaceStyles.secondaryButton}>
+                                Cancel
+                            </button>
+                            <Button
+                                disabled={
+                                    promotionBusy ||
+                                    approveSelection.length === 0
+                                }
+                                onClick={submitApproval}>
+                                {promotionBusy
+                                    ? 'Promoting...'
+                                    : `Approve ${approveSelection.length} learner(s)`}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+        </>
     )
 }

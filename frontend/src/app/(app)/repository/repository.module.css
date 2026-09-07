@@ -1,0 +1,243 @@
+.toolbarPanel {
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--surface-card-soft);
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.toolbarRow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 0.9rem;
+}
+
+.termPillRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.termPill {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-field);
+    color: var(--ink);
+    padding: 0.4rem 0.8rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    transition:
+        border-color 140ms ease,
+        background-color 140ms ease,
+        color 140ms ease;
+}
+
+.termPill:hover {
+    border-color: var(--accent);
+}
+
+.termPillActive {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+}
+
+.repoMessage {
+    border: 1px solid var(--line);
+    border-radius: 0.9rem;
+    background: var(--surface-card-soft);
+    color: var(--muted);
+    padding: 1rem 1.1rem;
+    font-size: 0.88rem;
+}
+
+.statusBar {
+    border-radius: 0.9rem;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.statusError {
+    border: 1px solid var(--status-error-border);
+    background: var(--status-error-bg);
+    color: var(--status-error-ink);
+}
+
+.classBlock {
+    margin-bottom: 1.5rem;
+}
+
+.classHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.6rem;
+}
+
+.classHeader h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--ink);
+}
+
+.classCount {
+    border-radius: 999px;
+    background: var(--surface-tint);
+    color: var(--accent-strong);
+    padding: 0.28rem 0.7rem;
+    font-size: 0.74rem;
+    font-weight: 800;
+}
+
+.tableWrap {
+    overflow-x: auto;
+}
+
+.studentRow {
+    cursor: pointer;
+}
+
+.studentRow:hover td {
+    background: var(--surface-tint);
+}
+
+.expandButton {
+    width: 1.7rem;
+    height: 1.7rem;
+    flex: 0 0 1.7rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-card-soft);
+    color: var(--accent-strong);
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.studentMeta {
+    display: block;
+    margin-top: 0.15rem;
+    color: var(--muted);
+    font-size: 0.76rem;
+    text-transform: capitalize;
+}
+
+.overall {
+    color: var(--accent-strong);
+    font-weight: 800;
+}
+
+.detailRow td {
+    padding: 0 !important;
+    background: var(--surface-card-muted);
+}
+
+.detailInner {
+    padding: 1rem 1.25rem;
+}
+
+.detailEmpty {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.periodCard {
+    border: 1px solid var(--line);
+    border-radius: 0.9rem;
+    background: var(--panel-strong);
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.7rem;
+}
+
+.periodCard:last-child {
+    margin-bottom: 0;
+}
+
+.periodHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.periodHeader p {
+    margin: 0 0 0.15rem;
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.periodHeader h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--ink);
+}
+
+.statusChip {
+    border-radius: 999px;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: capitalize;
+}
+
+.statusApproved {
+    border: 1px solid var(--status-success-border);
+    background: var(--status-success-bg);
+    color: var(--status-success-ink, var(--accent-strong));
+}
+
+.statusSubmitted {
+    border: 1px solid var(--status-info-border);
+    background: var(--status-info-bg);
+    color: var(--status-info-ink, var(--accent-strong));
+}
+
+.statusDraft {
+    border: 1px solid var(--line);
+    background: var(--surface-card-soft);
+    color: var(--muted);
+}
+
+.subjectChipList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.7rem;
+}
+
+.subjectChip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    border: 1px solid var(--line);
+    border-radius: 0.65rem;
+    background: var(--surface-card-soft);
+    padding: 0.4rem 0.65rem;
+    font-size: 0.78rem;
+    color: var(--ink);
+}
+
+.subjectChip strong {
+    color: var(--accent-strong);
+    font-size: 0.82rem;
+}
+
+.periodComment {
+    margin: 0.7rem 0 0;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-style: italic;
+}
+
+@media (max-width: 700px) {
+    .toolbarRow {
+        grid-template-columns: 1fr;
+    }
+}

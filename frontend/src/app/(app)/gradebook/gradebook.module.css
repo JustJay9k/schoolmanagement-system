@@ -367,6 +367,153 @@
     color: var(--accent-strong);
 }
 
+.promotionOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgba(10, 16, 24, 0.48);
+    backdrop-filter: blur(8px);
+}
+
+.promotionCard {
+    width: min(100%, 44rem);
+    max-height: calc(100vh - 2rem);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--line);
+    border-radius: 1.3rem;
+    background: var(--panel-strong);
+    box-shadow: 0 28px 72px var(--shadow-strong);
+    overflow: hidden;
+}
+
+.promotionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem 1.4rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.promotionHeader h2 {
+    margin: 0.2rem 0 0.4rem;
+    font-size: 1.15rem;
+    line-height: 1.2;
+    color: var(--ink);
+}
+
+.promotionHeader p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.promotionClose {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-card-soft);
+    color: var(--ink);
+    padding: 0.4rem 0.85rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.promotionToolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1.4rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-tint);
+}
+
+.promotionCounter {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--accent-strong);
+}
+
+.promotionList {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 0.4rem 1.4rem 1rem;
+}
+
+.promotionRowHeader,
+.promotionRow {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.5rem;
+}
+
+.promotionRowHeader {
+    position: sticky;
+    top: 0;
+    padding-top: 0.9rem;
+    padding-bottom: 0.5rem;
+    background: var(--panel-strong);
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--line);
+}
+
+.promotionRow {
+    border-bottom: 1px solid var(--line);
+    border-radius: 0.6rem;
+    cursor: pointer;
+    transition: background-color 120ms ease;
+}
+
+.promotionRow:hover {
+    background: var(--surface-tint);
+}
+
+.promotionRowSelected {
+    background: var(--accent-soft);
+}
+
+.promotionRowHeader span:last-child,
+.promotionAverage {
+    text-align: right;
+    justify-self: end;
+}
+
+.promotionCheckbox {
+    accent-color: var(--accent);
+    width: 1.05rem;
+    height: 1.05rem;
+}
+
+.promotionName {
+    color: var(--ink);
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.promotionAverage {
+    color: var(--accent-strong);
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+.promotionFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    padding: 1rem 1.4rem;
+    border-top: 1px solid var(--line);
+}
+
 .termBody {
     margin-top: 1.15rem;
 }

@@ -14,8 +14,10 @@ use App\Http\Controllers\Api\HomeworkAttachmentFileController;
 use App\Http\Controllers\Api\HomeworkSubmissionFileController;
 use App\Http\Controllers\Api\Management\ManagementAnnouncementApiController;
 use App\Http\Controllers\Api\Management\ManagementFormTeacherApiController;
+use App\Http\Controllers\Api\Management\ManagementClassPromotionApiController;
 use App\Http\Controllers\Api\Management\ManagementDashboardApiController;
 use App\Http\Controllers\Api\Management\ManagementGradeAssessmentPeriodApiController;
+use App\Http\Controllers\Api\Management\ManagementRepositoryApiController;
 use App\Http\Controllers\Api\Management\ManagementRegisterReportApiController;
 use App\Http\Controllers\Api\Management\ManagementRegisterScheduleApiController;
 use App\Http\Controllers\Api\Management\ManagementSchoolSubjectApiController;
@@ -26,6 +28,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProfileSettingsController;
 use App\Http\Controllers\Api\Teacher\TeacherGradebookApiController;
 use App\Http\Controllers\Api\Teacher\TeacherHomeworkApiController;
+use App\Http\Controllers\Api\Teacher\TeacherClassPromotionApiController;
 use App\Http\Controllers\Api\Teacher\TeacherRegisterReportApiController;
 use App\Http\Controllers\Api\Teacher\TeacherTimetableApiController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -134,6 +137,12 @@ Route::middleware(['auth:sanctum', 'timetable-manager'])->prefix('management')->
     Route::put('/register-schedule', [ManagementRegisterScheduleApiController::class, 'update']);
     Route::get('/register-reports', [ManagementRegisterReportApiController::class, 'index']);
 
+    Route::get('/promotions', [ManagementClassPromotionApiController::class, 'index']);
+    Route::post('/promotions/{promotion}/approve', [ManagementClassPromotionApiController::class, 'approve']);
+    Route::post('/promotions/{promotion}/reject', [ManagementClassPromotionApiController::class, 'reject']);
+
+    Route::get('/repository-records', [ManagementRepositoryApiController::class, 'records']);
+
     Route::get('/timetables', [ManagementTimetableApiController::class, 'index']);
     Route::get('/timetables/{timetable}', [ManagementTimetableApiController::class, 'show']);
     Route::post('/timetables', [ManagementTimetableApiController::class, 'store']);
@@ -155,6 +164,8 @@ Route::middleware(['auth:sanctum', 'portal'])->prefix('teacher')->group(function
     Route::get('/gradebook', [TeacherGradebookApiController::class, 'index']);
     Route::put('/gradebook/students/{student}/performance', [TeacherGradebookApiController::class, 'upsert']);
     Route::post('/gradebook/submit', [TeacherGradebookApiController::class, 'submit']);
+    Route::get('/class-promotions/status', [TeacherClassPromotionApiController::class, 'status']);
+    Route::post('/class-promotions', [TeacherClassPromotionApiController::class, 'store']);
     Route::get('/register-reports', [TeacherRegisterReportApiController::class, 'index']);
     Route::put('/register-reports/current', [TeacherRegisterReportApiController::class, 'storeOrUpdateCurrent']);
     Route::put('/register-reports/{report}', [TeacherRegisterReportApiController::class, 'update']);

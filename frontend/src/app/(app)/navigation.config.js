@@ -21,7 +21,7 @@ const managementNavItems = [
     { label: 'Teacher Allocations', href: '/management/form-teachers', icon: 'users' },
     { label: 'School Structure', href: '/management/school-structure', icon: 'schoolStructure' },
     { label: 'Timetables', href: '/management/timetables', icon: 'timetable' },
-    { label: 'Behaviour', href: '/behaviour', icon: 'behaviour' },
+    { label: 'Repository', href: '/repository', icon: 'repository' },
     { label: 'Settings', href: '/settings', icon: 'settings' },
 ]
 

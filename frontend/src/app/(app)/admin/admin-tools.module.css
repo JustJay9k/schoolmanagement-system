@@ -690,6 +690,191 @@
     grid-column: 1 / -1;
 }
 
+.promotionList {
+    display: grid;
+    gap: 1rem;
+    margin-top: 0.4rem;
+}
+
+.promotionCard {
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--surface-card-soft);
+    padding: 1rem 1.15rem;
+}
+
+.promotionCardHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.promotionCardHeader h3 {
+    margin: 0.2rem 0;
+    font-size: 1.05rem;
+    color: var(--ink);
+}
+
+.promotionCardHeader p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+.promotionStatus {
+    flex: 0 0 auto;
+    border-radius: 999px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.promotionStatusPending {
+    border: 1px solid var(--status-info-border);
+    background: var(--status-info-bg);
+    color: var(--status-info-ink, var(--accent-strong));
+}
+
+.promotionStatusApproved {
+    border: 1px solid var(--status-success-border);
+    background: var(--status-success-bg);
+    color: var(--status-success-ink, var(--accent-strong));
+}
+
+.promotionStatusRejected {
+    border: 1px solid var(--status-error-border);
+    background: var(--status-error-bg);
+    color: var(--status-error-ink, var(--danger));
+}
+
+.promotionStudents {
+    margin-top: 0.9rem;
+    border-top: 1px solid var(--line);
+    padding-top: 0.6rem;
+}
+
+.promotionStudentsLabel {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.promotionStudentRow {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem;
+    padding: 0.35rem 0;
+    font-size: 0.86rem;
+    color: var(--ink);
+}
+
+.promotionStudentRow span:last-child {
+    color: var(--accent-strong);
+    font-weight: 800;
+}
+
+.promotionActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 0.9rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--line);
+}
+
+.promotionMeta {
+    margin: 0.9rem 0 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+}
+
+.dangerSecondaryButton {
+    border-color: color-mix(in srgb, var(--danger) 28%, transparent);
+    background: color-mix(in srgb, var(--danger) 6%, var(--surface-card-soft));
+    color: var(--danger);
+}
+
+.modalClose {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-card-soft);
+    color: var(--ink);
+    padding: 0.4rem 0.85rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.modalSelectRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.6rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: 0.8rem;
+    background: var(--surface-tint);
+}
+
+.modalSelectRow span {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--accent-strong);
+}
+
+.modalStudentList {
+    display: grid;
+    gap: 0.35rem;
+    max-height: 24rem;
+    overflow-y: auto;
+    padding: 0.2rem;
+}
+
+.modalStudentRow {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 0.7rem;
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--ink);
+    transition: background-color 120ms ease;
+}
+
+.modalStudentRow:hover {
+    background: var(--surface-tint);
+}
+
+.modalStudentRowSelected {
+    background: var(--accent-soft);
+}
+
+.modalStudentRow span:last-child {
+    color: var(--accent-strong);
+    font-weight: 800;
+}
+
+.modalStudentCheckbox {
+    accent-color: var(--accent);
+    width: 1.05rem;
+    height: 1.05rem;
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin-top: 1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--line);
+}
+
 @media (min-width: 1200px) {
     .splitPanel {
         grid-template-columns: minmax(0, 1.6fr) minmax(22rem, 0.95fr);
