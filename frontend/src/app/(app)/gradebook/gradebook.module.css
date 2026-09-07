@@ -337,6 +337,36 @@
     color: var(--accent-strong);
 }
 
+.positionsTermRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.positionsTermButton {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-field);
+    color: var(--ink);
+    padding: 0.4rem 0.8rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    transition:
+        border-color 140ms ease,
+        background-color 140ms ease,
+        color 140ms ease;
+}
+
+.positionsTermButton:hover {
+    border-color: var(--accent);
+}
+
+.positionsTermButtonActive {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+}
+
 .termBody {
     margin-top: 1.15rem;
 }

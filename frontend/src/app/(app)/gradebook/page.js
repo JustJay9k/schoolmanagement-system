@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import managementStyles from '@/app/(app)/management/management-tools.module.css'
@@ -209,6 +209,8 @@ export default function GradebookPage() {
     const [confirmingReopen, setConfirmingReopen] = useState(null)
     const [reopening, setReopening] = useState(false)
     const [openTerms, setOpenTerms] = useState(defaultOpenTerms)
+    const [positionsTerm, setPositionsTerm] = useState('first')
+    const activeTermRef = useRef(null)
 
     const loadGradebook = async activeFilters => {
         setLoading(true)
@@ -248,6 +250,15 @@ export default function GradebookPage() {
                     third: nextActiveTerm === 'third',
                 }
             })
+
+            if (
+                activeTermRef.current === null ||
+                activeTermRef.current !== nextActiveTerm
+            ) {
+                setPositionsTerm(nextActiveTerm)
+            }
+
+            activeTermRef.current = nextActiveTerm
 
             if (nextScope) {
                 setFilters(current => {
@@ -299,19 +310,14 @@ export default function GradebookPage() {
         return computeAverage(Object.values(subjectGrades))
     }
 
-    const computeStudentOverallAverage = student => {
+    const computeTermAverage = (student, term) => {
         const allGrades = []
 
-        for (const term of gradebookTerms) {
-            for (const period of assessmentPeriods) {
-                const draft =
-                    drafts[student.id]?.[
-                        makePerformanceKey(term.value, period.id)
-                    ]
+        for (const period of assessmentPeriods) {
+            const draft = drafts[student.id]?.[makePerformanceKey(term, period.id)]
 
-                if (draft?.subjectGrades) {
-                    allGrades.push(...Object.values(draft.subjectGrades))
-                }
+            if (draft?.subjectGrades) {
+                allGrades.push(...Object.values(draft.subjectGrades))
             }
         }
 
@@ -329,7 +335,7 @@ export default function GradebookPage() {
             school_track_label: student.school_track_label,
             class_name: student.class_name,
             classKey: `${student.school_track}::${student.class_name}`,
-            average: computeStudentOverallAverage(student),
+            average: computeTermAverage(student, positionsTerm),
         }))
 
         const groups = {}
@@ -1232,15 +1238,41 @@ export default function GradebookPage() {
                                             >
                                                 Class ranking
                                             </p>
-                                            <h2
-                                                className={
-                                                    workspaceStyles.panelTitle
-                                                }
-                                            >
-                                                Learner positions
-                                            </h2>
-                                        </div>
-                                    </div>
+<h2
+                                                        className={
+                                                            workspaceStyles.panelTitle
+                                                        }
+                                                    >
+                                                        Learner positions
+                                                    </h2>
+                                                </div>
+                                                <div
+                                                    className={
+                                                        styles.positionsTermRow
+                                                    }
+                                                    role="group"
+                                                    aria-label="Choose a term for class positions"
+                                                >
+                                                    {gradebookTerms.map(term => (
+                                                        <button
+                                                            key={term.value}
+                                                            type="button"
+                                                            onClick={() =>
+                                                                setPositionsTerm(
+                                                                    term.value,
+                                                                )
+                                                            }
+                                                            className={`${styles.positionsTermButton} ${
+                                                                positionsTerm ===
+                                                                term.value
+                                                                    ? styles.positionsTermButtonActive
+                                                                    : ''
+                                                            }`}>
+                                                            {term.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
 
                                     {positionsByClass.map(group => (
                                         <section
