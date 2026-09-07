@@ -7,7 +7,6 @@ const teacherNavItems = [
     { label: 'Schoolwork', href: '/gradebook', icon: 'gradebook' },
     { label: 'Attendance Reports', href: '/attendance-reports', icon: 'reports' },
     { label: 'Timetables', href: '/timetables', icon: 'timetable' },
-    { label: 'Behaviour', href: '/behaviour', icon: 'behaviour' },
     { label: 'Settings', href: '/settings', icon: 'settings' },
 ]
 
