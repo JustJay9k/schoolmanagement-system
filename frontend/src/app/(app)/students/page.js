@@ -5,7 +5,8 @@ import ExcelJS from 'exceljs/dist/exceljs.min.js'
 import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import managementStyles from '@/app/(app)/management/management-tools.module.css'
-import { DeleteIcon, EditIcon } from '@/app/(app)/admin/action-icons'
+import studentsStyles from './students.module.css'
+import { DeleteIcon, EditIcon, ExportIcon } from '@/app/(app)/admin/action-icons'
 import Button from '@/components/Button'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import Input from '@/components/Input'
@@ -312,6 +313,7 @@ export default function StudentsPage() {
     const [pageStatus, setPageStatus] = useState(null)
     const [collapsedClasses, setCollapsedClasses] = useState(new Set())
     const [classFilter, setClassFilter] = useState('')
+    const [exportingKeys, setExportingKeys] = useState(new Set())
     const schoolMeta = useMemo(() => getSchoolMeta(user), [user])
 
     const loadStudents = async () => {
@@ -411,6 +413,115 @@ export default function StudentsPage() {
 
             return next
         })
+    }
+
+    const exportClassStudents = async group => {
+        if (exportingKeys.has(group.key)) {
+            return
+        }
+
+        setExportingKeys(current => new Set(current).add(group.key))
+
+        const columns = [
+            { header: 'Full name', key: 'full_name', width: 30 },
+            { header: 'Sex', key: 'sex', width: 10 },
+            { header: 'Date of birth', key: 'date_of_birth', width: 14 },
+            { header: 'Age', key: 'age', width: 8 },
+            { header: 'Code', key: 'student_code', width: 18 },
+            { header: 'Disability', key: 'disability_name', width: 22 },
+            { header: 'Orphan status', key: 'orphan_status', width: 14 },
+            { header: 'Guardian', key: 'guardian_name', width: 30 },
+            { header: 'Guardian phone', key: 'guardian_phone', width: 18 },
+            { header: 'Guardian email', key: 'guardian_email', width: 32 },
+            { header: 'Residence', key: 'residence', width: 24 },
+            { header: 'Entry date', key: 'first_entry_date', width: 14 },
+        ]
+
+        try {
+            const workbook = new ExcelJS.Workbook()
+            const worksheet = workbook.addWorksheet('Class register')
+
+            worksheet.columns = columns
+
+            group.students.forEach(student => {
+                worksheet.addRow([
+                    student.full_name ?? '',
+                    student.sex ?? '',
+                    student.date_of_birth ?? '',
+                    student.age ?? '',
+                    student.student_code ?? '',
+                    student.disability_name ?? '',
+                    student.orphan_status ?? '',
+                    student.guardian_name ?? '',
+                    student.guardian_phone ?? '',
+                    student.guardian_email ?? '',
+                    student.residence ?? '',
+                    student.first_entry_date ?? '',
+                ])
+            })
+
+            const trackLabel =
+                options?.schoolTracks?.[group.school_track] ?? group.school_track
+            const learnerCount = group.students.length
+
+            worksheet.spliceRows(1, 0, [
+                `Learners register – ${trackLabel} • ${group.class_name}`,
+            ])
+            worksheet.spliceRows(2, 0, [
+                `${schoolMeta.label} | ${learnerCount} learner${
+                    learnerCount === 1 ? '' : 's'
+                } | Exported ${new Date().toLocaleString('en-GB')}`,
+            ])
+
+            worksheet.mergeCells(1, 1, 1, columns.length)
+            worksheet.mergeCells(2, 1, 2, columns.length)
+
+            const titleRow = worksheet.getRow(1)
+            titleRow.height = 22
+            titleRow.font = { bold: true, size: 14 }
+
+            const subtitleRow = worksheet.getRow(2)
+            subtitleRow.height = 16
+            subtitleRow.font = { italic: true, size: 10, color: { argb: 'FF6F7280' } }
+
+            const headerRow = worksheet.getRow(3)
+            headerRow.height = 20
+            headerRow.eachCell(cell => {
+                cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: 'FF1F6FEB' },
+                }
+                cell.alignment = { vertical: 'middle' }
+            })
+
+            worksheet.views = [{ state: 'frozen', ySplit: 3 }]
+
+            const buffer = await workbook.xlsx.writeBuffer()
+            const blob = new Blob([buffer], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            })
+            const url = URL.createObjectURL(blob)
+            const anchor = document.createElement('a')
+            const slug = `${group.school_track}-${group.class_name}`
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+
+            anchor.href = url
+            anchor.download = `student-register-${slug || 'class'}.xlsx`
+            document.body.appendChild(anchor)
+            anchor.click()
+            document.body.removeChild(anchor)
+            URL.revokeObjectURL(url)
+        } finally {
+            setExportingKeys(current => {
+                const next = new Set(current)
+                next.delete(group.key)
+                return next
+            })
+        }
     }
 
     const allClassKeys = useMemo(
@@ -1268,11 +1379,20 @@ export default function StudentsPage() {
                                                 <article
                                                     key={`${school.key}-${group.key}`}
                                                     className={workspaceStyles.panel}>
+                                                    <div
+                                                        className={
+                                                            studentsStyles.classHeaderRow
+                                                        }>
                                                     <button
                                                         type="button"
                                                         onClick={() =>
                                                             toggleClassCollapse(group.key)
                                                         }
+                                                        style={{
+                                                            flex: '1 1 auto',
+                                                            minWidth: 0,
+                                                            width: 'auto',
+                                                        }}
                                                         className={
                                                             workspaceStyles.collapseTrigger
                                                         }>
@@ -1324,6 +1444,28 @@ export default function StudentsPage() {
                                                             </svg>
                                                         </div>
                                                     </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            exportClassStudents(group)
+                                                        }
+                                                        disabled={exportingKeys.has(group.key)}
+                                                        title={
+                                                            exportingKeys.has(group.key)
+                                                                ? 'Preparing Excel file...'
+                                                                : `Export ${group.class_name} students to Excel`
+                                                        }
+                                                        className={`${managementStyles.secondaryButton} ${studentsStyles.exportClassButton}`}>
+                                                        {exportingKeys.has(group.key) ? (
+                                                            'Preparing...'
+                                                        ) : (
+                                                            <>
+                                                                <ExportIcon />
+                                                                Excel
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                    </div>
 
                                                     {!isCollapsed && (
                                                         <div className={workspaceStyles.tableWrap}>
