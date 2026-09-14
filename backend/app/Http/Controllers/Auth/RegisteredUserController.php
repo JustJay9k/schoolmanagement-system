@@ -59,12 +59,16 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): JsonResponse|Response
     {
+        $request->merge([
+            'email' => Str::lower(Str::squish($request->string('email')->toString())),
+        ]);
+
         $schoolIdForValidation = $this->resolveSchoolIdFromRequest($request);
 
         $validator = Validator::make($request->all(), [
             'account_type' => ['required', 'string', 'in:teacher,guardian'],
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:'.User::class],
             'school_id' => ['nullable', 'integer', 'exists:schools,id'],
             'school_name' => ['nullable', 'string', 'max:180'],
             'school_track' => ['nullable', 'string', 'in:'.implode(',', SchoolContextOptions::trackValues())],

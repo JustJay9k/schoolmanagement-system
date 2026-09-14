@@ -24,7 +24,7 @@ class UpdateAdminUserRequest extends FormRequest
 
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->route('user'))],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->route('user'))],
             'role' => ['required', Rule::in(UserRole::values())],
             'status' => ['required', Rule::in(UserStatus::values())],
             'school_id' => ['nullable', 'integer', 'exists:schools,id'],
@@ -34,6 +34,13 @@ class UpdateAdminUserRequest extends FormRequest
             'email_verified' => ['nullable', 'boolean'],
             'password' => ['nullable', 'confirmed', Password::defaults()],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'email' => Str::lower(Str::squish($this->string('email')->toString())),
+        ]);
     }
 
     public function after(): array

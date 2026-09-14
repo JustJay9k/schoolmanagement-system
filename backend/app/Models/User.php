@@ -15,6 +15,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 #[Fillable(['name', 'email', 'password', 'role', 'status', 'school_id', 'linked_student_record_id', 'school_track', 'assigned_class_name', 'profile_photo_path', 'last_login_at', 'email_verified_at'])]
 #[Hidden(['password', 'remember_token'])]
@@ -41,6 +42,13 @@ class User extends Authenticatable
             'role' => UserRole::class,
             'status' => UserStatus::class,
         ];
+    }
+
+    protected function setEmailAttribute(?string $value): void
+    {
+        $this->attributes['email'] = is_string($value)
+            ? Str::lower(Str::squish($value))
+            : $value;
     }
 
     public function isAdmin(): bool

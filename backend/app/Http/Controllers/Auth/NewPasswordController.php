@@ -21,6 +21,10 @@ class NewPasswordController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $request->merge([
+            'email' => Str::lower(Str::squish($request->string('email')->toString())),
+        ]);
+
         $request->validate([
             'token' => ['required'],
             'email' => ['required', 'email'],
