@@ -7,7 +7,6 @@ const footerNav = [
         links: [
             { label: 'Home', href: '#hero' },
             { label: 'About', href: '#about' },
-            { label: 'Pricing', href: '#pricing' },
         ],
     },
     {

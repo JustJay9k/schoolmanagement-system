@@ -9,7 +9,6 @@ import { useAuth } from '@/hooks/auth'
 const navItems = [
     { label: 'Home', href: '#hero' },
     { label: 'About', href: '#about' },
-    { label: 'Pricing', href: '#pricing' },
     { label: 'Contact', href: '#contact' },
 ]
 
