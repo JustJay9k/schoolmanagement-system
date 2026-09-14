@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rules\Password;
 
 class ProfileSettingsController extends Controller
 {
@@ -37,6 +39,36 @@ class ProfileSettingsController extends Controller
         return response()->json([
             'message' => 'Personal settings updated successfully.',
             'user' => $user->fresh()->load('school:id,name'),
+        ]);
+    }
+
+    public function updatePassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        $user = $request->user();
+
+        if (! $user) {
+            abort(401);
+        }
+
+        if (! Hash::check($validated['current_password'], $user->password)) {
+            return response()->json([
+                'message' => 'The current password is incorrect.',
+                'errors' => [
+                    'current_password' => ['The current password is incorrect.'],
+                ],
+            ], 422);
+        }
+
+        $user->password = $validated['password'];
+        $user->save();
+
+        return response()->json([
+            'message' => 'Password updated successfully.',
         ]);
     }
 

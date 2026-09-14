@@ -74,6 +74,7 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 
 Route::middleware(['auth:sanctum', 'portal'])->prefix('settings')->group(function () {
     Route::post('/profile', [ProfileSettingsController::class, 'update']);
+    Route::put('/password', [ProfileSettingsController::class, 'updatePassword']);
 });
 
 Route::middleware(['auth:sanctum', 'portal'])->prefix('notifications')->group(function () {

@@ -3,10 +3,13 @@
 import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import styles from './settings.module.css'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import { useTheme } from '@/components/ThemeProvider'
 import { useAuth } from '@/hooks/auth'
 import Button from '@/components/Button'
 import InputError from '@/components/InputError'
+import Label from '@/components/Label'
+import PasswordInput from '@/components/PasswordInput'
 import axios from '@/lib/axios'
 import { formatRoleLabel } from '@/lib/userAccess'
 import Image from 'next/image'
@@ -48,6 +51,16 @@ export default function SettingsPage() {
     const [formErrors, setFormErrors] = useState({})
     const [status, setStatus] = useState(null)
     const [saving, setSaving] = useState(false)
+    const [passwordForm, setPasswordForm] = useState({
+        current_password: '',
+        password: '',
+        password_confirmation: '',
+    })
+    const [passwordErrors, setPasswordErrors] = useState({})
+    const [passwordStatus, setPasswordStatus] = useState(null)
+    const [changingPassword, setChangingPassword] = useState(false)
+    const [passwordCardOpen, setPasswordCardOpen] = useState(false)
+    const [confirmingPasswordChange, setConfirmingPasswordChange] = useState(false)
 
     useEffect(() => {
         if (!selectedFile) {
@@ -148,13 +161,58 @@ export default function SettingsPage() {
         }
     }
 
+    const updatePasswordField = (field, value) => {
+        setPasswordForm(current => ({
+            ...current,
+            [field]: value,
+        }))
+    }
+
+    const submitPasswordChange = async event => {
+        event.preventDefault()
+        setConfirmingPasswordChange(true)
+    }
+
+    const confirmPasswordChange = async () => {
+        setChangingPassword(true)
+        setPasswordErrors({})
+        setPasswordStatus(null)
+
+        try {
+            await axios.put('/api/settings/password', passwordForm)
+
+            setPasswordForm({
+                current_password: '',
+                password: '',
+                password_confirmation: '',
+            })
+            setPasswordStatus({
+                type: 'success',
+                message: 'Password updated successfully.',
+            })
+            setConfirmingPasswordChange(false)
+        } catch (error) {
+            setPasswordErrors(error?.response?.data?.errors ?? {})
+            setPasswordStatus({
+                type: 'error',
+                message:
+                    error?.response?.data?.message ??
+                    'Unable to update your password right now.',
+            })
+            setConfirmingPasswordChange(false)
+        } finally {
+            setChangingPassword(false)
+        }
+    }
+
     return (
-        <WorkspacePageShell
-            eyebrow="Personal Settings"
-            title="Profile and appearance"
-            description="Manage your own account-facing preferences here. System-wide administration is kept separate so profile photo, theme, and personal presentation stay in one place."
-        >
-            <section className={workspaceStyles.panelGrid}>
+        <>
+            <WorkspacePageShell
+                eyebrow="Personal Settings"
+                title="Profile and appearance"
+                description="Manage your own account-facing preferences here. System-wide administration is kept separate so profile photo, theme, and personal presentation stay in one place."
+            >
+                <section className={workspaceStyles.panelGrid}>
                 <article className={workspaceStyles.panel}>
                     <div className={workspaceStyles.panelHeader}>
                         <div>
@@ -246,6 +304,102 @@ export default function SettingsPage() {
                 </article>
 
                 <article className={workspaceStyles.panel}>
+                    <button
+                        type="button"
+                        className={styles.collapsibleHeader}
+                        onClick={() => setPasswordCardOpen(current => !current)}
+                        aria-expanded={passwordCardOpen}
+                        aria-controls="settings-password-form">
+                        <div>
+                            <p className={workspaceStyles.panelEyebrow}>Security</p>
+                            <h2 className={workspaceStyles.panelTitle}>Change password</h2>
+                        </div>
+                        <span
+                            className={`${styles.collapseIcon} ${
+                                passwordCardOpen ? styles.collapseIconOpen : ''
+                            }`}
+                            aria-hidden="true">
+                            +
+                        </span>
+                    </button>
+
+                    {passwordCardOpen ? (
+                        <form
+                            id="settings-password-form"
+                            onSubmit={submitPasswordChange}
+                            className={styles.passwordForm}>
+                            {passwordStatus ? (
+                                <p
+                                    className={`${styles.status} ${
+                                        passwordStatus.type === 'error' ? styles.statusError : ''
+                                    }`}>
+                                    {passwordStatus.message}
+                                </p>
+                            ) : null}
+
+                            <div>
+                                <Label htmlFor="current_password">Current password</Label>
+                                <PasswordInput
+                                    id="current_password"
+                                    value={passwordForm.current_password}
+                                    onChange={event =>
+                                        updatePasswordField('current_password', event.target.value)
+                                    }
+                                    autoComplete="current-password"
+                                    required
+                                />
+                                <InputError
+                                    messages={passwordErrors.current_password}
+                                    className="mt-2"
+                                />
+                            </div>
+
+                            <div>
+                                <Label htmlFor="new_password">New password</Label>
+                                <PasswordInput
+                                    id="new_password"
+                                    value={passwordForm.password}
+                                    onChange={event =>
+                                        updatePasswordField('password', event.target.value)
+                                    }
+                                    autoComplete="new-password"
+                                    required
+                                />
+                                <InputError messages={passwordErrors.password} className="mt-2" />
+                            </div>
+
+                            <div>
+                                <Label htmlFor="password_confirmation">
+                                    Confirm new password
+                                </Label>
+                                <PasswordInput
+                                    id="password_confirmation"
+                                    value={passwordForm.password_confirmation}
+                                    onChange={event =>
+                                        updatePasswordField(
+                                            'password_confirmation',
+                                            event.target.value,
+                                        )
+                                    }
+                                    autoComplete="new-password"
+                                    required
+                                />
+                                <InputError
+                                    messages={passwordErrors.password_confirmation}
+                                    className="mt-2"
+                                />
+                            </div>
+
+                            <div className={styles.uploadActions}>
+                                <Button disabled={changingPassword}>
+                                    {changingPassword ? 'Updating...' : 'Update password'}
+                                </Button>
+                            </div>
+                        </form>
+                    ) : null}
+                </article>
+
+                <article className={workspaceStyles.panel}>
                     <div className={workspaceStyles.panelHeader}>
                         <div>
                             <p className={workspaceStyles.panelEyebrow}>Appearance</p>
@@ -325,7 +479,24 @@ export default function SettingsPage() {
                     </div>
                 </article>
 
-            </section>
-        </WorkspacePageShell>
+                </section>
+            </WorkspacePageShell>
+
+            <ConfirmDialog
+                open={confirmingPasswordChange}
+                eyebrow="Security confirmation"
+                title="Update your password?"
+                message="You will use the new password the next time you sign in."
+                confirmLabel="Update password"
+                busyLabel="Updating..."
+                busy={changingPassword}
+                onClose={() => {
+                    if (!changingPassword) {
+                        setConfirmingPasswordChange(false)
+                    }
+                }}
+                onConfirm={confirmPasswordChange}
+            />
+        </>
     )
 }
