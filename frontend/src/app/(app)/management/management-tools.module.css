@@ -5,6 +5,55 @@
     align-items: center;
 }
 
+.tabList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 0.75rem;
+}
+
+.tabButton {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-card-soft);
+    color: var(--muted);
+    padding: 0.7rem 1rem;
+    font-size: 0.84rem;
+    font-weight: 800;
+    transition:
+        border-color 140ms ease,
+        background-color 140ms ease,
+        color 140ms ease;
+}
+
+.tabButtonActive {
+    border-color: var(--accent);
+    background: var(--surface-tint);
+    color: var(--accent-strong);
+}
+
+.requestBadge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.32rem 0.7rem;
+    font-size: 0.76rem;
+    font-weight: 800;
+}
+
+.requestBadgePending {
+    border: 1px solid var(--status-info-border);
+    background: var(--status-info-bg);
+    color: var(--status-info-ink);
+}
+
+.requestBadgeDenied {
+    border: 1px solid var(--status-error-border);
+    background: var(--status-error-bg);
+    color: var(--status-error-ink);
+}
+
 .notice {
     border: 1px solid var(--line);
     border-radius: 1rem;

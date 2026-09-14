@@ -47,6 +47,11 @@ class UpdateFormTeacherAllocationRequest extends FormRequest
                     return;
                 }
 
+                if ($teacher->school_id !== $this->user()?->school_id) {
+                    $validator->errors()->add('teacher', 'Choose a teacher from your school.');
+                    return;
+                }
+
                 $className = $this->string('assigned_class_name')->toString();
 
                 if ($className === '') {

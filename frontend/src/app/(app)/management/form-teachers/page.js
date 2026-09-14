@@ -37,6 +37,8 @@ export default function ManagementFormTeachersPage() {
     const { user } = useAuth({ middleware: 'auth' })
     const { showToast } = useToast()
     const [teachers, setTeachers] = useState([])
+    const [teacherRequests, setTeacherRequests] = useState([])
+    const [activeTab, setActiveTab] = useState('allocations')
     const [formTeacherOptions, setFormTeacherOptions] = useState(null)
     const [subjectAssignments, setSubjectAssignments] = useState([])
     const [subjectAssignmentOptions, setSubjectAssignmentOptions] = useState(
@@ -53,8 +55,10 @@ export default function ManagementFormTeachersPage() {
     const [savingSubjectAssignment, setSavingSubjectAssignment] =
         useState(false)
     const [deletingAssignmentId, setDeletingAssignmentId] = useState(null)
+    const [processingRequest, setProcessingRequest] = useState(null)
     const [loadError, setLoadError] = useState(null)
     const [confirmingAssignment, setConfirmingAssignment] = useState(null)
+    const [confirmingRequest, setConfirmingRequest] = useState(null)
 
     const loadData = async () => {
         setLoading(true)
@@ -69,6 +73,7 @@ export default function ManagementFormTeachersPage() {
             const nextTeachers = formTeachersResponse.data?.teachers ?? []
 
             setTeachers(nextTeachers)
+            setTeacherRequests(formTeachersResponse.data?.requests ?? [])
             setFormTeacherOptions(formTeachersResponse.data?.options ?? null)
             setFormTeacherDrafts(buildFormTeacherDrafts(nextTeachers))
             setSubjectAssignments(
@@ -102,8 +107,11 @@ export default function ManagementFormTeachersPage() {
             formTeachers: teachers.filter(teacher => teacher.is_form_teacher)
                 .length,
             subjectAllocations: subjectAssignments.length,
+            pendingRequests: teacherRequests.filter(
+                request => request.status === 'pending',
+            ).length,
         }),
-        [teachers, subjectAssignments],
+        [teachers, subjectAssignments, teacherRequests],
     )
 
     const availableClasses = formTeacherOptions?.secondaryClasses ?? []
@@ -230,6 +238,34 @@ export default function ManagementFormTeachersPage() {
         }
     }
 
+    const respondToTeacherRequest = async (teacher, action) => {
+        setProcessingRequest(`${action}-${teacher.id}`)
+
+        try {
+            const response = await axios.post(
+                `/api/management/form-teachers/${teacher.id}/${action}`,
+            )
+
+            showToast({
+                type: 'success',
+                message:
+                    response.data?.message ??
+                    `Teacher request ${action === 'approve' ? 'accepted' : 'denied'}.`,
+            })
+            await loadData()
+        } catch (error) {
+            showToast({
+                type: 'error',
+                message:
+                    error?.response?.data?.message ??
+                    'Unable to update the teacher request.',
+            })
+        } finally {
+            setProcessingRequest(null)
+            setConfirmingRequest(null)
+        }
+    }
+
     if (!user) {
         return null
     }
@@ -281,6 +317,7 @@ export default function ManagementFormTeachersPage() {
                     ['Secondary teachers', stats.totalTeachers],
                     ['Form teachers', stats.formTeachers],
                     ['Subject allocations', stats.subjectAllocations],
+                    ['Pending requests', stats.pendingRequests],
                 ].map(([label, value]) => (
                     <article key={label} className={workspaceStyles.statCard}>
                         <p className={workspaceStyles.statLabel}>{label}</p>
@@ -289,6 +326,178 @@ export default function ManagementFormTeachersPage() {
                 ))}
             </section>
 
+            <div className={managementStyles.tabList} role="tablist" aria-label="Teacher allocation tabs">
+                <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === 'allocations'}
+                    onClick={() => setActiveTab('allocations')}
+                    className={`${managementStyles.tabButton} ${
+                        activeTab === 'allocations' ? managementStyles.tabButtonActive : ''
+                    }`}>
+                    Allocations
+                </button>
+                <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === 'requests'}
+                    onClick={() => setActiveTab('requests')}
+                    className={`${managementStyles.tabButton} ${
+                        activeTab === 'requests' ? managementStyles.tabButtonActive : ''
+                    }`}>
+                    Approval requests
+                </button>
+            </div>
+
+            {activeTab === 'requests' ? (
+                <section className={managementStyles.summaryCards}>
+                    <article className={workspaceStyles.fullPanel}>
+                        <div className={workspaceStyles.panelHeader}>
+                            <div>
+                                <p className={workspaceStyles.panelEyebrow}>
+                                    Teacher Requests
+                                </p>
+                                <h2 className={workspaceStyles.panelTitle}>
+                                    Account approval requests
+                                </h2>
+                            </div>
+                        </div>
+
+                        <div className={workspaceStyles.tableWrap}>
+                            <table className={workspaceStyles.table}>
+                                <thead>
+                                    <tr>
+                                        <th>Teacher</th>
+                                        <th>Request</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan="4" className={managementStyles.muted}>
+                                                Loading teacher requests...
+                                            </td>
+                                        </tr>
+                                    ) : teacherRequests.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="4" className={managementStyles.muted}>
+                                                No teacher account requests yet.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        teacherRequests.map(request => {
+                                            const approving =
+                                                processingRequest ===
+                                                `approve-${request.id}`
+                                            const denying =
+                                                processingRequest ===
+                                                `deny-${request.id}`
+                                            const canRespond =
+                                                request.status === 'pending' &&
+                                                processingRequest === null
+
+                                            return (
+                                                <tr key={request.id}>
+                                                    <td>
+                                                        <strong>{request.name}</strong>
+                                                        <small>{request.email}</small>
+                                                    </td>
+                                                    <td>
+                                                        <strong>
+                                                            {request.school_track === 'primary'
+                                                                ? 'Primary teacher'
+                                                                : 'Secondary teacher'}
+                                                        </strong>
+                                                        <small>
+                                                            {request.assigned_class_name
+                                                                ? `Requested class: ${request.assigned_class_name}`
+                                                                : 'No class responsibility requested'}
+                                                        </small>
+                                                    </td>
+                                                    <td>
+                                                        <span
+                                                            className={`${managementStyles.requestBadge} ${
+                                                                request.status === 'pending'
+                                                                    ? managementStyles.requestBadgePending
+                                                                    : managementStyles.requestBadgeDenied
+                                                            }`}>
+                                                            {request.status_label}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div className={managementStyles.tableActions}>
+                                                            <Button
+                                                                type="button"
+                                                                disabled={!canRespond}
+                                                                onClick={() =>
+                                                                    setConfirmingRequest({
+                                                                        teacher: request,
+                                                                        action: 'approve',
+                                                                    })
+                                                                }>
+                                                                {approving ? 'Accepting...' : 'Accept'}
+                                                            </Button>
+                                                            <button
+                                                                type="button"
+                                                                disabled={!canRespond}
+                                                                onClick={() =>
+                                                                    setConfirmingRequest({
+                                                                        teacher: request,
+                                                                        action: 'deny',
+                                                                    })
+                                                                }
+                                                                className={managementStyles.dangerButton}>
+                                                                {denying ? 'Denying...' : 'Deny'}
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+
+                    <article className={workspaceStyles.panel}>
+                        <div className={workspaceStyles.panelHeader}>
+                            <div>
+                                <p className={workspaceStyles.panelEyebrow}>
+                                    Access
+                                </p>
+                                <h2 className={workspaceStyles.panelTitle}>
+                                    What happens next
+                                </h2>
+                            </div>
+                        </div>
+
+                        <div className={workspaceStyles.list}>
+                            <div className={workspaceStyles.listItem}>
+                                <div>
+                                    <strong>Accepted teachers can sign in</strong>
+                                    <p>
+                                        Their account becomes active and appears in
+                                        allocation tools.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className={workspaceStyles.listItem}>
+                                <div>
+                                    <strong>Denied teachers stay blocked</strong>
+                                    <p>
+                                        They will see a denial message when they try
+                                        to sign in.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </section>
+            ) : (
+                <>
             <section className={managementStyles.summaryCards}>
                 <article className={workspaceStyles.fullPanel}>
                     <div className={workspaceStyles.panelHeader}>
@@ -696,6 +905,8 @@ export default function ManagementFormTeachersPage() {
                     </form>
                 </article>
             </section>
+                </>
+            )}
             <ConfirmDialog
                 open={Boolean(confirmingAssignment)}
                 eyebrow="Remove allocation"
@@ -718,6 +929,51 @@ export default function ManagementFormTeachersPage() {
                 onConfirm={() => {
                     if (confirmingAssignment) {
                         deleteSubjectAssignment(confirmingAssignment)
+                    }
+                }}
+            />
+            <ConfirmDialog
+                open={Boolean(confirmingRequest)}
+                eyebrow={
+                    confirmingRequest?.action === 'approve'
+                        ? 'Accept request'
+                        : 'Deny request'
+                }
+                title={
+                    confirmingRequest?.action === 'approve'
+                        ? 'Accept this teacher account?'
+                        : 'Deny this teacher account?'
+                }
+                message={
+                    confirmingRequest?.teacher
+                        ? confirmingRequest.action === 'approve'
+                            ? `${confirmingRequest.teacher.name} will be able to sign in and appear in teacher allocation tools.`
+                            : `${confirmingRequest.teacher.name} will remain blocked from signing in and will see that the request was denied.`
+                        : ''
+                }
+                confirmLabel={
+                    confirmingRequest?.action === 'approve'
+                        ? 'Accept account'
+                        : 'Deny account'
+                }
+                busyLabel={
+                    confirmingRequest?.action === 'approve'
+                        ? 'Accepting...'
+                        : 'Denying...'
+                }
+                tone={confirmingRequest?.action === 'deny' ? 'danger' : 'default'}
+                busy={Boolean(processingRequest)}
+                onClose={() => {
+                    if (!processingRequest) {
+                        setConfirmingRequest(null)
+                    }
+                }}
+                onConfirm={() => {
+                    if (confirmingRequest) {
+                        respondToTeacherRequest(
+                            confirmingRequest.teacher,
+                            confirmingRequest.action,
+                        )
                     }
                 }}
             />

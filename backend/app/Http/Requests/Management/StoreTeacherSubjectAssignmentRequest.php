@@ -40,6 +40,11 @@ class StoreTeacherSubjectAssignmentRequest extends FormRequest
                     return;
                 }
 
+                if ($teacher->school_id !== $this->user()?->school_id) {
+                    $validator->errors()->add('teacher_id', 'Choose a teacher from your school.');
+                    return;
+                }
+
                 if ($teacher->status !== UserStatus::Active || $teacher->school_track !== 'secondary') {
                     $validator->errors()->add('teacher_id', 'Choose an active secondary teacher account.');
                 }

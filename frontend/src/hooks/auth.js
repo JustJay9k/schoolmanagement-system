@@ -157,12 +157,19 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
 
             if (response.data.token) {
                 setToken(response.data.token)
+
+                await mutate()
+
+                if (redirectIfAuthenticated) {
+                    router.replace(redirectIfAuthenticated)
+                }
+
+                return true
             }
 
-            await mutate()
-
-            if (redirectIfAuthenticated) {
-                router.replace(redirectIfAuthenticated)
+            if (response.data.status) {
+                setStatus?.(createStatus(response.data.status, 'success'))
+                router.replace('/register/pending')
             }
 
             return true

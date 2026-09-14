@@ -118,6 +118,8 @@ Route::middleware(['auth:sanctum', 'timetable-manager'])->prefix('management')->
 
     Route::get('/form-teachers', [ManagementFormTeacherApiController::class, 'index']);
     Route::put('/form-teachers/{teacher}', [ManagementFormTeacherApiController::class, 'update']);
+    Route::post('/form-teachers/{teacher}/approve', [ManagementFormTeacherApiController::class, 'approve']);
+    Route::post('/form-teachers/{teacher}/deny', [ManagementFormTeacherApiController::class, 'deny']);
     Route::get('/teacher-subject-assignments', [ManagementTeacherSubjectAssignmentApiController::class, 'index']);
     Route::post('/teacher-subject-assignments', [ManagementTeacherSubjectAssignmentApiController::class, 'store']);
     Route::delete('/teacher-subject-assignments/{assignment}', [ManagementTeacherSubjectAssignmentApiController::class, 'destroy']);

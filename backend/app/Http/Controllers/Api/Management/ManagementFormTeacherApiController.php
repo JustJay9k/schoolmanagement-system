@@ -9,27 +9,41 @@ use App\Http\Requests\Management\UpdateFormTeacherAllocationRequest;
 use App\Models\User;
 use App\Support\SchoolContextOptions;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ManagementFormTeacherApiController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
+        $schoolId = $request->user()?->school_id;
         $teachers = User::query()
             ->where('role', UserRole::Teacher)
+            ->where('status', UserStatus::Active)
+            ->where('school_id', $schoolId)
             ->where('school_track', 'secondary')
             ->orderBy('name')
             ->get()
             ->map(fn (User $teacher): array => $this->serializeTeacher($teacher))
             ->values();
 
+        $requests = User::query()
+            ->where('role', UserRole::Teacher)
+            ->where('school_id', $schoolId)
+            ->whereIn('status', [UserStatus::Pending, UserStatus::Denied])
+            ->latest()
+            ->get()
+            ->map(fn (User $teacher): array => $this->serializeTeacher($teacher))
+            ->values();
+
         return response()->json([
             'teachers' => $teachers,
+            'requests' => $requests,
             'allocations' => $teachers
                 ->filter(fn (array $teacher): bool => $teacher['is_form_teacher'])
                 ->values(),
             'options' => [
-                'secondaryClasses' => SchoolContextOptions::classesByTrack(request()->user()?->school_id)['secondary'] ?? [],
-                'takenClasses' => SchoolContextOptions::takenClassesByTrack(null, request()->user()?->school_id)['secondary'] ?? [],
+                'secondaryClasses' => SchoolContextOptions::classesByTrack($schoolId)['secondary'] ?? [],
+                'takenClasses' => SchoolContextOptions::takenClassesByTrack(null, $schoolId)['secondary'] ?? [],
             ],
         ]);
     }
@@ -52,6 +66,35 @@ class ManagementFormTeacherApiController extends Controller
         ]);
     }
 
+    public function approve(Request $request, User $teacher): JsonResponse
+    {
+        $this->authorizeTeacherRequest($request, $teacher);
+
+        $teacher->update([
+            'status' => UserStatus::Active,
+        ]);
+
+        return response()->json([
+            'message' => "{$teacher->name}'s teacher account request was accepted.",
+            'teacher' => $this->serializeTeacher($teacher->fresh()),
+        ]);
+    }
+
+    public function deny(Request $request, User $teacher): JsonResponse
+    {
+        $this->authorizeTeacherRequest($request, $teacher);
+
+        $teacher->update([
+            'status' => UserStatus::Denied,
+            'assigned_class_name' => null,
+        ]);
+
+        return response()->json([
+            'message' => "{$teacher->name}'s teacher account request was denied.",
+            'teacher' => $this->serializeTeacher($teacher->fresh()),
+        ]);
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -69,6 +112,17 @@ class ManagementFormTeacherApiController extends Controller
             'is_form_teacher' => $teacher->isFormTeacher(),
             'teaching_roles' => $teacher->teachingRoles(),
             'can_receive_form_class' => $teacher->status === UserStatus::Active,
+            'created_at' => $teacher->created_at?->toIso8601String(),
         ];
+    }
+
+    private function authorizeTeacherRequest(Request $request, User $teacher): void
+    {
+        abort_unless(
+            $teacher->role === UserRole::Teacher &&
+                $teacher->school_id === $request->user()?->school_id &&
+                in_array($teacher->status, [UserStatus::Pending, UserStatus::Denied], true),
+            404,
+        );
     }
 }

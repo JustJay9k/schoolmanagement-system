@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Enums\UserStatus;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -50,6 +51,17 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        $user = Auth::user();
+
+        if ($user?->status !== UserStatus::Active) {
+            Auth::logout();
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => [$this->statusMessage($user?->status)],
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 
@@ -82,5 +94,16 @@ class LoginRequest extends FormRequest
     public function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->input('email')).'|'.$this->ip());
+    }
+
+    private function statusMessage(?UserStatus $status): string
+    {
+        return match ($status) {
+            UserStatus::Pending => 'Your teacher account request is waiting for your head teacher to accept it.',
+            UserStatus::Denied => 'Your teacher account request was denied by your head teacher.',
+            UserStatus::Inactive => 'This account is inactive. Contact your school administrator for help.',
+            UserStatus::Suspended => 'This account has been suspended. Contact your school administrator for help.',
+            default => 'This account cannot sign in right now.',
+        };
     }
 }

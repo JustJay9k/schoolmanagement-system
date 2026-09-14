@@ -16,10 +16,14 @@ class ManagementTeacherSubjectAssignmentApiController extends Controller
 {
     public function index(): JsonResponse
     {
+        $schoolId = request()->user()?->school_id;
+
         return response()->json([
             'assignments' => TeacherSubjectAssignment::query()
                 ->with(['teacher:id,name,email,assigned_class_name,school_track,status', 'subject:id,name,code,school_track'])
                 ->where('school_track', 'secondary')
+                ->whereHas('teacher', fn ($query) => $query->where('school_id', $schoolId))
+                ->whereHas('subject', fn ($query) => $query->where('school_id', $schoolId))
                 ->orderBy('class_name')
                 ->orderBy('subject_id')
                 ->get()
@@ -49,6 +53,12 @@ class ManagementTeacherSubjectAssignmentApiController extends Controller
 
     public function destroy(TeacherSubjectAssignment $assignment): JsonResponse
     {
+        abort_unless(
+            $assignment->teacher?->school_id === request()->user()?->school_id &&
+                $assignment->subject?->school_id === request()->user()?->school_id,
+            404,
+        );
+
         $assignment->delete();
 
         return response()->json([
@@ -67,6 +77,7 @@ class ManagementTeacherSubjectAssignmentApiController extends Controller
             'teachers' => User::query()
                 ->where('role', UserRole::Teacher)
                 ->where('status', UserStatus::Active)
+                ->where('school_id', request()->user()?->school_id)
                 ->where('school_track', 'secondary')
                 ->orderBy('name')
                 ->get()

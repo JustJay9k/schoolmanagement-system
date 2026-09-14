@@ -171,11 +171,15 @@ class RegisteredUserController extends Controller
             )
             : null;
 
+        $userStatus = $accountType === 'teacher'
+            ? UserStatus::Pending
+            : UserStatus::Active;
+
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'role' => $accountType === 'guardian' ? UserRole::Guardian : UserRole::Teacher,
-            'status' => UserStatus::Active,
+            'status' => $userStatus,
             'school_id' => $school?->id,
             'linked_student_record_id' => $linkedStudent?->id,
             'school_track' => $accountType === 'teacher'
@@ -190,6 +194,16 @@ class RegisteredUserController extends Controller
         UserNotificationCenter::welcome($user);
 
         event(new Registered($user));
+
+        if ($accountType === 'teacher') {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'status' => 'Your teacher account request has been sent. Your head teacher must accept it before you can sign in.',
+                ], 201);
+            }
+
+            return response()->noContent(201);
+        }
 
         Auth::login($user);
 
@@ -340,4 +354,3 @@ class RegisteredUserController extends Controller
         return false;
     }
 }
-
