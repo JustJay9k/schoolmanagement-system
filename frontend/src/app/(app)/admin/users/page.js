@@ -544,8 +544,10 @@ export default function AdminUsersPage() {
                         </label>
                     </div>
 
-                    <div className={workspaceStyles.tableWrap}>
-                        <table className={workspaceStyles.table}>
+                    <div
+                        className={`${workspaceStyles.tableWrap} ${adminStyles.userTableWrap}`}>
+                        <table
+                            className={`${workspaceStyles.table} ${adminStyles.userAccountsTable}`}>
                             <thead>
                                 <tr>
                                     <th>User</th>
@@ -562,13 +564,17 @@ export default function AdminUsersPage() {
                             <tbody>
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="9" className={adminStyles.muted}>
+                                        <td
+                                            colSpan="9"
+                                            className={`${adminStyles.muted} ${adminStyles.tableStateCell}`}>
                                             Loading user accounts...
                                         </td>
                                     </tr>
                                 ) : filteredUsers.length === 0 ? (
                                     <tr>
-                                        <td colSpan="9" className={adminStyles.muted}>
+                                        <td
+                                            colSpan="9"
+                                            className={`${adminStyles.muted} ${adminStyles.tableStateCell}`}>
                                             No users match the current filters.
                                         </td>
                                     </tr>
@@ -583,20 +589,20 @@ export default function AdminUsersPage() {
 
                                                 return (
                                                     <>
-                                            <td>
+                                            <td data-label="User">
                                                 <strong>{item.name}</strong>
                                                 <small>{item.email}</small>
                                             </td>
-                                            <td>{item.role_label}</td>
-                                            <td>
+                                            <td data-label="Role">{item.role_label}</td>
+                                            <td data-label="School">
                                                 <strong>{item.school_name ?? 'Unassigned'}</strong>
                                                 <small>
                                                     {item.school_name
                                                         ? 'Assigned School'
-                                                        : 'Needs assignment'}
+                                                    : 'Needs assignment'}
                                                 </small>
                                             </td>
-                                            <td>
+                                            <td data-label="Assignment">
                                                 {assignmentMeta ? (
                                                     <>
                                                         <strong>{assignmentMeta.trackLabel}</strong>
@@ -607,7 +613,7 @@ export default function AdminUsersPage() {
                                                     <small>All-school access</small>
                                                 )}
                                             </td>
-                                            <td>
+                                            <td data-label="Status">
                                                 <span
                                                     className={`${adminStyles.statusBadge} ${
                                                         item.status === 'active'
@@ -620,14 +626,14 @@ export default function AdminUsersPage() {
                                                     {item.status_label}
                                                 </span>
                                             </td>
-                                            <td>
+                                            <td data-label="Verified">
                                                 {item.email_verified_at
                                                     ? 'Verified'
                                                     : 'Pending'}
                                             </td>
-                                            <td>{formatDate(item.created_at)}</td>
-                                            <td>{formatDate(item.last_login_at)}</td>
-                                            <td>
+                                            <td data-label="Created">{formatDate(item.created_at)}</td>
+                                            <td data-label="Last login">{formatDate(item.last_login_at)}</td>
+                                            <td data-label="Actions">
                                                 <div
                                                     className={
                                                         adminStyles.tableActions

@@ -270,6 +270,18 @@
     gap: 0.5rem;
 }
 
+.userTableWrap {
+    width: 100%;
+}
+
+.userAccountsTable td {
+    min-width: 7rem;
+}
+
+.tableStateCell {
+    text-align: center;
+}
+
 .srOnly {
     position: absolute;
     width: 1px;
@@ -902,5 +914,74 @@
     .structureRoleBadge,
     .classCountBadge {
         width: fit-content;
+    }
+}
+
+@media (max-width: 760px) {
+    .userTableWrap {
+        overflow-x: visible;
+    }
+
+    .userAccountsTable {
+        border-collapse: separate;
+        border-spacing: 0 0.8rem;
+    }
+
+    .userAccountsTable thead {
+        display: none;
+    }
+
+    .userAccountsTable,
+    .userAccountsTable tbody,
+    .userAccountsTable tr,
+    .userAccountsTable td {
+        display: block;
+        width: 100%;
+    }
+
+    .userAccountsTable tr {
+        border: 1px solid var(--line);
+        border-radius: 1rem;
+        background: var(--surface-card-muted);
+        padding: 0.25rem 0;
+        overflow: hidden;
+        box-shadow: 0 12px 24px var(--shadow-soft);
+    }
+
+    .userAccountsTable td {
+        display: grid;
+        grid-template-columns: minmax(5.8rem, 0.38fr) minmax(0, 1fr);
+        gap: 0.75rem;
+        align-items: start;
+        border-bottom: 1px solid var(--line);
+        padding: 0.72rem 0.85rem;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .userAccountsTable td:last-child {
+        border-bottom: 0;
+    }
+
+    .userAccountsTable td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 0.64rem;
+        font-weight: 800;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+    }
+
+    .userAccountsTable .tableStateCell {
+        display: block;
+        text-align: left;
+    }
+
+    .userAccountsTable .tableStateCell::before {
+        content: none;
+    }
+
+    .userAccountsTable .tableActions {
+        justify-content: flex-start;
     }
 }
