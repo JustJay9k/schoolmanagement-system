@@ -1,0 +1,89 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 240;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgba(10, 16, 24, 0.62);
+    backdrop-filter: blur(10px);
+    pointer-events: all;
+}
+
+.card {
+    width: min(100%, 34rem);
+    border: 1px solid color-mix(in srgb, var(--danger) 24%, var(--line));
+    border-radius: 1.2rem;
+    background: var(--panel-strong);
+    box-shadow: 0 28px 72px var(--shadow-strong);
+    padding: 1.15rem;
+}
+
+.eyebrow {
+    color: var(--danger);
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.title {
+    margin-top: 0.3rem;
+    color: var(--ink);
+    font-size: 1.45rem;
+    font-weight: 800;
+}
+
+.message {
+    margin-top: 0.7rem;
+    color: var(--muted);
+}
+
+.statusRow {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-top: 1rem;
+    border: 1px solid color-mix(in srgb, var(--danger) 18%, transparent);
+    border-radius: 0.85rem;
+    background: color-mix(in srgb, var(--danger) 8%, var(--surface-card-soft));
+    color: var(--ink);
+    padding: 0.75rem 0.85rem;
+    font-size: 0.86rem;
+    font-weight: 800;
+}
+
+.textButton {
+    display: inline-flex;
+    margin-top: 0.95rem;
+    border: 0;
+    background: transparent;
+    color: var(--accent);
+    font-size: 0.9rem;
+    font-weight: 900;
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+}
+
+.textButton:hover {
+    color: var(--accent-strong);
+}
+
+.statusDot {
+    width: 0.55rem;
+    height: 0.55rem;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: var(--danger);
+    box-shadow: 0 0 0 0.32rem color-mix(in srgb, var(--danger) 16%, transparent);
+}
+
+@media (max-width: 640px) {
+    .card {
+        padding: 1rem;
+    }
+
+    .title {
+        font-size: 1.25rem;
+    }
+}

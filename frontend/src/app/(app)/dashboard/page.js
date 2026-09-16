@@ -1142,10 +1142,10 @@ const Dashboard = () => {
                             <span className={styles.alertTag}>Admin</span>
                         </a>
 
-                        <a href="/admin/school-structure" className={styles.alertCard}>
+                        <a href="/admin/schools" className={styles.alertCard}>
                             <div>
-                                <strong>School Structure</strong>
-                                <p>Set up the class structure used across the portal.</p>
+                                <strong>Schools</strong>
+                                <p>Create schools, rename them, and lock access when needed.</p>
                             </div>
                             <span className={styles.alertTag}>Admin</span>
                         </a>

@@ -38,7 +38,7 @@ class ProfileSettingsController extends Controller
 
         return response()->json([
             'message' => 'Personal settings updated successfully.',
-            'user' => $user->fresh()->load('school:id,name'),
+            'user' => $user->fresh()->load('school:id,name,is_locked,locked_at'),
         ]);
     }
 

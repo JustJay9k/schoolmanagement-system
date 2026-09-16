@@ -88,7 +88,15 @@ class User extends Authenticatable
 
     public function canAccessPortal(): bool
     {
-        return $this->isActive() && in_array($this->role, [
+        if (! $this->isActive()) {
+            return false;
+        }
+
+        if (! $this->isAdmin() && $this->schoolIsLocked()) {
+            return false;
+        }
+
+        return in_array($this->role, [
             UserRole::Admin,
             UserRole::Management,
             UserRole::Teacher,
@@ -104,23 +112,36 @@ class User extends Authenticatable
 
     public function canManageTimetables(): bool
     {
-        return $this->isHeadTeacher() && $this->isActive();
+        return $this->isHeadTeacher() && $this->isActive() && ! $this->schoolIsLocked();
     }
 
     public function canManageSchoolStructure(): bool
     {
         return $this->isActive()
-            && ($this->isAdmin() || ($this->isHeadTeacher() && filled($this->school_id)));
+            && ($this->isAdmin() || ($this->isHeadTeacher() && filled($this->school_id) && ! $this->schoolIsLocked()));
     }
 
     public function canManageFinance(): bool
     {
-        return $this->isAccountant() && $this->isActive();
+        return $this->isAccountant() && $this->isActive() && ! $this->schoolIsLocked();
     }
 
     public function canAccessAdminPanel(): bool
     {
         return $this->canManageAdministration();
+    }
+
+    public function schoolIsLocked(): bool
+    {
+        if (! $this->school_id) {
+            return false;
+        }
+
+        $school = $this->relationLoaded('school')
+            ? $this->school
+            : $this->school()->first(['id', 'is_locked']);
+
+        return (bool) $school?->is_locked;
     }
 
     public function isFormTeacher(): bool

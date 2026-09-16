@@ -15,6 +15,10 @@ class EnsureUserCanAccessPortal
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if ($request->user() && ! $request->user()->isAdmin() && $request->user()->schoolIsLocked()) {
+            abort(403, 'Your school has been locked by the administrator. Actions are unavailable until it is unlocked.');
+        }
+
         abort_unless(
             $request->user()?->canAccessPortal(),
             403,

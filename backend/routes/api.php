@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Admin\AdminSchoolStructureApiController;
 use App\Http\Controllers\Api\Admin\AdminDeletedStudentRecordApiController;
+use App\Http\Controllers\Api\Admin\AdminSchoolApiController;
 use App\Http\Controllers\Api\Admin\AdminUserApiController;
 use App\Http\Controllers\Api\AnnouncementAttachmentFileController;
 use App\Http\Controllers\Api\Finance\FinanceMerchandiseApiController;
@@ -67,7 +68,7 @@ Route::get('/homework/submissions/attachments/{attachment}/file', HomeworkSubmis
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user()?->fresh()->load([
-        'school:id,name',
+        'school:id,name,is_locked,locked_at',
         'linkedStudentRecord:id,school_id,school_track,class_name,full_name',
     ]);
 });
@@ -89,6 +90,13 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::put('/users/{user}', [AdminUserApiController::class, 'update']);
     Route::patch('/users/{user}/status', [AdminUserApiController::class, 'updateStatus']);
     Route::delete('/users/{user}', [AdminUserApiController::class, 'destroy']);
+
+    Route::get('/schools', [AdminSchoolApiController::class, 'index']);
+    Route::post('/schools', [AdminSchoolApiController::class, 'store']);
+    Route::put('/schools/{school}', [AdminSchoolApiController::class, 'update']);
+    Route::post('/schools/{school}/lock', [AdminSchoolApiController::class, 'lock']);
+    Route::post('/schools/{school}/unlock', [AdminSchoolApiController::class, 'unlock']);
+    Route::delete('/schools/{school}', [AdminSchoolApiController::class, 'destroy']);
 
     Route::get('/school-structure', [AdminSchoolStructureApiController::class, 'show']);
     Route::put('/school-structure', [AdminSchoolStructureApiController::class, 'update']);

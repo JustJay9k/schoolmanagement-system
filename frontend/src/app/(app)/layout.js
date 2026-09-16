@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/auth'
 import Navigation from '@/app/(app)/Navigation'
 import Loading from '@/app/(app)/Loading'
+import SchoolLockOverlay from '@/app/(app)/SchoolLockOverlay'
+import { isAdminUser } from '@/lib/userAccess'
 
 const idleTimeoutMs = 10 * 60 * 1000
 const activityEvents = [
@@ -16,8 +18,11 @@ const activityEvents = [
 ]
 
 const AppLayout = ({ children }) => {
-    const { user, logout } = useAuth({ middleware: 'auth' })
+    const { user, logout, mutate } = useAuth({ middleware: 'auth' })
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+    const schoolLocked = Boolean(
+        user?.school?.is_locked && !isAdminUser(user),
+    )
     const toggleSidebar = useCallback(() => {
         setSidebarCollapsed(current => !current)
     }, [])
@@ -95,6 +100,20 @@ const AppLayout = ({ children }) => {
         }
     }, [logout, user])
 
+    useEffect(() => {
+        if (!schoolLocked) {
+            return undefined
+        }
+
+        const intervalId = window.setInterval(() => {
+            mutate()
+        }, 10000)
+
+        return () => {
+            window.clearInterval(intervalId)
+        }
+    }, [mutate, schoolLocked])
+
     if (!user) {
         return <Loading />
     }
@@ -108,6 +127,13 @@ const AppLayout = ({ children }) => {
             />
 
             <main className="appShellMain pb-12">{children}</main>
+
+            {schoolLocked ? (
+                <SchoolLockOverlay
+                    schoolName={user?.school?.name}
+                    onReturnToLogin={() => logout('/login')}
+                />
+            ) : null}
         </div>
     )
 }

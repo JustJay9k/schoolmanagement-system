@@ -264,7 +264,7 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
             )
     }
 
-    const logout = async () => {
+    const logout = async (redirectPath = '/login') => {
         if (isLoggingOutRef.current) return
 
         isLoggingOutRef.current = true
@@ -286,7 +286,7 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
         removeToken()
         await mutate(null, false)
 
-        window.location.pathname = '/login'
+        window.location.pathname = redirectPath
     }
 
     useEffect(() => {
@@ -309,6 +309,7 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
 
     return {
         user,
+        mutate,
         register,
         login,
         forgotPassword,

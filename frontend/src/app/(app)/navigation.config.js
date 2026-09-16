@@ -29,7 +29,7 @@ const adminNavItems = [
     { label: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
     { label: 'Notifications', href: '/notifications', icon: 'notifications' },
     { label: 'User Accounts', href: '/admin/users', icon: 'users' },
-    { label: 'School Structure', href: '/admin/school-structure', icon: 'schoolStructure' },
+    { label: 'Schools', href: '/admin/schools', icon: 'schoolStructure' },
     { label: 'Deleted Records', href: '/admin/deleted-records', icon: 'deletedRecords' },
     { label: 'Settings', href: '/settings', icon: 'settings' },
 ]
