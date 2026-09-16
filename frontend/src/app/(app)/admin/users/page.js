@@ -993,6 +993,12 @@ export default function AdminUsersPage() {
                                     </span>
                                     <PasswordInput
                                         value={form.password}
+                                        wrapperClassName={
+                                            adminStyles.accountPasswordWrap
+                                        }
+                                        className={
+                                            adminStyles.accountPasswordInput
+                                        }
                                         onChange={event =>
                                             handleFieldChange(
                                                 'password',
@@ -1015,6 +1021,12 @@ export default function AdminUsersPage() {
                                     </span>
                                     <PasswordInput
                                         value={form.password_confirmation}
+                                        wrapperClassName={
+                                            adminStyles.accountPasswordWrap
+                                        }
+                                        className={
+                                            adminStyles.accountPasswordInput
+                                        }
                                         onChange={event =>
                                             handleFieldChange(
                                                 'password_confirmation',
@@ -1023,6 +1035,9 @@ export default function AdminUsersPage() {
                                         }
                                         required={editorMode === 'create'}
                                     />
+                                    <span className={adminStyles.fieldHint}>
+                                        Re-enter the same password for confirmation.
+                                    </span>
                                     <InputError
                                         messages={
                                             formErrors.password_confirmation

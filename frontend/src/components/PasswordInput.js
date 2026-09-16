@@ -20,16 +20,21 @@ const EyeOffIcon = () => (
     </svg>
 )
 
-const PasswordInput = ({ disabled = false, className = '', ...props }) => {
+const PasswordInput = ({
+    disabled = false,
+    className = '',
+    wrapperClassName = '',
+    ...props
+}) => {
     const [visible, setVisible] = useState(false)
 
     return (
-        <div className="relative">
+        <div className={`relative ${wrapperClassName}`}>
             <input
                 {...props}
                 type={visible ? 'text' : 'password'}
                 disabled={disabled}
-                className={`w-full rounded-[0.8rem] border border-[var(--line)] bg-[var(--surface-field)] px-3 py-2 pr-11 text-[0.84rem] text-[var(--ink)] shadow-sm outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--focus-ring)] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+                className={`block w-full rounded-[0.8rem] border border-[var(--line)] bg-[var(--surface-field)] px-3 py-2 pr-11 text-[0.84rem] text-[var(--ink)] shadow-sm outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--focus-ring)] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
             />
             <button
                 type="button"
