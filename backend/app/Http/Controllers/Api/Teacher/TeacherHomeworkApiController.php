@@ -37,6 +37,8 @@ class TeacherHomeworkApiController extends Controller
         $homework = Homework::query()
             ->where('school_id', $actor->school_id)
             ->where('teacher_id', $actor->id)
+            ->where('school_track', $actor->school_track)
+            ->where('class_name', $actor->assigned_class_name)
             ->with(['questions', 'attachments', 'grades', 'submissions.studentRecord:id,full_name', 'submissions.attachments'])
             ->latest()
             ->get();
@@ -144,6 +146,14 @@ class TeacherHomeworkApiController extends Controller
         $actor = $request->user();
         abort_unless($actor, 401);
         abort_unless((int) $homework->teacher_id === (int) $actor->id, 404);
+
+        abort_unless(
+            ! $actor->isTeacher()
+                || ($homework->school_id === $actor->school_id
+                    && $homework->school_track === $actor->school_track
+                    && $homework->class_name === $actor->assigned_class_name),
+            404,
+        );
 
         $entries = collect($request->validated('grades'));
 

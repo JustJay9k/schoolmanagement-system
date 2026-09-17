@@ -26,6 +26,27 @@ class TeacherGradebookApiController extends Controller
 
         $scope = $this->resolveScope($request, $actor);
 
+        if ($actor->isTeacher() && ($scope['school_track'] === '' || $scope['class_name'] === '')) {
+            return response()->json([
+                'students' => [],
+                'stats' => [
+                    'total_students' => 0,
+                    'graded_students' => 0,
+                    'pending_students' => 0,
+                ],
+                'scope' => $scope,
+                'options' => [
+                    'schoolTracks' => [],
+                    'classesByTrack' => [],
+                    'subjectsByTrack' => [],
+                    'assessmentPeriods' => [],
+                    'registerScheduleByTrack' => [],
+                    'activeTerm' => SchoolContextOptions::activeTerm($actor->school_id),
+                ],
+                'registerReport' => null,
+            ]);
+        }
+
         if ($actor->canManageTimetables()) {
             $students = StudentRecord::query()
                 ->where('school_id', $actor->school_id)
@@ -424,6 +445,15 @@ class TeacherGradebookApiController extends Controller
             ? trim($actor->assigned_class_name)
             : '';
 
+        if ($actor->isTeacher() && $lockedClassName === '') {
+            return [
+                'school_track' => '',
+                'class_name' => '',
+                'locked_track' => $lockedTrack,
+                'locked_class_name' => '',
+            ];
+        }
+
         $track = $lockedTrack !== '' ? $lockedTrack : $requestedTrack;
         $className = $lockedClassName !== '' ? $lockedClassName : $requestedClassName;
 
@@ -451,6 +481,10 @@ class TeacherGradebookApiController extends Controller
 
         if ($actor->canManageTimetables()) {
             return true;
+        }
+
+        if ($actor->isTeacher() && (! filled($actor->school_track) || ! filled($actor->assigned_class_name))) {
+            return false;
         }
 
         if ($actor->school_track && $student->school_track !== $actor->school_track) {

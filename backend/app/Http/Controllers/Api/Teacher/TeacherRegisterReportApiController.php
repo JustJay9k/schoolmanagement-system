@@ -20,9 +20,15 @@ class TeacherRegisterReportApiController extends Controller
 
         abort_unless($actor && $actor->isTeacher(), 403);
 
+        if (! filled($actor->school_track) || ! filled($actor->assigned_class_name)) {
+            return response()->json(['reports' => []]);
+        }
+
         $reports = RegisterReport::query()
             ->where('school_id', $actor->school_id)
             ->where('teacher_id', $actor->id)
+            ->where('school_track', $actor->school_track)
+            ->where('class_name', $actor->assigned_class_name)
             ->orderByDesc('report_date')
             ->orderByDesc('updated_at')
             ->get();
