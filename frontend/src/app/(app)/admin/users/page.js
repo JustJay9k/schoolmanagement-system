@@ -62,9 +62,9 @@ const getTeacherAssignmentMeta = user => {
         return null
     }
 
-    if (user.school_track === 'primary') {
+    if (['preschool', 'primary'].includes(user.school_track)) {
         return {
-            trackLabel: 'Primary',
+            trackLabel: user.school_track === 'preschool' ? 'Preschool' : 'Primary',
             roleLabel: 'Class teacher',
             classLabel: user.assigned_class_name ?? 'Class required',
         }

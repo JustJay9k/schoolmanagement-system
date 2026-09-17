@@ -37,7 +37,7 @@ class UpdateRegisterScheduleRequest extends FormRequest
                     fallbackToDefaults: false,
                 );
 
-                foreach (SchoolContextOptions::trackValues() as $track) {
+                foreach (array_keys($this->input('schedule_by_track', [])) as $track) {
                     if (($scheduleByTrack[$track] ?? []) === []) {
                         $validator->errors()->add(
                             "schedule_by_track.{$track}",

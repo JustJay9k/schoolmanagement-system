@@ -21,6 +21,7 @@ final class SchoolContextOptions
     public static function tracks(): array
     {
         return [
+            'preschool' => 'Preschool',
             'primary' => 'Primary',
             'secondary' => 'Secondary',
         ];
@@ -50,6 +51,35 @@ final class SchoolContextOptions
     }
 
     /**
+     * @return list<string>
+     */
+    public static function enabledTracks(?int $schoolId = null): array
+    {
+        if (! Schema::hasTable('school_settings')) {
+            return ['primary', 'secondary'];
+        }
+
+        $query = SchoolSetting::query()->where('key', self::STRUCTURE_KEY);
+
+        if (Schema::hasColumn('school_settings', 'school_id')) {
+            $query->where('school_id', $schoolId);
+        }
+
+        $storedValue = $query->value('value');
+        $enabledTracks = is_array($storedValue) ? ($storedValue['enabled_tracks'] ?? null) : null;
+
+        if (! is_array($enabledTracks)) {
+            return ['primary', 'secondary'];
+        }
+
+        return collect($enabledTracks)
+            ->filter(fn (mixed $track): bool => is_string($track) && array_key_exists($track, self::tracks()))
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
      * @param  array<string, mixed>|null  $classesByTrack
      */
     public static function saveClassesByTrack(?array $classesByTrack, ?int $schoolId = null): void
@@ -69,6 +99,30 @@ final class SchoolContextOptions
                 ),
             ],
         );
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $classesByTrack
+     * @param  list<string>|null  $enabledTracks
+     */
+    public static function saveSchoolStructure(?array $classesByTrack, ?array $enabledTracks, ?int $schoolId = null): void
+    {
+        $identity = ['key' => self::STRUCTURE_KEY];
+
+        if (Schema::hasColumn('school_settings', 'school_id')) {
+            $identity['school_id'] = $schoolId;
+        }
+
+        SchoolSetting::query()->updateOrCreate($identity, [
+            'value' => [
+                ...self::normalizeClassesByTrack($classesByTrack, fallbackToDefaults: false),
+                'enabled_tracks' => collect($enabledTracks ?? [])
+                    ->filter(fn (mixed $track): bool => is_string($track) && array_key_exists($track, self::tracks()))
+                    ->unique()
+                    ->values()
+                    ->all(),
+            ],
+        ]);
     }
 
     /**
@@ -122,6 +176,10 @@ final class SchoolContextOptions
     public static function defaultRegisterScheduleByTrack(): array
     {
         return [
+            'preschool' => [
+                ['label' => 'AM', 'registration_enabled' => true, 'start_time' => '07:30', 'end_time' => '08:00'],
+                ['label' => 'PM', 'registration_enabled' => true, 'start_time' => '13:00', 'end_time' => '13:15'],
+            ],
             'primary' => [
                 ['label' => 'AM', 'registration_enabled' => true, 'start_time' => '07:30', 'end_time' => '08:00'],
                 ['label' => 'PM', 'registration_enabled' => true, 'start_time' => '13:00', 'end_time' => '13:15'],
@@ -147,6 +205,11 @@ final class SchoolContextOptions
     public static function defaultClassesByTrack(): array
     {
         return [
+            'preschool' => [
+                'Baby Class',
+                'Middle Class',
+                'Top Class',
+            ],
             'primary' => array_map(
                 static fn (int $standard): string => "Standard {$standard}",
                 range(1, 8),

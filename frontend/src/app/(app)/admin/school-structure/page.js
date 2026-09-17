@@ -31,6 +31,12 @@ const getSchoolStructureEndpoint = user =>
 
 const tracks = [
     {
+        key: 'preschool',
+        label: 'Preschool',
+        hint: 'Usually Baby Class, Middle Class, and Top Class.',
+        placeholder: 'Baby Class\nMiddle Class\nTop Class',
+    },
+    {
         key: 'primary',
         label: 'Primary',
         hint: 'Usually Standard 1 through Standard 8.',
@@ -54,6 +60,8 @@ export default function SchoolStructurePage() {
     const { user } = useAuth({ middleware: 'auth' })
     const [teacherCountsByTrack, setTeacherCountsByTrack] = useState(null)
     const [form, setForm] = useState({
+        enabled_tracks: ['primary', 'secondary'],
+        preschool_classes: '',
         primary_classes: '',
         secondary_classes: '',
     })
@@ -72,13 +80,21 @@ export default function SchoolStructurePage() {
     const [promotionStatus, setPromotionStatus] = useState(null)
     const classesByTrack = useMemo(
         () => ({
+            preschool: toClassList(form.preschool_classes),
             primary: toClassList(form.primary_classes),
             secondary: toClassList(form.secondary_classes),
         }),
         [form],
     )
     const totalClassCount =
-        classesByTrack.primary.length + classesByTrack.secondary.length
+        tracks.reduce(
+            (total, track) =>
+                total +
+                (form.enabled_tracks.includes(track.key)
+                    ? (classesByTrack[track.key] ?? []).length
+                    : 0),
+            0,
+        )
 
     const errorsForTrack = track => [
         ...(errors[`classes_by_track.${track}`] ?? []),
@@ -94,6 +110,13 @@ export default function SchoolStructurePage() {
             setTeacherCountsByTrack(response.data?.teacherCountsByTrack ?? null)
             setActiveTerm(response.data?.activeTerm ?? 'first')
             setForm({
+                enabled_tracks: response.data?.enabledTracks ?? [
+                    'primary',
+                    'secondary',
+                ],
+                preschool_classes: toTextareaValue(
+                    response.data?.classesByTrack?.preschool,
+                ),
                 primary_classes: toTextareaValue(
                     response.data?.classesByTrack?.primary,
                 ),
@@ -376,8 +399,10 @@ export default function SchoolStructurePage() {
                     </div>
 
                     <div className={adminStyles.trackSummaryGrid}>
-                        {tracks.map(track => {
-                            const classes = classesByTrack[track.key]
+                        {tracks
+                            .filter(track => form.enabled_tracks.includes(track.key))
+                            .map(track => {
+                            const classes = classesByTrack[track.key] ?? []
                             const teacherCount =
                                 teacherCountsByTrack?.[track.key] ?? 0
                             const visibleClasses = classes.slice(0, 8)
@@ -428,7 +453,7 @@ export default function SchoolStructurePage() {
                                     </div>
                                 </article>
                             )
-                        })}
+                            })}
                     </div>
                 </article>
 
@@ -737,7 +762,58 @@ export default function SchoolStructurePage() {
                 </div>
 
                 <div className={adminStyles.trackEditorGrid}>
-                    {tracks.map(track => {
+                    <section
+                        className={`${adminStyles.trackEditorCard} ${adminStyles.sectionPickerCard}`}>
+                        <div className={adminStyles.trackEditorTop}>
+                            <div>
+                                <p className={workspaceStyles.panelEyebrow}>
+                                    School sections
+                                </p>
+                                <h3>Which sections does this school have?</h3>
+                            </div>
+                        </div>
+                        <div className={adminStyles.termPickerGrid}>
+                            {tracks.map(track => {
+                                const checked = form.enabled_tracks.includes(track.key)
+
+                                return (
+                                    <label
+                                        key={track.key}
+                                        className={`${adminStyles.termOptionCard} ${
+                                            checked ? adminStyles.termOptionCardActive : ''
+                                        }`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={checked}
+                                            onChange={() =>
+                                                setForm(current => ({
+                                                    ...current,
+                                                    enabled_tracks: checked
+                                                        ? current.enabled_tracks.filter(
+                                                              value => value !== track.key,
+                                                          )
+                                                        : [...current.enabled_tracks, track.key],
+                                                }))
+                                            }
+                                            className={adminStyles.termOptionInput}
+                                        />
+                                        <span className={adminStyles.termOptionDot} aria-hidden="true" />
+                                        <span className={adminStyles.termOptionLabel}>{track.label}</span>
+                                        {checked ? (
+                                            <span className={adminStyles.termOptionBadge}>Enabled</span>
+                                        ) : null}
+                                    </label>
+                                )
+                            })}
+                        </div>
+                        <InputError messages={errors.enabled_tracks} />
+                    </section>
+                </div>
+
+                <div className={adminStyles.trackEditorGrid}>
+                    {tracks
+                        .filter(track => form.enabled_tracks.includes(track.key))
+                        .map(track => {
                         const fieldName = `${track.key}_classes`
                         const trackErrors = errorsForTrack(track.key)
                         const classes = classesByTrack[track.key]
@@ -803,7 +879,7 @@ export default function SchoolStructurePage() {
                                 </div>
                             </section>
                         )
-                    })}
+                        })}
                 </div>
 
                 <InputError messages={errors.classes_by_track} />

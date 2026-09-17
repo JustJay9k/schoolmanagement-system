@@ -8,6 +8,12 @@ export const roleLabels = {
     guardian: 'Guardian',
 }
 
+export const schoolTrackLabels = {
+    preschool: 'Preschool',
+    primary: 'Primary',
+    secondary: 'Secondary',
+}
+
 export const normalizeRole = role => {
     if (typeof role === 'string') {
         return role.toLowerCase()

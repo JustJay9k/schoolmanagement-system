@@ -27,8 +27,14 @@ class AdminSchoolStructureApiController extends Controller
         return response()->json([
             'schoolId' => $schoolId,
             'classesByTrack' => SchoolContextOptions::classesByTrack($schoolId),
+            'enabledTracks' => SchoolContextOptions::enabledTracks($schoolId),
             'defaultClassesByTrack' => SchoolContextOptions::defaultClassesByTrack(),
             'teacherCountsByTrack' => [
+                'preschool' => User::query()
+                    ->where('role', UserRole::Teacher)
+                    ->where('school_id', $schoolId)
+                    ->where('school_track', 'preschool')
+                    ->count(),
                 'primary' => User::query()
                     ->where('role', UserRole::Teacher)
                     ->where('school_id', $schoolId)
@@ -58,12 +64,17 @@ class AdminSchoolStructureApiController extends Controller
 
         abort_unless($schoolId, 403, 'Choose a school before updating the school structure.');
 
-        SchoolContextOptions::saveClassesByTrack($request->input('classes_by_track', []), $schoolId);
+        SchoolContextOptions::saveSchoolStructure(
+            $request->input('classes_by_track', []),
+            $request->input('enabled_tracks', []),
+            $schoolId,
+        );
 
         return response()->json([
             'message' => 'School structure updated successfully.',
             'schoolId' => $schoolId,
             'classesByTrack' => SchoolContextOptions::classesByTrack($schoolId),
+            'enabledTracks' => SchoolContextOptions::enabledTracks($schoolId),
         ]);
     }
 

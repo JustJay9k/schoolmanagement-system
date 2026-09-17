@@ -16,11 +16,12 @@ class ManagementFormTeacherApiController extends Controller
     public function index(Request $request): JsonResponse
     {
         $schoolId = $request->user()?->school_id;
+        $enabledTracks = SchoolContextOptions::enabledTracks($schoolId);
         $teachers = User::query()
             ->where('role', UserRole::Teacher)
             ->where('status', UserStatus::Active)
             ->where('school_id', $schoolId)
-            ->whereIn('school_track', SchoolContextOptions::trackValues())
+            ->whereIn('school_track', $enabledTracks)
             ->orderBy('name')
             ->get()
             ->map(fn (User $teacher): array => $this->serializeTeacher($teacher))
@@ -42,7 +43,8 @@ class ManagementFormTeacherApiController extends Controller
                 ->filter(fn (array $teacher): bool => filled($teacher['assigned_class_name']))
                 ->values(),
             'options' => [
-                'classesByTrack' => SchoolContextOptions::classesByTrack($schoolId),
+                'enabledTracks' => $enabledTracks,
+                'classesByTrack' => collect(SchoolContextOptions::classesByTrack($schoolId))->only($enabledTracks)->all(),
                 'takenClassesByTrack' => SchoolContextOptions::takenClassesByTrack(null, $schoolId),
             ],
         ]);

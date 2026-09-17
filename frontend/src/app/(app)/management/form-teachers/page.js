@@ -97,6 +97,14 @@ export default function ManagementFormTeachersPage() {
         loadData()
     }, [user])
 
+    useEffect(() => {
+        const enabledTracks = formTeacherOptions?.enabledTracks ?? []
+
+        if (enabledTracks.length > 0 && !enabledTracks.includes(activeTrack)) {
+            setActiveTrack(enabledTracks[0])
+        }
+    }, [activeTrack, formTeacherOptions])
+
     const stats = useMemo(
         () => ({
             totalTeachers: teachers.length,
@@ -142,8 +150,8 @@ export default function ManagementFormTeachersPage() {
     })
 
     const getTeacherRoleLabel = teacher =>
-        teacher.school_track === 'primary'
-            ? 'Class teacher'
+        ['preschool', 'primary'].includes(teacher.school_track)
+            ? `${teacher.school_track === 'preschool' ? 'Preschool' : 'Primary'} class teacher`
             : teacher.assigned_class_name
               ? 'Form teacher and subject teacher'
               : 'Subject teacher only'
@@ -425,9 +433,11 @@ export default function ManagementFormTeachersPage() {
                                                     </td>
                                                     <td>
                                                         <strong>
-                                                            {request.school_track === 'primary'
-                                                                ? 'Primary teacher'
-                                                                : 'Secondary teacher'}
+                                                                                                                        {request.school_track === 'preschool'
+                                                                                                                                ? 'Preschool teacher'
+                                                                                                                                : request.school_track === 'primary'
+                                                                                                                                    ? 'Primary teacher'
+                                                                                                                                    : 'Secondary teacher'}
                                                         </strong>
                                                         <small>
                                                             {request.assigned_class_name
@@ -518,7 +528,7 @@ export default function ManagementFormTeachersPage() {
             ) : (
                 <>
             <div className={managementStyles.tabList} role="tablist" aria-label="School section allocations">
-                {['primary', 'secondary'].map(track => (
+                {(formTeacherOptions?.enabledTracks ?? ['primary', 'secondary']).map(track => (
                     <button
                         key={track}
                         type="button"

@@ -179,7 +179,7 @@ class User extends Authenticatable
 
         $roles = ['subject_teacher'];
 
-        if ($this->school_track === 'primary' && filled($this->assigned_class_name)) {
+        if (in_array($this->school_track, ['preschool', 'primary'], true) && filled($this->assigned_class_name)) {
             $roles[] = 'class_teacher';
         }
 

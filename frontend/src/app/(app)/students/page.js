@@ -1266,7 +1266,8 @@ export default function StudentsPage() {
                 </section>
             ) : null}
 
-            <section className={workspaceStyles.fullPanel}>
+            <section
+                className={`${workspaceStyles.fullPanel} ${studentsStyles.studentRegisterPanel}`}>
                 <div className={workspaceStyles.panelHeader}>
                     <div>
                         <p className={workspaceStyles.panelEyebrow}>Stored records</p>

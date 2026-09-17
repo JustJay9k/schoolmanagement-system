@@ -19,9 +19,11 @@ class UpdateSchoolStructureRequest extends FormRequest
     {
         $this->merge([
             'classes_by_track' => [
+                'preschool' => $this->parseClassList($this->input('preschool_classes')),
                 'primary' => $this->parseClassList($this->input('primary_classes')),
                 'secondary' => $this->parseClassList($this->input('secondary_classes')),
             ],
+            'enabled_tracks' => $this->input('enabled_tracks', []),
         ]);
     }
 
@@ -29,9 +31,13 @@ class UpdateSchoolStructureRequest extends FormRequest
     {
         return [
             'school_id' => ['nullable', 'integer', 'exists:schools,id'],
-            'classes_by_track.primary' => ['required', 'array', 'min:1'],
+            'enabled_tracks' => ['required', 'array', 'min:1'],
+            'enabled_tracks.*' => ['required', 'string', Rule::in(SchoolContextOptions::trackValues()), 'distinct'],
+            'classes_by_track.preschool' => ['nullable', 'array'],
+            'classes_by_track.preschool.*' => ['required', 'string', 'max:100', 'distinct'],
+            'classes_by_track.primary' => ['nullable', 'array'],
             'classes_by_track.primary.*' => ['required', 'string', 'max:100', 'distinct'],
-            'classes_by_track.secondary' => ['required', 'array', 'min:1'],
+            'classes_by_track.secondary' => ['nullable', 'array'],
             'classes_by_track.secondary.*' => ['required', 'string', 'max:100', 'distinct'],
         ];
     }
@@ -52,8 +58,10 @@ class UpdateSchoolStructureRequest extends FormRequest
                     fallbackToDefaults: false,
                 );
 
+                $enabledTracks = collect($this->input('enabled_tracks', []))->values()->all();
+
                 foreach (SchoolContextOptions::trackValues() as $track) {
-                    if (($classesByTrack[$track] ?? []) === []) {
+                    if (in_array($track, $enabledTracks, true) && ($classesByTrack[$track] ?? []) === []) {
                         $validator->errors()->add(
                             "classes_by_track.{$track}",
                             'Provide at least one class name for this track.',

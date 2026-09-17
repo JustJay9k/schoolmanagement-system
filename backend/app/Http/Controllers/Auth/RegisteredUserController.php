@@ -32,6 +32,9 @@ class RegisteredUserController extends Controller
         return response()->json([
             'tracks' => SchoolContextOptions::tracks(),
             'classesByTrack' => SchoolContextOptions::defaultClassesByTrack(),
+            'enabledTracksBySchool' => $schools->mapWithKeys(fn (School $school): array => [
+                (string) $school->id => SchoolContextOptions::enabledTracks($school->id),
+            ]),
             'availableClassesByTrack' => SchoolContextOptions::availableClassesByTrack(),
             'schools' => $schools->map(fn (School $school): array => [
                 'value' => (string) $school->id,
@@ -39,7 +42,9 @@ class RegisteredUserController extends Controller
             ])->values(),
             'classesByTrackBySchool' => $schools
                 ->mapWithKeys(fn (School $school): array => [
-                    (string) $school->id => SchoolContextOptions::classesByTrack($school->id),
+                    (string) $school->id => collect(SchoolContextOptions::classesByTrack($school->id))
+                        ->only(SchoolContextOptions::enabledTracks($school->id))
+                        ->all(),
                 ]),
             'availableClassesByTrackBySchool' => $schools
                 ->mapWithKeys(fn (School $school): array => [
@@ -132,12 +137,17 @@ class RegisteredUserController extends Controller
             }
 
             if ($track === '') {
-                $validator->errors()->add('school_track', 'Choose whether you belong to the primary or secondary section.');
+                $validator->errors()->add('school_track', 'Choose the school section you belong to.');
                 return;
             }
 
-            if ($track === 'primary' && $className === '') {
-                $validator->errors()->add('assigned_class_name', 'Choose the primary class this teacher will manage.');
+            if ($schoolId && ! in_array($track, SchoolContextOptions::enabledTracks($schoolId), true)) {
+                $validator->errors()->add('school_track', 'That school does not offer the selected section.');
+                return;
+            }
+
+            if ($track !== 'secondary' && $className === '') {
+                $validator->errors()->add('assigned_class_name', 'Choose the class this teacher will manage.');
                 return;
             }
 

@@ -38,17 +38,19 @@ class ManagementStudentRecordApiController extends Controller
             'students' => $students->map(fn (StudentRecord $student): array => $this->serializeStudent($student))->values(),
             'stats' => [
                 'total' => $students->count(),
+                'preschool' => $students->where('school_track', 'preschool')->count(),
                 'primary' => $students->where('school_track', 'primary')->count(),
                 'secondary' => $students->where('school_track', 'secondary')->count(),
                 'classes' => $students->map(fn (StudentRecord $student): string => $student->school_track.'::'.$student->class_name)->unique()->count(),
             ],
             'options' => [
+                'enabledTracks' => SchoolContextOptions::enabledTracks($user->school_id),
                 'schoolTracks' => $user->isTeacher()
                     ? [$user->school_track => SchoolContextOptions::tracks()[$user->school_track] ?? ucfirst($user->school_track)]
-                    : SchoolContextOptions::tracks(),
+                    : collect(SchoolContextOptions::tracks())->only(SchoolContextOptions::enabledTracks($user->school_id))->all(),
                 'classesByTrack' => $user->isTeacher()
                     ? [$user->school_track => [$user->assigned_class_name]]
-                    : SchoolContextOptions::classesByTrack($user->school_id),
+                    : collect(SchoolContextOptions::classesByTrack($user->school_id))->only(SchoolContextOptions::enabledTracks($user->school_id))->all(),
             ],
         ]);
     }

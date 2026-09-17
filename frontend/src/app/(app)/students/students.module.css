@@ -21,6 +21,34 @@
     min-width: 72rem;
 }
 
+.studentRegisterPanel {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.studentRegisterPanel .tableWrap {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 701px) and (max-width: 1199px) {
+    .studentRegisterTable {
+        min-width: 60rem;
+    }
+
+    .studentRegisterTable th,
+    .studentRegisterTable td {
+        padding: 0.5rem 0.3rem;
+        font-size: 0.78rem;
+    }
+
+    .studentRegisterTable th {
+        white-space: normal;
+    }
+}
+
 @media (max-width: 700px) {
     .studentRegisterTable {
         min-width: 0;

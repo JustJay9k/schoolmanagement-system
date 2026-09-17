@@ -44,6 +44,7 @@ const statusMeta = {
 
 const attendanceOptions = ['P', 'L', 'S', 'A', 'E']
 const trackLabels = {
+    preschool: 'Preschool',
     primary: 'Primary',
     secondary: 'Secondary',
 }
@@ -70,6 +71,10 @@ const createAssignedFixtureFallback = (track, className) => ({
 })
 
 const defaultRegisterScheduleByTrack = {
+    preschool: [
+        { label: 'AM', registration_enabled: true },
+        { label: 'PM', registration_enabled: true },
+    ],
     primary: [
         { label: 'AM', registration_enabled: true },
         { label: 'PM', registration_enabled: true },
@@ -113,7 +118,7 @@ const normalizeTrack = track => {
 
     const normalized = track.toLowerCase()
 
-    return normalized === 'primary' || normalized === 'secondary'
+    return ['preschool', 'primary', 'secondary'].includes(normalized)
         ? normalized
         : null
 }

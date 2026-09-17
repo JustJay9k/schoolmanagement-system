@@ -39,6 +39,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Support\SchoolContextOptions;
 
 Route::get('/register/options', [RegisteredUserController::class, 'options']);
 Route::post('/register', [RegisteredUserController::class, 'store']);
@@ -67,10 +68,19 @@ Route::get('/homework/submissions/attachments/{attachment}/file', HomeworkSubmis
     ->name('homework.submissions.file');
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
-    return $request->user()?->fresh()->load([
+    $user = $request->user()?->fresh()->load([
         'school:id,name,is_locked,locked_at',
         'linkedStudentRecord:id,school_id,school_track,class_name,full_name',
     ]);
+
+    if ($user?->school) {
+        $user->school->setAttribute(
+            'enabled_tracks',
+            SchoolContextOptions::enabledTracks($user->school_id),
+        );
+    }
+
+    return $user;
 });
 
 Route::middleware(['auth:sanctum', 'portal'])->prefix('settings')->group(function () {

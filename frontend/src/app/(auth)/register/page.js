@@ -30,6 +30,7 @@ const Page = () => {
     const [registrationOptions, setRegistrationOptions] = useState({
         schools: [],
         tracks: {},
+        enabledTracksBySchool: {},
         classesByTrack: {},
         classesByTrackBySchool: {},
         availableClassesByTrackBySchool: {},
@@ -53,6 +54,8 @@ const Page = () => {
                 setRegistrationOptions({
                     schools: response.data?.schools ?? [],
                     tracks: response.data?.tracks ?? {},
+                    enabledTracksBySchool:
+                        response.data?.enabledTracksBySchool ?? {},
                     classesByTrack: response.data?.classesByTrack ?? {},
                     classesByTrackBySchool:
                         response.data?.classesByTrackBySchool ?? {},
@@ -102,6 +105,11 @@ const Page = () => {
             ? registrationOptions.classesByTrack
             : registrationOptions.classesByTrackBySchool?.[effectiveSchoolId] ??
               registrationOptions.classesByTrack
+    const enabledTracksForSelectedSchool =
+        effectiveSchoolId === ''
+            ? Object.keys(registrationOptions.tracks)
+            : registrationOptions.enabledTracksBySchool?.[effectiveSchoolId] ??
+              Object.keys(registrationOptions.tracks)
     const availableClasses = schoolTrack
         ? (classesForSelectedSchool?.[schoolTrack] ?? []).filter(
               className =>
@@ -113,7 +121,7 @@ const Page = () => {
     const isGuardianRegistration = accountType === 'guardian'
     const showClassPicker = !isGuardianRegistration && schoolTrack !== ''
     const requiresClassSelection =
-        !isGuardianRegistration && schoolTrack === 'primary'
+        !isGuardianRegistration && schoolTrack !== 'secondary'
 
     const submitForm = event => {
         event.preventDefault()
@@ -316,7 +324,11 @@ const Page = () => {
                             <Label>Responsible For:</Label>
 
                             <div className="grid gap-3 sm:grid-cols-2">
-                                {Object.entries(registrationOptions.tracks).map(
+                                {Object.entries(registrationOptions.tracks)
+                                    .filter(([trackValue]) =>
+                                        enabledTracksForSelectedSchool.includes(trackValue),
+                                    )
+                                    .map(
                                     ([trackValue, trackLabel]) => (
                                         <label
                                             key={trackValue}
