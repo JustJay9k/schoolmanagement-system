@@ -15,6 +15,14 @@ const formatCurrency = value =>
 
 const formatPaidStatus = value => (value ? 'Paid' : 'Not paid')
 
+const attendanceStatusClasses = {
+    P: 'present',
+    L: 'late',
+    S: 'sick',
+    A: 'absent',
+    E: 'excused',
+}
+
 const renderSubjectGrades = record => {
     const subjectGrades = record?.subject_grades ?? []
 
@@ -46,6 +54,10 @@ const GuardianDashboard = ({ user }) => {
     const child = data?.child ?? null
     const announcements = data?.announcements ?? []
     const performanceRecords = child?.performance_records ?? []
+    const todayAttendance = child?.today_attendance ?? null
+    const attendanceClass = todayAttendance?.code
+        ? styles[attendanceStatusClasses[todayAttendance.code]]
+        : styles.statusBadgeMuted
 
     if (isLoading) {
         return (
@@ -72,6 +84,21 @@ const GuardianDashboard = ({ user }) => {
                     <p className={styles.managementValue}>{child.full_name}</p>
                     <p className={styles.metricMeta}>
                         {child.school_track_label} · {child.class_name}
+                    </p>
+                </div>
+
+                <div className={styles.managementCard}>
+                    <p className={styles.metricLabel}>Today's registration</p>
+                    <p className={styles.managementValue}>
+                        <span
+                            className={`${styles.statusBadge} ${styles.attendanceStatus} ${attendanceClass}`}>
+                            {todayAttendance?.label ?? 'Not submitted'}
+                        </span>
+                    </p>
+                    <p className={styles.metricMeta}>
+                        {todayAttendance?.label
+                            ? 'Submitted by the class teacher.'
+                            : 'Waiting for the class teacher to submit.'}
                     </p>
                 </div>
 

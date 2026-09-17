@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Guardian;
 
 use App\Http\Controllers\Controller;
+use App\Models\RegisterReport;
 use App\Models\StudentPerformanceRecord;
 use App\Models\StudentRecord;
 use App\Support\SchoolContextOptions;
@@ -39,9 +40,10 @@ class GuardianChildApiController extends Controller
         }
 
         $classPositions = $this->resolveClassPositions($student);
+        $attendance = $this->resolveTodayAttendance($student);
 
         return response()->json([
-            'child' => $this->serializeStudent($student, $classPositions),
+            'child' => $this->serializeStudent($student, $classPositions, $attendance),
             'announcements' => $guardian->notifications()
                 ->limit(5)
                 ->get()
@@ -55,6 +57,52 @@ class GuardianChildApiController extends Controller
                 ])
                 ->values(),
         ]);
+    }
+
+    /**
+     * Find the child's entry in the latest daily register submitted today.
+     * Draft registers are intentionally excluded from the guardian view.
+     *
+     * @return array{code: string|null, label: string|null, report_date: string|null}
+     */
+    private function resolveTodayAttendance(StudentRecord $student): array
+    {
+        $statusLabels = [
+            'P' => 'Present',
+            'L' => 'Late',
+            'S' => 'Sick',
+            'A' => 'Absent',
+            'E' => 'Excused',
+        ];
+
+        $reports = RegisterReport::query()
+            ->where('school_id', $student->school_id)
+            ->where('school_track', $student->school_track)
+            ->where('class_name', $student->class_name)
+            ->whereDate('report_date', now()->toDateString())
+            ->where('status', 'submitted')
+            ->orderByDesc('submitted_at')
+            ->get(['entries', 'report_date']);
+
+        foreach ($reports as $report) {
+            $entry = collect($report->entries ?? [])->first(
+                fn (array $entry): bool => (int) ($entry['student_id'] ?? 0) === (int) $student->id,
+            );
+
+            if ($entry && isset($statusLabels[$entry['status'] ?? ''])) {
+                return [
+                    'code' => $entry['status'],
+                    'label' => $statusLabels[$entry['status']],
+                    'report_date' => $report->report_date?->toDateString(),
+                ];
+            }
+        }
+
+        return [
+            'code' => null,
+            'label' => null,
+            'report_date' => null,
+        ];
     }
 
     /**
@@ -191,9 +239,10 @@ class GuardianChildApiController extends Controller
 
     /**
      * @param  array<int, array{position: int|null, average: float|null, total_students: int}>  $classPositions
-     * @return array<string, mixed>
+    * @param  array{code: string|null, label: string|null, report_date: string|null}  $attendance
+    * @return array<string, mixed>
      */
-    private function serializeStudent(StudentRecord $student, array $classPositions): array
+    private function serializeStudent(StudentRecord $student, array $classPositions, array $attendance): array
     {
         $performanceRecords = $student->performanceRecords
             ->map(function (StudentPerformanceRecord $record) use ($classPositions): array {
@@ -250,6 +299,7 @@ class GuardianChildApiController extends Controller
             'books_paid' => (bool) $student->books_paid,
             'uniform_paid' => (bool) $student->uniform_paid,
             'bus_fare_paid' => (bool) $student->bus_fare_paid,
+            'today_attendance' => $attendance,
             'latest_grade' => $performanceRecords[0]['grade'] ?? null,
             'latest_grade_summary' => $performanceRecords[0]['grade_summary'] ?? null,
             'latest_assessment_period_name' => $performanceRecords[0]['assessment_period_name'] ?? null,
