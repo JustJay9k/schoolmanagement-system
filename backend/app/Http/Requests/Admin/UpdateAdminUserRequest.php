@@ -69,8 +69,8 @@ class UpdateAdminUserRequest extends FormRequest
                     return;
                 }
 
-                if ($track === 'primary' && $className === '') {
-                    $validator->errors()->add('assigned_class_name', 'Choose the primary class this teacher will manage.');
+                if (in_array($track, ['preschool', 'primary'], true) && $className === '') {
+                    $validator->errors()->add('assigned_class_name', 'Choose the class this teacher will manage.');
                     return;
                 }
 

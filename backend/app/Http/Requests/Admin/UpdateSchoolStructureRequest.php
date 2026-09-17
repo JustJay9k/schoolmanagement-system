@@ -7,6 +7,7 @@ use App\Models\Timetable;
 use App\Models\User;
 use App\Support\SchoolContextOptions;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateSchoolStructureRequest extends FormRequest
 {

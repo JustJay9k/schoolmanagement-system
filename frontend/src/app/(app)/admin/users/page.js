@@ -936,7 +936,9 @@ export default function AdminUsersPage() {
                                                 }
                                                 className={adminStyles.select}
                                                 required={
-                                                    form.school_track === 'primary'
+                                                    ['preschool', 'primary'].includes(
+                                                        form.school_track,
+                                                    )
                                                 }>
                                                 <option value="">
                                                     {form.school_track
