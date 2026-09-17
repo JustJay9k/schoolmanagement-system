@@ -170,6 +170,16 @@ const GuardianDashboard = ({ user }) => {
                         Status recorded by the finance office.
                     </p>
                 </div>
+
+                <div className={styles.managementCard}>
+                    <p className={styles.metricLabel}>Bus fare payment</p>
+                    <p className={styles.managementValue}>
+                        {formatPaidStatus(Boolean(child.bus_fare_paid))}
+                    </p>
+                    <p className={styles.metricMeta}>
+                        Status recorded by the finance office.
+                    </p>
+                </div>
             </section>
 
             <section className={styles.lowerGrid}>

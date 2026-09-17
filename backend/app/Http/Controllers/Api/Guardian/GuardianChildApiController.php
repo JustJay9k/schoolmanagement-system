@@ -249,6 +249,7 @@ class GuardianChildApiController extends Controller
             'fees_balance' => (float) $student->fees_balance,
             'books_paid' => (bool) $student->books_paid,
             'uniform_paid' => (bool) $student->uniform_paid,
+            'bus_fare_paid' => (bool) $student->bus_fare_paid,
             'latest_grade' => $performanceRecords[0]['grade'] ?? null,
             'latest_grade_summary' => $performanceRecords[0]['grade_summary'] ?? null,
             'latest_assessment_period_name' => $performanceRecords[0]['assessment_period_name'] ?? null,
