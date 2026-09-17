@@ -524,7 +524,10 @@ const Navigation = ({ user, sidebarCollapsed, onToggleSidebar }) => {
                     </div>
                 </div>
 
-                <button onClick={logout} className={styles.logoutButton}>
+                <button
+                    type="button"
+                    onClick={() => logout()}
+                    className={styles.logoutButton}>
                     <span className={styles.navIconWrap}>
                         <NavIcon name="logout" />
                     </span>

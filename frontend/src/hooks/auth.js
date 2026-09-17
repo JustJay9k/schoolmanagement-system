@@ -268,6 +268,8 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
         if (isLoggingOutRef.current) return
 
         isLoggingOutRef.current = true
+        const targetPath =
+            typeof redirectPath === 'string' ? redirectPath : '/login'
 
         try {
             if (getToken()) {
@@ -286,7 +288,7 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
         removeToken()
         await mutate(null, false)
 
-        window.location.pathname = redirectPath
+        window.location.pathname = targetPath
     }
 
     useEffect(() => {

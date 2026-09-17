@@ -36,7 +36,7 @@ const Page = () => {
                 <button
                     type="button"
                     className="underline text-sm text-[var(--muted)] transition hover:text-[var(--ink)]"
-                    onClick={logout}>
+                    onClick={() => logout()}>
                     Logout
                 </button>
             </div>
