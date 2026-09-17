@@ -20,7 +20,7 @@ class ManagementFormTeacherApiController extends Controller
             ->where('role', UserRole::Teacher)
             ->where('status', UserStatus::Active)
             ->where('school_id', $schoolId)
-            ->where('school_track', 'secondary')
+            ->whereIn('school_track', SchoolContextOptions::trackValues())
             ->orderBy('name')
             ->get()
             ->map(fn (User $teacher): array => $this->serializeTeacher($teacher))
@@ -39,11 +39,11 @@ class ManagementFormTeacherApiController extends Controller
             'teachers' => $teachers,
             'requests' => $requests,
             'allocations' => $teachers
-                ->filter(fn (array $teacher): bool => $teacher['is_form_teacher'])
+                ->filter(fn (array $teacher): bool => filled($teacher['assigned_class_name']))
                 ->values(),
             'options' => [
-                'secondaryClasses' => SchoolContextOptions::classesByTrack($schoolId)['secondary'] ?? [],
-                'takenClasses' => SchoolContextOptions::takenClassesByTrack(null, $schoolId)['secondary'] ?? [],
+                'classesByTrack' => SchoolContextOptions::classesByTrack($schoolId),
+                'takenClassesByTrack' => SchoolContextOptions::takenClassesByTrack(null, $schoolId),
             ],
         ]);
     }
@@ -60,8 +60,8 @@ class ManagementFormTeacherApiController extends Controller
                 : 'Form teacher allocation cleared successfully.',
             'teacher' => $this->serializeTeacher($teacher->fresh()),
             'options' => [
-                'secondaryClasses' => SchoolContextOptions::classesByTrack($request->user()?->school_id)['secondary'] ?? [],
-                'takenClasses' => SchoolContextOptions::takenClassesByTrack($teacher->fresh(), $request->user()?->school_id)['secondary'] ?? [],
+                'classesByTrack' => SchoolContextOptions::classesByTrack($request->user()?->school_id),
+                'takenClassesByTrack' => SchoolContextOptions::takenClassesByTrack($teacher->fresh(), $request->user()?->school_id),
             ],
         ]);
     }

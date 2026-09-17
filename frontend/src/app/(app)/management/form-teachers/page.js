@@ -14,7 +14,7 @@ import { useAuth } from '@/hooks/auth'
 
 const buildFormTeacherDrafts = teachers =>
     Object.fromEntries(
-        teachers.map(teacher => [teacher.id, teacher.form_class_name ?? '']),
+        teachers.map(teacher => [teacher.id, teacher.assigned_class_name ?? '']),
     )
 
 const emptySubjectAssignmentForm = {
@@ -22,11 +22,6 @@ const emptySubjectAssignmentForm = {
     subject_id: '',
     class_name: '',
 }
-
-const getTeacherRoleLabel = teacher =>
-    teacher.is_form_teacher
-        ? 'Form teacher and subject teacher'
-        : 'Subject teacher only'
 
 const getTeacherOptionLabel = teacher =>
     teacher.form_class_name
@@ -39,6 +34,7 @@ export default function ManagementFormTeachersPage() {
     const [teachers, setTeachers] = useState([])
     const [teacherRequests, setTeacherRequests] = useState([])
     const [activeTab, setActiveTab] = useState('allocations')
+    const [activeTrack, setActiveTrack] = useState('secondary')
     const [formTeacherOptions, setFormTeacherOptions] = useState(null)
     const [subjectAssignments, setSubjectAssignments] = useState([])
     const [subjectAssignmentOptions, setSubjectAssignmentOptions] = useState(
@@ -114,7 +110,11 @@ export default function ManagementFormTeachersPage() {
         [teachers, subjectAssignments, teacherRequests],
     )
 
-    const availableClasses = formTeacherOptions?.secondaryClasses ?? []
+    const teachersForTrack = teachers.filter(
+        teacher => teacher.school_track === activeTrack,
+    )
+    const availableClasses =
+        formTeacherOptions?.classesByTrack?.[activeTrack] ?? []
     const availableAssignmentTeachers =
         subjectAssignmentOptions?.teachers ?? []
     const availableSubjects = subjectAssignmentOptions?.subjects ?? []
@@ -124,10 +124,29 @@ export default function ManagementFormTeachersPage() {
             .filter(
                 teacher =>
                     teacher.id !== teacherId &&
-                    typeof teacher.form_class_name === 'string' &&
-                    teacher.form_class_name !== '',
+                    teacher.school_track === activeTrack &&
+                    typeof teacher.assigned_class_name === 'string' &&
+                    teacher.assigned_class_name !== '',
             )
-            .map(teacher => teacher.form_class_name)
+            .map(teacher => teacher.assigned_class_name)
+
+    const classCoverage = availableClasses.map(className => {
+        const assignedTeacher = teachersForTrack.find(
+            teacher => teacher.assigned_class_name === className,
+        )
+
+        return {
+            className,
+            teacherName: assignedTeacher?.name ?? null,
+        }
+    })
+
+    const getTeacherRoleLabel = teacher =>
+        teacher.school_track === 'primary'
+            ? 'Class teacher'
+            : teacher.assigned_class_name
+              ? 'Form teacher and subject teacher'
+              : 'Subject teacher only'
 
     const updateFormTeacherDraft = (teacherId, value) => {
         setFormTeacherDrafts(current => ({
@@ -278,8 +297,8 @@ export default function ManagementFormTeachersPage() {
                 description={`This account is signed in as ${formatRoleLabel(user?.role)}. Only head teacher / management accounts can allocate teacher responsibilities.`}>
                 <article className={workspaceStyles.panel}>
                     <p className={managementStyles.notice}>
-                        Secondary form-teacher allocation and subject teaching
-                        allocation both belong to the management workspace.
+                        Primary and secondary teacher allocation and subject
+                        teaching allocation belong to the management workspace.
                     </p>
                 </article>
             </WorkspacePageShell>
@@ -290,7 +309,7 @@ export default function ManagementFormTeachersPage() {
         <WorkspacePageShell
             eyebrow="Management"
             title="Teacher allocations"
-            description="Assign one secondary form class to each form teacher, then allocate the subjects and classes each secondary teacher will actually teach."
+            description="Manage primary class teachers and secondary form teachers separately, see unassigned classes, and allocate secondary subject teaching."
             actions={
                 <div className={managementStyles.toolbarGroup}>
                     <button
@@ -314,8 +333,8 @@ export default function ManagementFormTeachersPage() {
 
             <section className={managementStyles.statsGrid}>
                 {[
-                    ['Secondary teachers', stats.totalTeachers],
-                    ['Form teachers', stats.formTeachers],
+                    ['Primary and secondary teachers', stats.totalTeachers],
+                    ['Assigned classes', stats.formTeachers],
                     ['Subject allocations', stats.subjectAllocations],
                     ['Pending requests', stats.pendingRequests],
                 ].map(([label, value]) => (
@@ -498,15 +517,70 @@ export default function ManagementFormTeachersPage() {
                 </section>
             ) : (
                 <>
+            <div className={managementStyles.tabList} role="tablist" aria-label="School section allocations">
+                {['primary', 'secondary'].map(track => (
+                    <button
+                        key={track}
+                        type="button"
+                        role="tab"
+                        aria-selected={activeTrack === track}
+                        onClick={() => setActiveTrack(track)}
+                        className={`${managementStyles.tabButton} ${
+                            activeTrack === track ? managementStyles.tabButtonActive : ''
+                        }`}>
+                        {track === 'primary' ? 'Primary classes' : 'Secondary classes'}
+                    </button>
+                ))}
+            </div>
+
             <section className={managementStyles.summaryCards}>
+                <article className={workspaceStyles.panel}>
+                    <div className={workspaceStyles.panelHeader}>
+                        <div>
+                            <p className={workspaceStyles.panelEyebrow}>
+                                {activeTrack === 'primary' ? 'Primary' : 'Secondary'} class coverage
+                            </p>
+                            <h2 className={workspaceStyles.panelTitle}>
+                                Assigned and unassigned classes
+                            </h2>
+                        </div>
+                    </div>
+
+                    <div className={workspaceStyles.list}>
+                        {classCoverage.map(({ className, teacherName }) => (
+                            <div key={className} className={workspaceStyles.listItem}>
+                                <div>
+                                    <strong>{className}</strong>
+                                    <p>
+                                        {teacherName
+                                            ? `Assigned to ${teacherName}`
+                                            : 'No teacher assigned yet'}
+                                    </p>
+                                </div>
+                                <span className={`${managementStyles.requestBadge} ${
+                                    teacherName
+                                        ? managementStyles.requestBadgePending
+                                        : managementStyles.requestBadgeDenied
+                                }`}>
+                                    {teacherName ? 'Assigned' : 'Unassigned'}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </article>
+
                 <article className={workspaceStyles.fullPanel}>
                     <div className={workspaceStyles.panelHeader}>
                         <div>
                             <p className={workspaceStyles.panelEyebrow}>
-                                Form Responsibility
+                                {activeTrack === 'primary'
+                                    ? 'Class Responsibility'
+                                    : 'Form Responsibility'}
                             </p>
                             <h2 className={workspaceStyles.panelTitle}>
-                                Form teacher assignments
+                                {activeTrack === 'primary'
+                                    ? 'Primary class teacher assignments'
+                                    : 'Secondary form teacher assignments'}
                             </h2>
                         </div>
                     </div>
@@ -518,7 +592,11 @@ export default function ManagementFormTeachersPage() {
                                     <th>Teacher</th>
                                     <th>Role</th>
                                     <th>Status</th>
-                                    <th>Form class</th>
+                                    <th>
+                                        {activeTrack === 'primary'
+                                            ? 'Class'
+                                            : 'Form class'}
+                                    </th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -526,18 +604,18 @@ export default function ManagementFormTeachersPage() {
                                 {loading ? (
                                     <tr>
                                         <td colSpan="5" className={managementStyles.muted}>
-                                            Loading secondary teachers...
+                                            Loading {activeTrack} teachers...
                                         </td>
                                     </tr>
-                                ) : teachers.length === 0 ? (
+                                ) : teachersForTrack.length === 0 ? (
                                     <tr>
                                         <td colSpan="5" className={managementStyles.muted}>
-                                            No secondary teachers found.
+                                            No {activeTrack} teachers found.
                                         </td>
                                     </tr>
                                 ) : (
-                                    teachers.map(teacher => {
-                                        const takenClasses =
+                                    teachersForTrack.map(teacher => {
+                                        const takenClassesForTeacher =
                                             getTakenClassesForTeacher(teacher.id)
                                         const fieldErrors =
                                             formTeacherErrors[teacher.id] ?? {}
@@ -552,7 +630,7 @@ export default function ManagementFormTeachersPage() {
                                                     <strong>{teacher.name}</strong>
                                                     <small>{teacher.email}</small>
                                                 </td>
-                                                <td>{getTeacherRoleLabel(teacher)}</td>
+                                                        <td>{getTeacherRoleLabel(teacher)}</td>
                                                 <td>{teacher.status_label}</td>
                                                 <td>
                                                     <div className={managementStyles.field}>
@@ -577,8 +655,8 @@ export default function ManagementFormTeachersPage() {
                                                             </option>
                                                             {availableClasses.map(
                                                                 className => {
-                                                                    const reservedByOtherTeacher =
-                                                                        takenClasses.includes(
+                                                                        const reservedByOtherTeacher =
+                                                                        takenClassesForTeacher.includes(
                                                                             className,
                                                                         ) &&
                                                                         className !==
@@ -694,6 +772,7 @@ export default function ManagementFormTeachersPage() {
                 </article>
             </section>
 
+            {activeTrack === 'secondary' ? (
             <section className={managementStyles.summaryCards}>
                 <article className={workspaceStyles.fullPanel}>
                     <div className={workspaceStyles.panelHeader}>
@@ -905,6 +984,7 @@ export default function ManagementFormTeachersPage() {
                     </form>
                 </article>
             </section>
+            ) : null}
                 </>
             )}
             <ConfirmDialog

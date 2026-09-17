@@ -26,7 +26,7 @@ class UpdateFormTeacherAllocationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'assigned_class_name' => ['nullable', 'string', Rule::in(SchoolContextOptions::classesByTrack($this->user()?->school_id)['secondary'] ?? [])],
+            'assigned_class_name' => ['nullable', 'string'],
         ];
     }
 
@@ -42,8 +42,8 @@ class UpdateFormTeacherAllocationRequest extends FormRequest
                     return;
                 }
 
-                if ($teacher->school_track !== 'secondary') {
-                    $validator->errors()->add('teacher', 'Only secondary teachers can be allocated as form teachers.');
+                if (! in_array($teacher->school_track, SchoolContextOptions::trackValues(), true)) {
+                    $validator->errors()->add('teacher', 'The teacher must have a valid school track before receiving a class assignment.');
                     return;
                 }
 
@@ -58,13 +58,18 @@ class UpdateFormTeacherAllocationRequest extends FormRequest
                     return;
                 }
 
-                if ($teacher->status !== UserStatus::Active) {
-                    $validator->errors()->add('teacher', 'Only active secondary teachers can receive a form class.');
+                if (! SchoolContextOptions::isValidClassForTrack($teacher->school_track, $className, $teacher->school_id)) {
+                    $validator->errors()->add('assigned_class_name', 'That class does not belong to the teacher\'s school track.');
                     return;
                 }
 
-                if (! SchoolContextOptions::isTeacherClassAvailableForSchool('secondary', $className, $teacher->school_id, $teacher)) {
-                    $validator->errors()->add('assigned_class_name', 'That form class already has a form teacher.');
+                if ($teacher->status !== UserStatus::Active) {
+                    $validator->errors()->add('teacher', 'Only active teachers can receive a class assignment.');
+                    return;
+                }
+
+                if (! SchoolContextOptions::isTeacherClassAvailableForSchool($teacher->school_track, $className, $teacher->school_id, $teacher)) {
+                    $validator->errors()->add('assigned_class_name', 'That class already has an assigned teacher.');
                 }
             },
         ];
