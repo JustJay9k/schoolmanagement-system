@@ -31,6 +31,7 @@ class StudentRecord extends Model
         'fees_balance',
         'books_paid',
         'uniform_paid',
+        'bus_fare_paid',
         'created_by',
     ];
 
@@ -42,6 +43,7 @@ class StudentRecord extends Model
             'fees_balance' => 'decimal:2',
             'books_paid' => 'boolean',
             'uniform_paid' => 'boolean',
+            'bus_fare_paid' => 'boolean',
         ];
     }
 

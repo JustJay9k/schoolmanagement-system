@@ -25,6 +25,7 @@ const createDrafts = students =>
                 fees_balance: formatWithCommas(String(student.fees_balance ?? 0)),
                 books_paid: Boolean(student.books_paid),
                 uniform_paid: Boolean(student.uniform_paid),
+                bus_fare_paid: Boolean(student.bus_fare_paid),
             },
         ]),
     )
@@ -118,7 +119,8 @@ export default function FinancePage() {
         return (
             Number(parseNumericInput(draft.fees_balance) || 0) !== Number(student.fees_balance || 0) ||
             draft.books_paid !== Boolean(student.books_paid) ||
-            draft.uniform_paid !== Boolean(student.uniform_paid)
+            draft.uniform_paid !== Boolean(student.uniform_paid) ||
+            draft.bus_fare_paid !== Boolean(student.bus_fare_paid)
         )
     }
 
@@ -163,6 +165,7 @@ export default function FinancePage() {
                     parseNumericInput(draft.fees_balance) === '' ? 0 : Number(parseNumericInput(draft.fees_balance)),
                 books_paid: draft.books_paid,
                 uniform_paid: draft.uniform_paid,
+                bus_fare_paid: draft.bus_fare_paid,
             })
             const updatedStudent = response.data?.student
 
@@ -177,6 +180,7 @@ export default function FinancePage() {
                     fees_balance: formatWithCommas(String(updatedStudent?.fees_balance ?? 0)),
                     books_paid: Boolean(updatedStudent?.books_paid),
                     uniform_paid: Boolean(updatedStudent?.uniform_paid),
+                    bus_fare_paid: Boolean(updatedStudent?.bus_fare_paid),
                 },
             }))
             setPageStatus({
@@ -426,6 +430,7 @@ export default function FinancePage() {
                                     <th>Fees balance</th>
                                     <th>Books paid</th>
                                     <th>Uniform paid</th>
+                                    <th>Bus fare paid</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -515,6 +520,30 @@ export default function FinancePage() {
                                                     <span className={managementStyles.radioMeta}>
                                                         <strong>
                                                             {draft?.uniform_paid
+                                                                ? 'Paid'
+                                                                : 'Pending'}
+                                                        </strong>
+                                                    </span>
+                                                </label>
+                                            </td>
+                                            <td data-label="Bus fare paid">
+                                                <label className={managementStyles.radioCard}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={Boolean(
+                                                            draft?.bus_fare_paid,
+                                                        )}
+                                                        onChange={event =>
+                                                            updateDraft(
+                                                                student.id,
+                                                                'bus_fare_paid',
+                                                                event.target.checked,
+                                                            )
+                                                        }
+                                                    />
+                                                    <span className={managementStyles.radioMeta}>
+                                                        <strong>
+                                                            {draft?.bus_fare_paid
                                                                 ? 'Paid'
                                                                 : 'Pending'}
                                                         </strong>

@@ -44,8 +44,9 @@ class FinanceStudentApiController extends Controller
                 'outstanding_balance' => round($students->sum('fees_balance'), 2),
                 'books_pending' => $students->where('books_paid', false)->count(),
                 'uniform_pending' => $students->where('uniform_paid', false)->count(),
+                'bus_fare_pending' => $students->where('bus_fare_paid', false)->count(),
                 'fully_paid' => $students
-                    ->filter(fn (StudentRecord $s) => $s->fees_balance <= 0 && $s->books_paid && $s->uniform_paid)
+                    ->filter(fn (StudentRecord $s) => $s->fees_balance <= 0 && $s->books_paid && $s->uniform_paid && $s->bus_fare_paid)
                     ->count(),
                 'average_balance' => $students->count() > 0
                     ? round($students->avg('fees_balance'), 2)
@@ -93,6 +94,7 @@ class FinanceStudentApiController extends Controller
             'fees_balance' => (float) $student->fees_balance,
             'books_paid' => (bool) $student->books_paid,
             'uniform_paid' => (bool) $student->uniform_paid,
+            'bus_fare_paid' => (bool) $student->bus_fare_paid,
         ];
     }
 }

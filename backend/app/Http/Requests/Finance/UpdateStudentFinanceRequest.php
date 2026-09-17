@@ -17,6 +17,7 @@ class UpdateStudentFinanceRequest extends FormRequest
             'fees_balance' => $this->normalizeDecimal($this->input('fees_balance')),
             'books_paid' => $this->boolean('books_paid'),
             'uniform_paid' => $this->boolean('uniform_paid'),
+            'bus_fare_paid' => $this->boolean('bus_fare_paid'),
         ]);
     }
 
@@ -26,6 +27,7 @@ class UpdateStudentFinanceRequest extends FormRequest
             'fees_balance' => ['required', 'numeric', 'min:0'],
             'books_paid' => ['required', 'boolean'],
             'uniform_paid' => ['required', 'boolean'],
+            'bus_fare_paid' => ['required', 'boolean'],
         ];
     }
 
