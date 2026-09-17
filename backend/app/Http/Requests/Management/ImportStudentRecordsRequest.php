@@ -11,7 +11,7 @@ class ImportStudentRecordsRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->canManageTimetables() ?? false;
+        return $this->user()?->canAddStudentRecords() ?? false;
     }
 
     protected function prepareForValidation(): void
@@ -73,6 +73,10 @@ class ImportStudentRecordsRequest extends FormRequest
 
                 if ($track !== '' && $className !== '' && ! SchoolContextOptions::isValidClassForTrack($track, $className, $this->user()?->school_id)) {
                     $validator->errors()->add('class_name', 'The selected class does not belong to the selected school track.');
+                }
+
+                if ($this->user() && ! $this->user()->canManageAssignedStudentClass($track, $className)) {
+                    $validator->errors()->add('class_name', 'You can only import students to your assigned class.');
                 }
 
                 $seenCodes = [];

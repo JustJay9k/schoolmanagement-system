@@ -6,13 +6,17 @@ import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import managementStyles from '@/app/(app)/management/management-tools.module.css'
 import studentsStyles from './students.module.css'
-import { DeleteIcon, EditIcon, ExportIcon } from '@/app/(app)/admin/action-icons'
+import { ExportIcon } from '@/app/(app)/admin/action-icons'
 import Button from '@/components/Button'
-import ConfirmDialog from '@/components/ConfirmDialog'
 import Input from '@/components/Input'
 import InputError from '@/components/InputError'
 import axios from '@/lib/axios'
-import { canManageStudentRecords, formatRoleLabel } from '@/lib/userAccess'
+import {
+    canAddStudentRecords,
+    canViewStudentRecords,
+    formatRoleLabel,
+    isTeacherUser,
+} from '@/lib/userAccess'
 import { useAuth } from '@/hooks/auth'
 
 const createManualForm = () => ({
@@ -269,34 +273,14 @@ const getSchoolMeta = user => ({
     label: user?.school?.name ?? 'Assigned school',
 })
 
-const hasNamedDisability = value => {
-    const normalized = String(value ?? '').trim().toLowerCase()
-
-    return normalized !== '' && !['n/a', 'none', 'no'].includes(normalized)
-}
-
-const studentToManualForm = student => ({
-    school_track: student.school_track ?? 'primary',
-    class_name: student.class_name ?? '',
-    full_name: student.full_name ?? '',
-    sex: student.sex ?? 'male',
-    date_of_birth: student.date_of_birth ?? '',
-    age: student.age == null ? '' : String(student.age),
-    student_code: student.student_code ?? '',
-    orphan_status: student.orphan_status ?? '',
-    has_disability: hasNamedDisability(student.disability_name) ? 'yes' : '',
-    disability_name: hasNamedDisability(student.disability_name)
-        ? student.disability_name
-        : '',
-    guardian_name: student.guardian_name ?? '',
-    guardian_phone: student.guardian_phone ?? '',
-    guardian_email: student.guardian_email ?? '',
-    residence: student.residence ?? '',
-    first_entry_date: student.first_entry_date ?? '',
-})
-
 export default function StudentsPage() {
     const { user } = useAuth({ middleware: 'auth' })
+    const canViewStudents = canViewStudentRecords(user)
+    const canAddStudents = canAddStudentRecords(user)
+    const isTeacher = isTeacherUser(user)
+    const studentApiBase = isTeacher
+        ? '/api/teacher/students'
+        : '/api/management/students'
     const [students, setStudents] = useState([])
     const [stats, setStats] = useState(null)
     const [options, setOptions] = useState(null)
@@ -304,9 +288,6 @@ export default function StudentsPage() {
     const [manualForm, setManualForm] = useState(createManualForm())
     const [manualErrors, setManualErrors] = useState({})
     const [manualSaving, setManualSaving] = useState(false)
-    const [editingStudentId, setEditingStudentId] = useState(null)
-    const [confirmingStudent, setConfirmingStudent] = useState(null)
-    const [deletingStudentId, setDeletingStudentId] = useState(null)
     const [importForm, setImportForm] = useState(createImportForm())
     const [importErrors, setImportErrors] = useState({})
     const [importing, setImporting] = useState(false)
@@ -320,7 +301,7 @@ export default function StudentsPage() {
         setLoading(true)
 
         try {
-            const response = await axios.get('/api/management/students')
+            const response = await axios.get(studentApiBase)
 
             setStudents(response.data?.students ?? [])
             setStats(response.data?.stats ?? null)
@@ -337,12 +318,25 @@ export default function StudentsPage() {
     }
 
     useEffect(() => {
-        if (!user || !canManageStudentRecords(user)) {
+        if (!user || !canViewStudents) {
             return
         }
 
+        if (isTeacher) {
+            setManualForm(current => ({
+                ...current,
+                school_track: user.school_track ?? current.school_track,
+                class_name: user.assigned_class_name ?? current.class_name,
+            }))
+            setImportForm(current => ({
+                ...current,
+                school_track: user.school_track ?? current.school_track,
+                class_name: user.assigned_class_name ?? current.class_name,
+            }))
+        }
+
         loadStudents()
-    }, [user])
+    }, [canViewStudents, isTeacher, studentApiBase, user])
 
     const manualClasses = options?.classesByTrack?.[manualForm.school_track] ?? []
     const importClasses = options?.classesByTrack?.[importForm.school_track] ?? []
@@ -352,20 +346,6 @@ export default function StudentsPage() {
     const resetManualEditor = () => {
         setManualForm(createManualForm())
         setManualErrors({})
-        setEditingStudentId(null)
-    }
-
-    const startEditingStudent = student => {
-        setManualForm(studentToManualForm(student))
-        setManualErrors({})
-        setEditingStudentId(student.id)
-        setPageStatus(null)
-
-        window.requestAnimationFrame(() => {
-            document
-                .getElementById('student-editor')
-                ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        })
     }
 
     const groupedStudents = useMemo(() => {
@@ -707,23 +687,23 @@ export default function StudentsPage() {
 
             const payload = {
                 ...manualPayload,
+                school_track: isTeacher
+                    ? user.school_track
+                    : manualPayload.school_track,
+                class_name: isTeacher
+                    ? user.assigned_class_name
+                    : manualPayload.class_name,
                 age: manualPayload.age === '' ? null : Number(manualPayload.age),
                 disability_name:
                     has_disability === 'yes' ? manualPayload.disability_name : '',
             }
 
-            if (editingStudentId) {
-                await axios.put(`/api/management/students/${editingStudentId}`, payload)
-            } else {
-                await axios.post('/api/management/students', payload)
-            }
+            await axios.post(studentApiBase, payload)
 
             resetManualEditor()
             setPageStatus({
                 type: 'success',
-                message: editingStudentId
-                    ? 'Student record updated successfully.'
-                    : 'Student record added successfully.',
+                message: 'Student record added successfully.',
             })
             await loadStudents()
         } catch (error) {
@@ -738,34 +718,6 @@ export default function StudentsPage() {
         }
     }
 
-    const deleteStudent = async student => {
-        setDeletingStudentId(student.id)
-        setPageStatus(null)
-
-        try {
-            await axios.delete(`/api/management/students/${student.id}`)
-
-            if (editingStudentId === student.id) {
-                resetManualEditor()
-            }
-
-            setConfirmingStudent(null)
-            setPageStatus({
-                type: 'success',
-                message: 'Student record deleted successfully.',
-            })
-            await loadStudents()
-        } catch (error) {
-            setPageStatus({
-                type: 'error',
-                message:
-                    'Unable to delete the student record. Please try again.',
-            })
-        } finally {
-            setDeletingStudentId(null)
-        }
-    }
-
     const submitImport = async event => {
         event.preventDefault()
         setImporting(true)
@@ -773,9 +725,13 @@ export default function StudentsPage() {
         setPageStatus(null)
 
         try {
-            const response = await axios.post('/api/management/students/import', {
-                school_track: importForm.school_track,
-                class_name: importForm.class_name,
+            const response = await axios.post(`${studentApiBase}/import`, {
+                school_track: isTeacher
+                    ? user.school_track
+                    : importForm.school_track,
+                class_name: isTeacher
+                    ? user.assigned_class_name
+                    : importForm.class_name,
                 records: importForm.records.map(record => ({
                     ...record,
                     age: record.age === '' ? null : Number(record.age),
@@ -804,16 +760,16 @@ export default function StudentsPage() {
         return null
     }
 
-    if (!canManageStudentRecords(user)) {
+    if (!canViewStudents) {
         return (
             <WorkspacePageShell
                 eyebrow="Restricted"
                 title="Student management access required"
-                description={`This account is signed in as ${formatRoleLabel(user?.role)}. Only head teacher / management accounts can add or import student records.`}>
+                description={`This account is signed in as ${formatRoleLabel(user?.role)}. Student records are available to head teachers and teachers assigned to a class.`}>
                 <article className={workspaceStyles.panel}>
                     <p className={managementStyles.notice}>
-                        Student uploading belongs to the head teacher /
-                        management workspace.
+                        Ask the head teacher to assign you a class before adding
+                        student records.
                     </p>
                 </article>
             </WorkspacePageShell>
@@ -822,9 +778,13 @@ export default function StudentsPage() {
 
     return (
         <WorkspacePageShell
-            eyebrow="Management"
-            title="Student records"
-            description={`Add students one by one or upload a class register spreadsheet for ${schoolMeta.label}, then keep every learner attached to the correct track and class.`}
+            eyebrow={isTeacher ? 'Teacher workspace' : 'Management'}
+            title={isTeacher ? 'My class students' : 'Student records'}
+            description={
+                isTeacher
+                    ? `Add students to ${user.assigned_class_name} only. Student records are limited to your assigned class.`
+                    : `Review the student register for ${schoolMeta.label}. Expand or collapse each class to inspect its learners.`
+            }
             actions={
                 <button
                     type="button"
@@ -859,13 +819,14 @@ export default function StudentsPage() {
                 ))}
             </section>
 
-            <section className={managementStyles.summaryCards}>
+            {canAddStudents ? (
+                <section className={managementStyles.summaryCards}>
                 <article id="student-editor" className={workspaceStyles.panel}>
                     <div className={workspaceStyles.panelHeader}>
                         <div>
                             <p className={workspaceStyles.panelEyebrow}>Manual entry</p>
                             <h2 className={workspaceStyles.panelTitle}>
-                                {editingStudentId ? 'Edit student' : 'Add one student'}
+                                Add one student
                             </h2>
                         </div>
                     </div>
@@ -883,7 +844,8 @@ export default function StudentsPage() {
                                             class_name: '',
                                         }))
                                     }
-                                    className={managementStyles.select}>
+                                    className={managementStyles.select}
+                                    disabled={isTeacher}>
                                     {Object.entries(options?.schoolTracks ?? {}).map(
                                         ([value, label]) => (
                                             <option key={value} value={value}>
@@ -906,6 +868,7 @@ export default function StudentsPage() {
                                         }))
                                     }
                                     className={`${managementStyles.select} ${fieldErrorClass(manualErrors.class_name)}`}
+                                    disabled={isTeacher}
                                     required>
                                     <option value="">Select a class</option>
                                     {manualClasses.map(className => (
@@ -1167,20 +1130,8 @@ export default function StudentsPage() {
 
                         <div className={managementStyles.actions}>
                             <Button disabled={manualSaving}>
-                                {manualSaving
-                                    ? 'Saving...'
-                                    : editingStudentId
-                                    ? 'Update student'
-                                    : 'Add student'}
+                                {manualSaving ? 'Saving...' : 'Add student'}
                             </Button>
-                            {editingStudentId ? (
-                                <button
-                                    type="button"
-                                    onClick={resetManualEditor}
-                                    className={managementStyles.secondaryButton}>
-                                    Cancel edit
-                                </button>
-                            ) : null}
                         </div>
                     </form>
                 </article>
@@ -1206,7 +1157,8 @@ export default function StudentsPage() {
                                             class_name: '',
                                         }))
                                     }
-                                    className={`${managementStyles.select} ${fieldErrorClass(importErrors.school_track)}`}>
+                                    className={`${managementStyles.select} ${fieldErrorClass(importErrors.school_track)}`}
+                                    disabled={isTeacher}>
                                     {Object.entries(options?.schoolTracks ?? {}).map(
                                         ([value, label]) => (
                                             <option key={value} value={value}>
@@ -1229,6 +1181,7 @@ export default function StudentsPage() {
                                         }))
                                     }
                                     className={`${managementStyles.select} ${fieldErrorClass(importErrors.class_name)}`}
+                                    disabled={isTeacher}
                                     required>
                                     <option value="">Select a class</option>
                                     {importClasses.map(className => (
@@ -1309,7 +1262,8 @@ export default function StudentsPage() {
                         </div>
                     </form>
                 </article>
-            </section>
+                </section>
+            ) : null}
 
             <section className={workspaceStyles.fullPanel}>
                 <div className={workspaceStyles.panelHeader}>
@@ -1444,33 +1398,35 @@ export default function StudentsPage() {
                                                             </svg>
                                                         </div>
                                                     </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            exportClassStudents(group)
-                                                        }
-                                                        disabled={exportingKeys.has(group.key)}
-                                                        title={
-                                                            exportingKeys.has(group.key)
-                                                                ? 'Preparing Excel file...'
-                                                                : `Export ${group.class_name} students to Excel`
-                                                        }
-                                                        className={`${managementStyles.secondaryButton} ${studentsStyles.exportClassButton}`}>
-                                                        {exportingKeys.has(group.key) ? (
-                                                            'Preparing...'
-                                                        ) : (
-                                                            <>
-                                                                <ExportIcon />
-                                                                Excel
-                                                            </>
-                                                        )}
-                                                    </button>
+                                                    {canAddStudents ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                exportClassStudents(group)
+                                                            }
+                                                            disabled={exportingKeys.has(group.key)}
+                                                            title={
+                                                                exportingKeys.has(group.key)
+                                                                    ? 'Preparing Excel file...'
+                                                                    : `Export ${group.class_name} students to Excel`
+                                                            }
+                                                            className={`${managementStyles.secondaryButton} ${studentsStyles.exportClassButton}`}>
+                                                            {exportingKeys.has(group.key) ? (
+                                                                'Preparing...'
+                                                            ) : (
+                                                                <>
+                                                                    <ExportIcon />
+                                                                    Excel
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                    ) : null}
                                                     </div>
 
                                                     {!isCollapsed && (
                                                         <div className={workspaceStyles.tableWrap}>
                                                             <table
-                                                                className={workspaceStyles.table}>
+                                                                className={`${workspaceStyles.table} ${studentsStyles.studentRegisterTable}`}>
                                                                 <thead>
                                                                     <tr>
                                                                         <th>Full name</th>
@@ -1489,104 +1445,60 @@ export default function StudentsPage() {
                                                                         </th>
                                                                         <th>Residence</th>
                                                                         <th>Entry date</th>
-                                                                        <th>Actions</th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
                                                                     {group.students.map(
                                                                         student => (
                                                                             <tr key={student.id}>
-                                                                                <td>
+                                                                                <td data-label="Full name">
                                                                                     {
                                                                                         student.full_name
                                                                                     }
                                                                                 </td>
-                                                                                <td>
+                                                                                <td data-label="Sex">
                                                                                     {student.sex ||
                                                                                         'N/A'}
                                                                                 </td>
-                                                                                <td>
+                                                                                <td data-label="Date of birth">
                                                                                     {student.date_of_birth ||
                                                                                         'N/A'}
                                                                                 </td>
-                                                                                <td>
+                                                                                <td data-label="Age">
                                                                                     {student.age ??
                                                                                         'N/A'}
                                                                                 </td>
-                                                                                <td>
+                                                                                <td data-label="Student code">
                                                                                     {student.student_code ||
                                                                                         'N/A'}
                                                                                 </td>
-                                                                                <td>
+                                                                                <td data-label="Disability">
                                                                                     {student.disability_name ||
                                                                                         'N/A'}
                                                                                 </td>
-                                                                                <td>
+                                                                                <td data-label="Orphan status">
                                                                                     {student.orphan_status ||
                                                                                         'N/A'}
                                                                                 </td>
-                                                                                <td>
+                                                                                <td data-label="Guardian">
                                                                                     {student.guardian_name ||
                                                                                         'N/A'}
                                                                                 </td>
-                                                                                <td>
+                                                                                <td data-label="Guardian phone">
                                                                                     {student.guardian_phone ||
                                                                                         'N/A'}
                                                                                 </td>
-                                                                                <td>
+                                                                                <td data-label="Guardian email">
                                                                                     {student.guardian_email ||
                                                                                         'N/A'}
                                                                                 </td>
-                                                                                <td>
+                                                                                <td data-label="Residence">
                                                                                     {student.residence ||
                                                                                         'N/A'}
                                                                                 </td>
-                                                                                <td>
+                                                                                <td data-label="Entry date">
                                                                                     {student.first_entry_date ||
                                                                                         'N/A'}
-                                                                                </td>
-                                                                                <td>
-                                                                                    <div
-                                                                                        className={
-                                                                                            managementStyles.tableActions
-                                                                                        }>
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            onClick={() =>
-                                                                                                startEditingStudent(
-                                                                                                    student,
-                                                                                                )
-                                                                                            }
-                                                                                            aria-label={`Edit ${student.full_name}`}
-                                                                                            title={`Edit ${student.full_name}`}
-                                                                                            className={`${managementStyles.secondaryButton} ${managementStyles.iconButton}`}>
-                                                                                            <span
-                                                                                                className={
-                                                                                                    managementStyles.srOnly
-                                                                                                }>
-                                                                                                {`Edit ${student.full_name}`}
-                                                                                            </span>
-                                                                                            <EditIcon />
-                                                                                        </button>
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            onClick={() =>
-                                                                                                setConfirmingStudent(
-                                                                                                    student,
-                                                                                                )
-                                                                                            }
-                                                                                            aria-label={`Delete ${student.full_name}`}
-                                                                                            title={`Delete ${student.full_name}`}
-                                                                                            className={`${managementStyles.dangerButton} ${managementStyles.iconButton}`}>
-                                                                                            <span
-                                                                                                className={
-                                                                                                    managementStyles.srOnly
-                                                                                                }>
-                                                                                                {`Delete ${student.full_name}`}
-                                                                                            </span>
-                                                                                            <DeleteIcon />
-                                                                                        </button>
-                                                                                    </div>
                                                                                 </td>
                                                                             </tr>
                                                                         ),
@@ -1605,29 +1517,6 @@ export default function StudentsPage() {
                     </>
                 )}
             </section>
-            <ConfirmDialog
-                open={Boolean(confirmingStudent)}
-                eyebrow="Delete student"
-                title="Delete this student record?"
-                message={
-                    confirmingStudent
-                        ? `Are you sure you want to delete ${confirmingStudent.full_name}?`
-                        : ''
-                }
-                confirmLabel="Delete student"
-                busyLabel="Deleting..."
-                tone="danger"
-                busy={
-                    deletingStudentId != null &&
-                    deletingStudentId === confirmingStudent?.id
-                }
-                onClose={() => setConfirmingStudent(null)}
-                onConfirm={() => {
-                    if (confirmingStudent) {
-                        deleteStudent(confirmingStudent)
-                    }
-                }}
-            />
         </WorkspacePageShell>
     )
 }

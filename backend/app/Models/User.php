@@ -126,6 +126,23 @@ class User extends Authenticatable
         return $this->isAccountant() && $this->isActive() && ! $this->schoolIsLocked();
     }
 
+    public function canAddStudentRecords(): bool
+    {
+        return $this->isTeacher()
+            && $this->isActive()
+            && filled($this->school_id)
+            && filled($this->school_track)
+            && filled($this->assigned_class_name)
+            && ! $this->schoolIsLocked();
+    }
+
+    public function canManageAssignedStudentClass(string $schoolTrack, string $className): bool
+    {
+        return $this->canAddStudentRecords()
+            && $this->school_track === $schoolTrack
+            && $this->assigned_class_name === $className;
+    }
+
     public function canAccessAdminPanel(): bool
     {
         return $this->canManageAdministration();

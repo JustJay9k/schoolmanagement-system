@@ -6,14 +6,6 @@ import styles from './dashboard.module.css'
 
 const fetcher = url => axios.get(url).then(response => response.data)
 
-const formatTimestamp = value => {
-    if (!value) {
-        return 'Not uploaded yet'
-    }
-
-    return new Date(value).toLocaleString()
-}
-
 const formatCurrency = value =>
     new Intl.NumberFormat('en-MW', {
         style: 'currency',
@@ -93,8 +85,7 @@ const GuardianDashboard = ({ user }) => {
                     <p className={styles.metricMeta}>
                         {child.latest_assessment_period_name
                             ? `${child.latest_assessment_period_name} | `
-                            : ''}
-                        Updated {formatTimestamp(child.latest_updated_at)}
+                            : 'No assessment period recorded'}
                     </p>
                 </div>
 
@@ -292,13 +283,12 @@ const GuardianDashboard = ({ user }) => {
                                 <th>Average</th>
                                 <th>Subjects and grades</th>
                                 <th>Comment</th>
-                                <th>Updated</th>
                             </tr>
                         </thead>
                         <tbody>
                             {performanceRecords.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7}>
+                                    <td colSpan={6}>
                                         No grades or teacher comments have been
                                         uploaded yet.
                                     </td>
@@ -325,9 +315,6 @@ const GuardianDashboard = ({ user }) => {
                                         <td>
                                             {record.comment ||
                                                 'No comment added.'}
-                                        </td>
-                                        <td>
-                                            {formatTimestamp(record.updated_at)}
                                         </td>
                                     </tr>
                                 ))

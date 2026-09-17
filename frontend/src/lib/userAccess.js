@@ -35,7 +35,16 @@ export const canManageSystem = user => isAdminUser(user)
 export const canManageSchoolStructure = user =>
     isAdminUser(user) || (isManagementUser(user) && Boolean(user?.school_id))
 export const canManageManagementWorkspace = user => isManagementUser(user)
-export const canManageStudentRecords = user => isManagementUser(user)
+export const canViewStudentRecords = user =>
+    isManagementUser(user) ||
+    (isTeacherUser(user) &&
+        Boolean(user?.school_track) &&
+        Boolean(user?.assigned_class_name))
+export const canAddStudentRecords = user =>
+    isTeacherUser(user) &&
+    Boolean(user?.school_track) &&
+    Boolean(user?.assigned_class_name)
+export const canManageStudentRecords = canViewStudentRecords
 export const canManageFinanceWorkspace = user => isAccountantUser(user)
 export const canManageGradebook = user =>
     isTeacherUser(user) || isManagementUser(user)

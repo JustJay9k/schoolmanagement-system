@@ -10,13 +10,24 @@ use App\Models\StudentRecord;
 use App\Support\SchoolContextOptions;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ManagementStudentRecordApiController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $students = StudentRecord::query()
-            ->where('school_id', request()->user()?->school_id)
+        $user = $request->user();
+        abort_unless($user?->isHeadTeacher() || $user?->canAddStudentRecords(), 403);
+
+        $studentQuery = StudentRecord::query()
+            ->where('school_id', $user?->school_id)
+            ->when($user?->isTeacher(), function ($query) use ($user): void {
+                $query
+                    ->where('school_track', $user->school_track)
+                    ->where('class_name', $user->assigned_class_name);
+            });
+
+        $students = $studentQuery
             ->with('creator:id,name')
             ->orderBy('school_track')
             ->orderBy('class_name')
@@ -32,8 +43,12 @@ class ManagementStudentRecordApiController extends Controller
                 'classes' => $students->map(fn (StudentRecord $student): string => $student->school_track.'::'.$student->class_name)->unique()->count(),
             ],
             'options' => [
-                'schoolTracks' => SchoolContextOptions::tracks(),
-                'classesByTrack' => SchoolContextOptions::classesByTrack(request()->user()?->school_id),
+                'schoolTracks' => $user->isTeacher()
+                    ? [$user->school_track => SchoolContextOptions::tracks()[$user->school_track] ?? ucfirst($user->school_track)]
+                    : SchoolContextOptions::tracks(),
+                'classesByTrack' => $user->isTeacher()
+                    ? [$user->school_track => [$user->assigned_class_name]]
+                    : SchoolContextOptions::classesByTrack($user->school_id),
             ],
         ]);
     }
