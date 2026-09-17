@@ -57,3 +57,77 @@
         var(--surface-card-soft) 100%
     );
 }
+
+.registerTable {
+    min-width: 58rem;
+}
+
+@media (max-width: 700px) {
+    .registerTable {
+        min-width: 0;
+        display: block;
+    }
+
+    .registerTable thead {
+        display: none;
+    }
+
+    .registerTable tbody {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .registerTable tr {
+        display: grid;
+        gap: 0.55rem;
+        border: 1px solid var(--line);
+        border-radius: 0.85rem;
+        background: var(--surface-card-muted);
+        padding: 0.75rem;
+    }
+
+    .registerTable tr:last-child td {
+        border-bottom: none;
+    }
+
+    .registerTable td {
+        display: grid;
+        grid-template-columns: minmax(6.8rem, 0.38fr) minmax(0, 1fr);
+        gap: 0.65rem;
+        align-items: start;
+        border-bottom: 1px solid var(--line);
+        padding: 0.2rem 0 0.55rem;
+        min-width: 0;
+    }
+
+    .registerTable td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        line-height: 1.35;
+        text-transform: uppercase;
+    }
+
+    .registerTable td:last-child {
+        grid-template-columns: 1fr;
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .registerTable td:last-child::before {
+        display: none;
+    }
+
+    .registerTable td > input,
+    .registerTable td > .radioCard,
+    .registerTable td > button {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .registerTable td > .radioCard {
+        padding: 0.65rem 0.75rem;
+    }
+}

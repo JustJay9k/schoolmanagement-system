@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import managementStyles from '@/app/(app)/management/management-tools.module.css'
+import financeStyles from '@/app/(app)/finance/finance.module.css'
 import Button from '@/components/Button'
 import Input from '@/components/Input'
 import axios from '@/lib/axios'
@@ -416,7 +417,8 @@ export default function FinancePage() {
                     </p>
                 ) : (
                     <div className={workspaceStyles.tableWrap}>
-                        <table className={workspaceStyles.table}>
+                        <table
+                            className={`${workspaceStyles.table} ${financeStyles.registerTable}`}>
                             <thead>
                                 <tr>
                                     <th>Student</th>
@@ -433,7 +435,7 @@ export default function FinancePage() {
 
                                     return (
                                         <tr key={student.id}>
-                                            <td>
+                                            <td data-label="Student">
                                                 <strong>{student.full_name}</strong>
                                                 <small>
                                                     {student.school_track_label} |{' '}
@@ -444,7 +446,7 @@ export default function FinancePage() {
                                                     {student.student_code || 'N/A'}
                                                 </small>
                                             </td>
-                                            <td>
+                                            <td data-label="Basic information">
                                                 <strong>
                                                     {student.guardian_name || 'No guardian name'}
                                                 </strong>
@@ -457,7 +459,7 @@ export default function FinancePage() {
                                                     {student.age ?? 'N/A'}
                                                 </small>
                                             </td>
-                                            <td>
+                                            <td data-label="Fees balance">
                                                 <Input
                                                     type="text"
                                                     inputMode="numeric"
@@ -471,7 +473,7 @@ export default function FinancePage() {
                                                     }
                                                 />
                                             </td>
-                                            <td>
+                                            <td data-label="Books paid">
                                                 <label className={managementStyles.radioCard}>
                                                     <input
                                                         type="checkbox"
@@ -495,7 +497,7 @@ export default function FinancePage() {
                                                     </span>
                                                 </label>
                                             </td>
-                                            <td>
+                                            <td data-label="Uniform paid">
                                                 <label className={managementStyles.radioCard}>
                                                     <input
                                                         type="checkbox"
@@ -519,7 +521,7 @@ export default function FinancePage() {
                                                     </span>
                                                 </label>
                                             </td>
-                                            <td>
+                                            <td data-label="Action">
                                                 <Button
                                                     type="button"
                                                     onClick={() =>
