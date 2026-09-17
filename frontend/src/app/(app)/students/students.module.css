@@ -18,6 +18,7 @@
 }
 
 .studentRegisterTable {
+    width: max-content;
     min-width: 72rem;
 }
 
@@ -27,14 +28,23 @@
 }
 
 .studentRegisterPanel .tableWrap {
+    display: block;
+    width: 100%;
+    min-width: 0;
     max-width: 100%;
-    overflow-x: auto;
+    overflow-x: scroll;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
 }
 
+.studentRegisterPanel .studentRegisterTable {
+    width: max-content;
+    min-width: 60rem;
+}
+
 @media (min-width: 701px) and (max-width: 1199px) {
     .studentRegisterTable {
+        width: max-content;
         min-width: 60rem;
     }
 
@@ -50,7 +60,8 @@
 }
 
 @media (max-width: 700px) {
-    .studentRegisterTable {
+    .studentRegisterPanel .studentRegisterTable {
+        width: 100%;
         min-width: 0;
         display: block;
     }
