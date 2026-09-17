@@ -538,7 +538,11 @@ export default function ManagementFormTeachersPage() {
                         className={`${managementStyles.tabButton} ${
                             activeTrack === track ? managementStyles.tabButtonActive : ''
                         }`}>
-                        {track === 'primary' ? 'Primary classes' : 'Secondary classes'}
+                                                {track === 'preschool'
+                                                        ? 'Preschool classes'
+                                                        : track === 'primary'
+                                                            ? 'Primary classes'
+                                                            : 'Secondary classes'}
                     </button>
                 ))}
             </div>

@@ -176,12 +176,13 @@ export default function AdminUsersPage() {
 
                     if (!accumulator[schoolKey]) {
                         accumulator[schoolKey] = {
+                            preschool: [],
                             primary: [],
                             secondary: [],
                         }
                     }
 
-                    accumulator[schoolKey][item.school_track].push(
+                    accumulator[schoolKey][item.school_track]?.push(
                         item.assigned_class_name,
                     )
                 }
