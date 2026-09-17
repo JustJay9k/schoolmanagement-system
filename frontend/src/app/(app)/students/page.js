@@ -10,6 +10,7 @@ import { ExportIcon } from '@/app/(app)/admin/action-icons'
 import Button from '@/components/Button'
 import Input from '@/components/Input'
 import InputError from '@/components/InputError'
+import { useToast } from '@/components/ToastProvider'
 import axios from '@/lib/axios'
 import {
     canAddStudentRecords,
@@ -275,6 +276,7 @@ const getSchoolMeta = user => ({
 
 export default function StudentsPage() {
     const { user } = useAuth({ middleware: 'auth' })
+    const { showToast } = useToast()
     const canViewStudents = canViewStudentRecords(user)
     const canAddStudents = canAddStudentRecords(user)
     const isTeacher = isTeacherUser(user)
@@ -644,16 +646,6 @@ export default function StudentsPage() {
             validationErrors.full_name = ['Full name is required.']
         }
 
-        if (manualForm.date_of_birth === '') {
-            validationErrors.date_of_birth = [
-                'Date of birth is required to calculate age.',
-            ]
-        }
-
-        if (manualForm.age === '') {
-            validationErrors.age = ['Age is required. Add the date of birth to calculate it.']
-        }
-
         if (manualForm.student_code.trim() === '') {
             validationErrors.student_code = ['Student code is required.']
         }
@@ -698,9 +690,15 @@ export default function StudentsPage() {
                     has_disability === 'yes' ? manualPayload.disability_name : '',
             }
 
-            await axios.post(studentApiBase, payload)
+            const response = await axios.post(studentApiBase, payload)
 
             resetManualEditor()
+            showToast({
+                type: 'success',
+                message:
+                    response.data?.message ??
+                    'Student record added successfully.',
+            })
             setPageStatus({
                 type: 'success',
                 message: 'Student record added successfully.',
@@ -739,6 +737,12 @@ export default function StudentsPage() {
             })
 
             setImportForm(createImportForm())
+            showToast({
+                type: 'success',
+                message:
+                    response.data?.message ??
+                    'Student records imported successfully.',
+            })
             setPageStatus({
                 type: 'success',
                 message: `${response.data?.message ?? 'Import completed.'} ${response.data?.summary?.processed ?? 0} row(s) processed.`,
@@ -924,7 +928,6 @@ export default function StudentsPage() {
                             <label className={managementStyles.field}>
                                 <span className={managementStyles.fieldLabel}>
                                     Date of birth
-                                    <span className={managementStyles.requiredMark}>*</span>
                                 </span>
                                 <Input
                                     type="date"
@@ -936,7 +939,6 @@ export default function StudentsPage() {
                                             age: getAgeFromDateOfBirth(event.target.value),
                                         }))
                                     }
-                                    required
                                     className={fieldErrorClass(manualErrors.date_of_birth)}
                                 />
                                 <InputError messages={manualErrors.date_of_birth} />
@@ -945,7 +947,6 @@ export default function StudentsPage() {
                             <label className={managementStyles.field}>
                                 <span className={managementStyles.fieldLabel}>
                                     Age
-                                    <span className={managementStyles.requiredMark}>*</span>
                                 </span>
                                 <Input
                                     type="number"
