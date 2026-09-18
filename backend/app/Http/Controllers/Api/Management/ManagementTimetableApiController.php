@@ -20,6 +20,7 @@ class ManagementTimetableApiController extends Controller
     {
         return response()->json([
             'timetables' => Timetable::query()
+                ->where('status', 'submitted')
                 ->with(['assignedTeacher:id,name,assigned_class_name', 'creator:id,name', 'entries.subject:id,name,code'])
                 ->orderBy('school_track')
                 ->orderBy('class_name')
@@ -32,6 +33,7 @@ class ManagementTimetableApiController extends Controller
 
     public function show(Timetable $timetable): JsonResponse
     {
+        abort_unless($timetable->status === 'submitted', 404);
         $timetable->load(['assignedTeacher:id,name,assigned_class_name', 'creator:id,name', 'entries.subject:id,name,code']);
 
         return response()->json([
@@ -152,6 +154,8 @@ class ManagementTimetableApiController extends Controller
             'school_track_label' => SchoolContextOptions::tracks()[$timetable->school_track] ?? ucfirst($timetable->school_track),
             'class_name' => $timetable->class_name,
             'notes' => $timetable->notes,
+            'status' => $timetable->status,
+            'submitted_at' => $timetable->submitted_at?->toIso8601String(),
             'assigned_teacher' => $timetable->assignedTeacher ? [
                 'id' => $timetable->assignedTeacher->id,
                 'name' => $timetable->assignedTeacher->name,

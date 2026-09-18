@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Api\Teacher;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Teacher\StoreTeacherTimetableRequest;
+use App\Http\Requests\Teacher\UpdateTeacherTimetableRequest;
 use App\Models\TeacherSubjectAssignment;
+use App\Models\SchoolSubject;
 use App\Models\Timetable;
 use App\Models\TimetableEntry;
 use App\Support\SchoolContextOptions;
@@ -20,14 +23,118 @@ class TeacherTimetableApiController extends Controller
 
         abort_unless($teacher?->isTeacher(), 403, 'Only teacher accounts can access assigned timetables.');
 
-        $timetables = $teacher->school_track === 'secondary'
-            ? $this->secondaryTimetables($teacher->id, $teacher->assigned_class_name)
-            : $this->primaryTimetables($teacher->id);
+        $timetables = Timetable::query()
+            ->with(['creator:id,name', 'entries.subject:id,name,code'])
+            ->where('assigned_teacher_id', $teacher->id)
+            ->where('school_track', $teacher->school_track)
+            ->where('class_name', $teacher->assigned_class_name)
+            ->orderBy('class_name')
+            ->get()
+            ->map(fn (Timetable $timetable): array => $this->serializeTimetable(
+                $timetable,
+                $timetable->entries,
+                'full_class',
+            ));
 
         return response()->json([
             'timetables' => $timetables->values(),
             'daysOfWeek' => TimetableOptions::daysOfWeek(),
+            'options' => [
+                'schoolTracks' => SchoolContextOptions::tracks(),
+                'classesByTrack' => SchoolContextOptions::classesByTrack($teacher->school_id),
+                'subjectsByTrack' => [
+                    $teacher->school_track => SchoolSubject::query()
+                        ->where('school_id', $teacher->school_id)
+                        ->where('school_track', $teacher->school_track)
+                        ->orderBy('name')
+                        ->get(['id', 'name', 'code'])
+                        ->map(fn (SchoolSubject $subject): array => [
+                            'id' => $subject->id,
+                            'name' => $subject->name,
+                            'code' => $subject->code,
+                        ])->values()->all(),
+                ],
+                'teachersByTrack' => [],
+                'daysOfWeek' => TimetableOptions::daysOfWeek(),
+            ],
         ]);
+    }
+
+    public function store(StoreTeacherTimetableRequest $request): JsonResponse
+    {
+        $teacher = $request->user();
+        $validated = $request->validated();
+        $this->guardTeacherScope($teacher, $validated);
+
+        $timetable = Timetable::query()->create([
+            'title' => $validated['title'],
+            'school_track' => $teacher->school_track,
+            'class_name' => $teacher->assigned_class_name,
+            'assigned_teacher_id' => $teacher->id,
+            'created_by' => $teacher->id,
+            'notes' => $validated['notes'] ?? null,
+            'status' => 'draft',
+        ]);
+        $timetable->entries()->createMany($validated['entries']);
+
+        return response()->json([
+            'message' => 'Timetable draft saved successfully.',
+            'timetable' => $this->serializeTimetable($timetable->fresh(['creator:id,name', 'entries.subject:id,name,code']), $timetable->entries, 'full_class'),
+        ], 201);
+    }
+
+    public function update(UpdateTeacherTimetableRequest $request, Timetable $timetable): JsonResponse
+    {
+        $teacher = $request->user();
+        abort_unless($this->teacherOwnsTimetable($teacher, $timetable), 404);
+        abort_if($timetable->status === 'submitted', 409, 'This timetable has already been submitted to the head teacher.');
+
+        $validated = $request->validated();
+        $this->guardTeacherScope($teacher, $validated);
+        $timetable->update(['title' => $validated['title'], 'notes' => $validated['notes'] ?? null]);
+        $timetable->entries()->delete();
+        $timetable->entries()->createMany($validated['entries']);
+
+        return response()->json(['message' => 'Timetable draft updated successfully.']);
+    }
+
+    public function destroy(Request $request, Timetable $timetable): JsonResponse
+    {
+        $teacher = $request->user();
+        abort_unless($this->teacherOwnsTimetable($teacher, $timetable), 404);
+        abort_if($timetable->status === 'submitted', 409, 'Submitted timetables cannot be deleted.');
+        $timetable->delete();
+
+        return response()->json(['message' => 'Timetable draft deleted successfully.']);
+    }
+
+    public function submit(Request $request, Timetable $timetable): JsonResponse
+    {
+        $teacher = $request->user();
+        abort_unless($this->teacherOwnsTimetable($teacher, $timetable), 404);
+        $timetable->update(['status' => 'submitted', 'submitted_at' => now()]);
+
+        return response()->json(['message' => 'Timetable submitted to the head teacher successfully.']);
+    }
+
+    private function teacherOwnsTimetable($teacher, Timetable $timetable): bool
+    {
+        return $teacher?->isTeacher()
+            && (int) $timetable->assigned_teacher_id === (int) $teacher->id
+            && $timetable->school_track === $teacher->school_track
+            && $timetable->class_name === $teacher->assigned_class_name;
+    }
+
+    private function guardTeacherScope($teacher, array $validated): void
+    {
+        abort_unless(
+            filled($teacher?->school_track)
+                && filled($teacher?->assigned_class_name)
+                && $validated['school_track'] === $teacher->school_track
+                && $validated['class_name'] === $teacher->assigned_class_name,
+            422,
+            'This timetable must belong to your assigned class.',
+        );
     }
 
     /**
@@ -138,6 +245,8 @@ class TeacherTimetableApiController extends Controller
             'school_track_label' => SchoolContextOptions::tracks()[$timetable->school_track] ?? ucfirst($timetable->school_track),
             'class_name' => $timetable->class_name,
             'notes' => $timetable->notes,
+            'status' => $timetable->status,
+            'submitted_at' => $timetable->submitted_at?->toIso8601String(),
             'creator_name' => $timetable->creator?->name,
             'view_scope' => $viewScope,
             'view_scope_label' => match ($viewScope) {

@@ -162,9 +162,6 @@ Route::middleware(['auth:sanctum', 'timetable-manager'])->prefix('management')->
 
     Route::get('/timetables', [ManagementTimetableApiController::class, 'index']);
     Route::get('/timetables/{timetable}', [ManagementTimetableApiController::class, 'show']);
-    Route::post('/timetables', [ManagementTimetableApiController::class, 'store']);
-    Route::put('/timetables/{timetable}', [ManagementTimetableApiController::class, 'update']);
-    Route::delete('/timetables/{timetable}', [ManagementTimetableApiController::class, 'destroy']);
 });
 
 Route::middleware(['auth:sanctum', 'finance'])->prefix('finance')->group(function () {
@@ -177,6 +174,10 @@ Route::middleware(['auth:sanctum', 'finance'])->prefix('finance')->group(functio
 });
 
 Route::middleware(['auth:sanctum', 'portal'])->prefix('teacher')->group(function () {
+    Route::post('/timetables', [TeacherTimetableApiController::class, 'store']);
+    Route::put('/timetables/{timetable}', [TeacherTimetableApiController::class, 'update']);
+    Route::delete('/timetables/{timetable}', [TeacherTimetableApiController::class, 'destroy']);
+    Route::post('/timetables/{timetable}/submit', [TeacherTimetableApiController::class, 'submit']);
     Route::get('/students', [ManagementStudentRecordApiController::class, 'index']);
     Route::post('/students', [ManagementStudentRecordApiController::class, 'store']);
     Route::post('/students/import', [ManagementStudentRecordApiController::class, 'import']);

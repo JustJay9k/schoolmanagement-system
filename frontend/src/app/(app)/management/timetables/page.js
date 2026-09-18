@@ -10,7 +10,11 @@ import Input from '@/components/Input'
 import InputError from '@/components/InputError'
 import { useToast } from '@/components/ToastProvider'
 import axios from '@/lib/axios'
-import { canManageManagementWorkspace, formatRoleLabel } from '@/lib/userAccess'
+import {
+    canManageManagementWorkspace,
+    formatRoleLabel,
+    isTeacherUser,
+} from '@/lib/userAccess'
 import { useAuth } from '@/hooks/auth'
 
 const createEmptyEntry = () => ({
@@ -82,6 +86,10 @@ const CloseIcon = () => (
 export default function ManagementTimetablesPage() {
     const { user } = useAuth({ middleware: 'auth' })
     const { showToast } = useToast()
+    const managementMode = canManageManagementWorkspace(user)
+    const teacherMode = isTeacherUser(user)
+    const canUseEditor = managementMode || teacherMode
+    const apiBase = teacherMode ? '/api/teacher/timetables' : '/api/management/timetables'
     const editorModalRef = useRef(null)
     const [timetables, setTimetables] = useState([])
     const [options, setOptions] = useState(null)
@@ -95,12 +103,13 @@ export default function ManagementTimetablesPage() {
     const [editorOpen, setEditorOpen] = useState(false)
     const [deletingTimetableId, setDeletingTimetableId] = useState(null)
     const [confirmingTimetable, setConfirmingTimetable] = useState(null)
+    const [collapsedTimetables, setCollapsedTimetables] = useState(new Set())
 
     const loadTimetables = async () => {
         setLoading(true)
 
         try {
-            const response = await axios.get('/api/management/timetables')
+            const response = await axios.get(apiBase)
 
             setTimetables(response.data?.timetables ?? [])
             setOptions(response.data?.options ?? null)
@@ -121,7 +130,18 @@ export default function ManagementTimetablesPage() {
         }
 
         loadTimetables()
-    }, [user])
+    }, [apiBase, user])
+
+    useEffect(() => {
+        if (teacherMode && user) {
+            setForm(current => ({
+                ...current,
+                school_track: user.school_track ?? current.school_track,
+                class_name: user.assigned_class_name ?? current.class_name,
+                assigned_teacher_id: user.id ? String(user.id) : current.assigned_teacher_id,
+            }))
+        }
+    }, [teacherMode, user])
 
     const availableClasses = options?.classesByTrack?.[form.school_track] ?? []
     const availableTeachers = options?.teachersByTrack?.[form.school_track] ?? []
@@ -263,7 +283,7 @@ export default function ManagementTimetablesPage() {
         try {
             if (editorMode === 'edit' && editingTimetableId) {
                 await axios.put(
-                    `/api/management/timetables/${editingTimetableId}`,
+                    `${apiBase}/${editingTimetableId}`,
                     form,
                 )
                 showToast({
@@ -272,7 +292,15 @@ export default function ManagementTimetablesPage() {
                 })
                 closeEditor()
             } else {
-                await axios.post('/api/management/timetables', form)
+                const payload = teacherMode
+                    ? {
+                          ...form,
+                          school_track: user.school_track,
+                          class_name: user.assigned_class_name,
+                          assigned_teacher_id: user.id,
+                      }
+                    : form
+                await axios.post(apiBase, payload)
                 showToast({
                     type: 'success',
                     message: 'Timetable created successfully.',
@@ -299,7 +327,7 @@ export default function ManagementTimetablesPage() {
 
         try {
             const response = await axios.delete(
-                `/api/management/timetables/${timetable.id}`,
+                `${apiBase}/${timetable.id}`,
             )
 
             if (editingTimetableId === timetable.id) {
@@ -324,22 +352,36 @@ export default function ManagementTimetablesPage() {
         }
     }
 
+    const submitTimetable = async timetable => {
+        try {
+            const response = await axios.post(`${apiBase}/${timetable.id}/submit`)
+            showToast({
+                type: 'success',
+                message: response.data?.message ?? 'Timetable submitted successfully.',
+            })
+            await loadTimetables()
+        } catch (error) {
+            showToast({
+                type: 'error',
+                message: error?.response?.data?.message ?? 'Unable to submit this timetable.',
+            })
+        }
+    }
+
     if (!user) {
         return null
     }
 
-    if (!canManageManagementWorkspace(user)) {
+    if (!canUseEditor) {
         return (
             <WorkspacePageShell
                 eyebrow="Restricted"
-                title="Management access required"
-                description={`This account is signed in as ${formatRoleLabel(user?.role)}. Only head teacher / management accounts can publish class timetables.`}>
+                title="Timetable access required"
+                description={`This account is signed in as ${formatRoleLabel(user?.role)}. Only teachers and head teachers can manage timetables.`}>
                 <article className={workspaceStyles.panel}>
                     <p className={managementStyles.notice}>
-                        Timetable publishing belongs to the management workspace.
-                        Teachers can only see timetables assigned to them, while
-                        form-teacher allocation stays in the same management
-                        workspace.
+                        Timetable editing belongs to assigned teachers and
+                        timetable review belongs to the head teacher.
                     </p>
                 </article>
             </WorkspacePageShell>
@@ -348,17 +390,19 @@ export default function ManagementTimetablesPage() {
 
     return (
         <WorkspacePageShell
-            eyebrow="Management"
-            title="Class timetables"
-            description="Choose whether a timetable belongs to primary or secondary school, assign it to a teacher account, and publish one schedule per class. Secondary subject teachers and form teachers can be the same person."
+            eyebrow={teacherMode ? 'Teacher workspace' : 'Management'}
+            title={teacherMode ? 'My class timetable' : 'Submitted timetables'}
+            description={teacherMode
+                ? 'Build your assigned class timetable, save it as a draft, and submit it to the head teacher when it is ready.'
+                : 'Review timetables submitted by teachers. Collapse each timetable to keep this workspace clear.'}
             actions={
                 <div className={managementStyles.toolbarGroup}>
-                    <button
+                    {teacherMode ? <button
                         type="button"
                         onClick={startCreate}
                         className={workspaceStyles.secondaryButton}>
                         New timetable
-                    </button>
+                    </button> : null}
                     <button
                         type="button"
                         onClick={loadTimetables}
@@ -395,7 +439,7 @@ export default function ManagementTimetablesPage() {
                 <article className={workspaceStyles.fullPanel}>
                     <div className={workspaceStyles.panelHeader}>
                         <div>
-                            <p className={workspaceStyles.panelEyebrow}>Published</p>
+                            <p className={workspaceStyles.panelEyebrow}>{teacherMode ? 'My submissions' : 'Submitted'}</p>
                             <h2 className={workspaceStyles.panelTitle}>
                                 Timetables by class
                             </h2>
@@ -426,13 +470,13 @@ export default function ManagementTimetablesPage() {
                                                 </p>
                                             </div>
                                             <div className={managementStyles.tableActions}>
-                                                <button
+                                                {teacherMode ? <button
                                                     type="button"
                                                     onClick={() => startEdit(timetable)}
                                                     className={managementStyles.ghostButton}>
                                                     Edit
-                                                </button>
-                                                <button
+                                                </button> : null}
+                                                {teacherMode ? <button
                                                     type="button"
                                                     onClick={() =>
                                                         setConfirmingTimetable(timetable)
@@ -442,17 +486,39 @@ export default function ManagementTimetablesPage() {
                                                     }
                                                     className={managementStyles.dangerButton}>
                                                     Delete
-                                                </button>
+                                                </button> : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setCollapsedTimetables(current => {
+                                                                const next = new Set(current)
+                                                                if (next.has(timetable.id)) next.delete(timetable.id)
+                                                                else next.add(timetable.id)
+                                                                return next
+                                                            })
+                                                        }
+                                                        className={managementStyles.ghostButton}>
+                                                        {collapsedTimetables.has(timetable.id) ? 'Expand' : 'Collapse'}
+                                                    </button>
+                                                )}
+                                                {teacherMode && timetable.status === 'draft' ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => submitTimetable(timetable)}
+                                                        className={workspaceStyles.button}>
+                                                        Submit to head teacher
+                                                    </button>
+                                                ) : null}
                                             </div>
                                         </div>
 
-                                        {timetable.notes ? (
+                                        {(!managementMode || !collapsedTimetables.has(timetable.id)) && timetable.notes ? (
                                             <p className={managementStyles.cardMeta}>
                                                 {timetable.notes}
                                             </p>
                                         ) : null}
 
-                                        <div className={managementStyles.dayGrid}>
+                                        {(!managementMode || !collapsedTimetables.has(timetable.id)) ? <div className={managementStyles.dayGrid}>
                                             {Object.entries(options?.daysOfWeek ?? {}).map(
                                                 ([dayValue, dayLabel]) => (
                                                     <div
@@ -488,7 +554,7 @@ export default function ManagementTimetablesPage() {
                                                     </div>
                                                 ),
                                             )}
-                                        </div>
+                                        </div> : null}
                                     </div>
                                 )
                             })
@@ -539,7 +605,7 @@ export default function ManagementTimetablesPage() {
                             onSubmit={submitForm}
                             className={`${managementStyles.stack} ${managementStyles.modalForm}`}>
                             <div className={managementStyles.formGrid}>
-                                <label className={managementStyles.field}>
+                                {!teacherMode ? <label className={managementStyles.field}>
                                     <span className={managementStyles.fieldLabel}>Title</span>
                                     <Input
                                         value={form.title}
@@ -550,7 +616,7 @@ export default function ManagementTimetablesPage() {
                                         required
                                     />
                                     <InputError messages={formErrors.title} />
-                                </label>
+                                </label> : null}
 
                                 <label className={managementStyles.field}>
                                     <span className={managementStyles.fieldLabel}>
@@ -598,6 +664,7 @@ export default function ManagementTimetablesPage() {
                                                     <input
                                                         type="radio"
                                                         checked={form.school_track === value}
+                                                        disabled={teacherMode}
                                                         onChange={() =>
                                                             handleFieldChange('school_track', value)
                                                         }
@@ -625,6 +692,7 @@ export default function ManagementTimetablesPage() {
                                             handleFieldChange('class_name', event.target.value)
                                         }
                                         className={managementStyles.select}
+                                        disabled={teacherMode}
                                         required>
                                         <option value="">
                                             {availableClasses.length

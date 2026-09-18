@@ -15,7 +15,16 @@ class Timetable extends Model
         'assigned_teacher_id',
         'created_by',
         'notes',
+        'status',
+        'submitted_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'submitted_at' => 'datetime',
+        ];
+    }
 
     public function assignedTeacher(): BelongsTo
     {

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
+import ManagementTimetablesPage from '@/app/(app)/management/timetables/page'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import managementStyles from '@/app/(app)/management/management-tools.module.css'
 import axios from '@/lib/axios'
@@ -70,6 +71,10 @@ export default function TimetablesPage() {
 
     if (!user) {
         return null
+    }
+
+    if (isTeacherUser(user)) {
+        return <ManagementTimetablesPage />
     }
 
     if (canManageManagementWorkspace(user)) {
