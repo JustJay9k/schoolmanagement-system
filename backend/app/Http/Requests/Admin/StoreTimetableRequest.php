@@ -23,12 +23,14 @@ class StoreTimetableRequest extends FormRequest
         $entries = collect($this->input('entries', []))
             ->filter(fn (mixed $entry): bool => is_array($entry))
             ->map(function (array $entry): array {
+                $isBreak = filter_var($entry['is_break'] ?? false, FILTER_VALIDATE_BOOLEAN);
                 return [
                     'day_of_week' => strtolower(trim((string) ($entry['day_of_week'] ?? ''))),
                     'period_label' => trim((string) ($entry['period_label'] ?? '')),
                     'start_time' => $this->emptyToNull($entry['start_time'] ?? null),
                     'end_time' => $this->emptyToNull($entry['end_time'] ?? null),
-                    'subject_id' => $this->emptyToNull($entry['subject_id'] ?? null),
+                    'subject_id' => $isBreak ? null : $this->emptyToNull($entry['subject_id'] ?? null),
+                    'is_break' => $isBreak,
                     'room' => $this->emptyToNull($entry['room'] ?? null),
                     'notes' => $this->emptyToNull($entry['notes'] ?? null),
                 ];
@@ -62,7 +64,8 @@ class StoreTimetableRequest extends FormRequest
             'entries.*.period_label' => ['required', 'string', 'max:100'],
             'entries.*.start_time' => ['nullable', 'date_format:H:i'],
             'entries.*.end_time' => ['nullable', 'date_format:H:i'],
-            'entries.*.subject_id' => ['required', 'integer', 'exists:school_subjects,id'],
+            'entries.*.is_break' => ['nullable', 'boolean'],
+            'entries.*.subject_id' => ['nullable', 'integer', 'exists:school_subjects,id'],
             'entries.*.room' => ['nullable', 'string', 'max:100'],
             'entries.*.notes' => ['nullable', 'string'],
         ];
@@ -100,6 +103,7 @@ class StoreTimetableRequest extends FormRequest
 
                 collect($this->input('entries', []))->each(function (array $entry, int $index) use ($validator, $track): void {
                     $field = 'entries.'.($index);
+                    $isBreak = filter_var($entry['is_break'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
                     if (($entry['start_time'] ?? null) && ! ($entry['end_time'] ?? null)) {
                         $validator->errors()->add($field.'.end_time', 'Add an end time when a start time is provided.');
@@ -113,12 +117,15 @@ class StoreTimetableRequest extends FormRequest
                         $validator->errors()->add($field.'.end_time', 'End time must be later than start time.');
                     }
 
-                    $subject = isset($entry['subject_id'])
-                        ? SchoolSubject::query()->find($entry['subject_id'])
-                        : null;
+                    // Break/free period slots do not require a subject.
+                    if (! $isBreak) {
+                        $subject = isset($entry['subject_id'])
+                            ? SchoolSubject::query()->find($entry['subject_id'])
+                            : null;
 
-                    if (! $subject || $subject->school_id !== $this->user()?->school_id || ($track !== '' && $subject->school_track !== $track)) {
-                        $validator->errors()->add($field.'.subject_id', 'Choose a subject that belongs to your school and the selected school track.');
+                        if (! $subject || $subject->school_id !== $this->user()?->school_id || ($track !== '' && $subject->school_track !== $track)) {
+                            $validator->errors()->add($field.'.subject_id', 'Choose a subject that belongs to your school and the selected school track.');
+                        }
                     }
                 });
             },

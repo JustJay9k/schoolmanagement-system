@@ -14,6 +14,7 @@ class TimetableEntry extends Model
         'start_time',
         'end_time',
         'subject_id',
+        'is_break',
         'room',
         'notes',
     ];
@@ -23,6 +24,7 @@ class TimetableEntry extends Model
         return [
             'start_time' => 'datetime:H:i',
             'end_time' => 'datetime:H:i',
+            'is_break' => 'boolean',
         ];
     }
 

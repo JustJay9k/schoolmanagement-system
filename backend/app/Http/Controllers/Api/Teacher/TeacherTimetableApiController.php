@@ -283,6 +283,7 @@ class TeacherTimetableApiController extends Controller
                 'period_label' => $entry->period_label,
                 'start_time' => $entry->start_time?->format('H:i'),
                 'end_time' => $entry->end_time?->format('H:i'),
+                'is_break' => (bool) $entry->is_break,
                 'room' => $entry->room,
                 'notes' => $entry->notes,
                 'subject' => $entry->subject ? [

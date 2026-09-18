@@ -23,6 +23,7 @@ const createEmptyEntry = () => ({
     start_time: '',
     end_time: '',
     subject_id: '',
+    is_break: false,
     room: '',
     notes: '',
 })
@@ -254,7 +255,8 @@ export default function ManagementTimetablesPage() {
                           period_label: entry.period_label ?? '',
                           start_time: entry.start_time ?? '',
                           end_time: entry.end_time ?? '',
-                          subject_id: String(entry.subject?.id ?? ''),
+                          subject_id: entry.is_break ? 'break' : String(entry.subject?.id ?? ''),
+                          is_break: entry.is_break ?? false,
                           room: entry.room ?? '',
                           notes: entry.notes ?? '',
                       }))
@@ -329,6 +331,21 @@ export default function ManagementTimetablesPage() {
         }))
     }
 
+    const serializeEntries = entries =>
+        entries.map(entry => {
+            const isBreak = entry.subject_id === 'break' || entry.is_break
+            return {
+                day_of_week: entry.day_of_week,
+                period_label: entry.period_label,
+                start_time: entry.start_time,
+                end_time: entry.end_time,
+                subject_id: isBreak ? null : entry.subject_id,
+                is_break: isBreak,
+                room: entry.room,
+                notes: entry.notes,
+            }
+        })
+
     const submitForm = async event => {
         event.preventDefault()
         setSaving(true)
@@ -338,7 +355,7 @@ export default function ManagementTimetablesPage() {
             if (editorMode === 'edit' && editingTimetableId) {
                 await axios.put(
                     `${apiBase}/${editingTimetableId}`,
-                    form,
+                    { ...form, entries: serializeEntries(form.entries) },
                 )
                 showToast({
                     type: 'success',
@@ -352,8 +369,9 @@ export default function ManagementTimetablesPage() {
                           school_track: user.school_track,
                           class_name: user.assigned_class_name,
                           assigned_teacher_id: user.id,
+                          entries: serializeEntries(form.entries),
                       }
-                    : form
+                    : { ...form, entries: serializeEntries(form.entries) }
                 await axios.post(apiBase, payload)
                 showToast({
                     type: 'success',
@@ -583,8 +601,9 @@ export default function ManagementTimetablesPage() {
                                                                             {entry.period_label}
                                                                         </strong>
                                                                         <p>
-                                                                            {entry.subject?.name ??
-                                                                                'Subject missing'}
+                                                                            {entry.is_break
+                                                                                ? '☕ Break / Free period'
+                                                                                : (entry.subject?.name ?? 'Subject missing')}
                                                                         </p>
                                                                         <small>
                                                                             {entry.start_time || '--:--'} -{' '}
@@ -893,24 +912,23 @@ export default function ManagementTimetablesPage() {
 
                                                 <label className={managementStyles.field}>
                                                     <span className={managementStyles.fieldLabel}>
-                                                        Subject
+                                                        Subject / Type
                                                     </span>
                                                     <select
                                                         value={entry.subject_id}
-                                                        onChange={event =>
-                                                            handleEntryChange(
-                                                                index,
-                                                                'subject_id',
-                                                                event.target.value,
-                                                            )
-                                                        }
+                                                        onChange={event => {
+                                                            const val = event.target.value
+                                                            handleEntryChange(index, 'subject_id', val)
+                                                            handleEntryChange(index, 'is_break', val === 'break')
+                                                        }}
                                                         className={managementStyles.select}
                                                         required>
                                                         <option value="">
                                                             {availableSubjects.length
-                                                                ? 'Select a subject'
+                                                                ? 'Select a subject or type'
                                                                 : 'Add subjects for this track first'}
                                                         </option>
+                                                        <option value="break">☕ Break / Free period</option>
                                                         {availableSubjects.map(subject => (
                                                             <option key={subject.id} value={subject.id}>
                                                                 {subject.code
