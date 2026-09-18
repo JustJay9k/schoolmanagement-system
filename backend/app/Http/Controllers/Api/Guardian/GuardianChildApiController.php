@@ -246,21 +246,24 @@ class GuardianChildApiController extends Controller
     private function serializeStudent(StudentRecord $student, array $classPositions, array $attendance): array
     {
         $performanceRecords = $student->performanceRecords
-            ->map(function (StudentPerformanceRecord $record) use ($classPositions): array {
+            ->map(function (StudentPerformanceRecord $record) use ($classPositions, $student): array {
                 $standing = $classPositions[$this->performanceKey($record->term, $record->assessment_period_id)] ?? [
                     'position' => null,
                     'average' => null,
                     'total_students' => null,
                 ];
 
+                $schoolTrack = $record->school_track ?? $student->school_track;
+                $className = $record->class_name ?? $student->class_name;
+
                 return [
                     'id' => $record->id,
                     'assessment_period_id' => $record->assessment_period_id,
                     'assessment_period_term' => $record->term,
                     'assessment_period_term_label' => $this->termLabel($record->term),
-                    'school_track' => $record->school_track,
-                    'class_name' => $record->class_name,
-                    'class_label' => $this->classLabel($record->school_track, $record->class_name),
+                    'school_track' => $schoolTrack,
+                    'class_name' => $className,
+                    'class_label' => $this->classLabel($schoolTrack, $className),
                     'assessment_period_name' => $record->assessmentPeriod?->name ?? 'General',
                     'teacher_name' => $record->teacher?->name ?? 'Teacher',
                     'grade' => $record->grade,

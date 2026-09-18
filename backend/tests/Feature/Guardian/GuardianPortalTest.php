@@ -49,8 +49,6 @@ class GuardianPortalTest extends TestCase
             'student_record_id' => $student->id,
             'teacher_id' => $teacher->id,
             'assessment_period_id' => $period->id,
-            'school_track' => 'secondary',
-            'class_name' => 'Form 2',
             'grade' => 'English: A; Mathematics: 78%',
             'subject_grades' => [
                 [
