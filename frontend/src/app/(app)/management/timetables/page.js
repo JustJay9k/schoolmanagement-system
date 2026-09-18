@@ -90,7 +90,7 @@ export default function ManagementTimetablesPage() {
     const teacherMode = isTeacherUser(user)
     const canUseEditor = managementMode || teacherMode
     const apiBase = teacherMode ? '/api/teacher/timetables' : '/api/management/timetables'
-    const editorModalRef = useRef(null)
+    const editorRef = useRef(null)
     const [timetables, setTimetables] = useState([])
     const [options, setOptions] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -269,30 +269,19 @@ export default function ManagementTimetablesPage() {
             return
         }
 
-        const originalOverflow = document.body.style.overflow
-        document.body.style.overflow = 'hidden'
-
         window.requestAnimationFrame(() => {
-            const firstField = editorModalRef.current?.querySelector(
+            editorRef.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+            })
+
+            const firstField = editorRef.current?.querySelector(
                 'input, select, textarea',
             )
 
             firstField?.focus()
         })
-
-        const handleKeyDown = event => {
-            if (event.key === 'Escape') {
-                closeEditor()
-            }
-        }
-
-        window.addEventListener('keydown', handleKeyDown)
-
-        return () => {
-            document.body.style.overflow = originalOverflow
-            window.removeEventListener('keydown', handleKeyDown)
-        }
-    }, [editorOpen])
+    }, [editorOpen, editorMode])
 
     const handleFieldChange = (field, value) => {
         setForm(current => {
@@ -629,24 +618,16 @@ export default function ManagementTimetablesPage() {
             </section>
 
             {editorOpen ? (
-                <div
-                    className={managementStyles.modalOverlay}
-                    onClick={closeEditor}>
-                    <div
-                        ref={editorModalRef}
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="timetable-editor-modal-title"
-                        className={`${managementStyles.modalCard} ${managementStyles.modalWideCard}`}
-                        onClick={event => event.stopPropagation()}>
-                        <div className={managementStyles.modalHeader}>
+                <section
+                    ref={editorRef}
+                    className={managementStyles.summaryCards}>
+                    <article className={workspaceStyles.fullPanel}>
+                        <div className={workspaceStyles.panelHeader}>
                             <div>
                                 <p className={workspaceStyles.panelEyebrow}>
                                     {editorMode === 'edit' ? 'Editor' : 'New timetable'}
                                 </p>
-                                <h2
-                                    id="timetable-editor-modal-title"
-                                    className={workspaceStyles.panelTitle}>
+                                <h2 className={workspaceStyles.panelTitle}>
                                     {editorMode === 'edit'
                                         ? 'Update timetable'
                                         : 'Create timetable'}
@@ -664,7 +645,7 @@ export default function ManagementTimetablesPage() {
 
                         <form
                             onSubmit={submitForm}
-                            className={`${managementStyles.stack} ${managementStyles.modalForm}`}>
+                            className={managementStyles.stack}>
                             <div className={managementStyles.formGrid}>
                                 {!teacherMode ? <label className={managementStyles.field}>
                                     <span className={managementStyles.fieldLabel}>Title</span>
@@ -792,12 +773,6 @@ export default function ManagementTimetablesPage() {
                                             Timetable rows
                                         </h2>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={addEntry}
-                                        className={managementStyles.secondaryButton}>
-                                        Add period
-                                    </button>
                                 </div>
 
                                 <div className={workspaceStyles.list}>
@@ -995,7 +970,17 @@ export default function ManagementTimetablesPage() {
                                         </div>
                                     ))}
                                 </div>
+
                                 <InputError messages={formErrors.entries} />
+
+                                <div className={managementStyles.actions}>
+                                    <button
+                                        type="button"
+                                        onClick={addEntry}
+                                        className={managementStyles.secondaryButton}>
+                                        + Add period
+                                    </button>
+                                </div>
                             </article>
 
                             <div className={managementStyles.actions}>
@@ -1008,14 +993,20 @@ export default function ManagementTimetablesPage() {
                                 </Button>
                                 <button
                                     type="button"
-                                    onClick={resetEditor}
+                                    onClick={closeEditor}
                                     className={managementStyles.secondaryButton}>
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={resetEditor}
+                                    className={managementStyles.ghostButton}>
                                     Reset
                                 </button>
                             </div>
                         </form>
-                    </div>
-                </div>
+                    </article>
+                </section>
             ) : null}
             <ConfirmDialog
                 open={Boolean(confirmingTimetable)}
