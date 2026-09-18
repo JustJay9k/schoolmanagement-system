@@ -2,6 +2,7 @@
 
 import useSWR from 'swr'
 import axios from '@/lib/axios'
+import GradeLetterBadge from '@/components/GradeLetterBadge'
 import GradeScaleLegend from '@/components/GradeScaleLegend'
 import styles from './dashboard.module.css'
 
@@ -24,7 +25,7 @@ const attendanceStatusClasses = {
     E: 'excused',
 }
 
-const renderSubjectGrades = record => {
+const renderSubjectGrades = (record, bands) => {
     const subjectGrades = record?.subject_grades ?? []
 
     if (subjectGrades.length === 0) {
@@ -39,7 +40,18 @@ const renderSubjectGrades = record => {
                     className={styles.subjectGradeSummaryItem}
                 >
                     <span>{subjectGrade.subject_name}</span>
-                    <strong>{subjectGrade.grade}</strong>
+                    <span className={styles.subjectGradeSummaryValue}>
+                        <strong>{subjectGrade.grade}</strong>
+                        <GradeLetterBadge
+                            grade={subjectGrade.grade}
+                            bands={bands}
+                        />
+                    </span>
+                    {subjectGrade.remarks ? (
+                        <span className={styles.subjectGradeSummaryRemark}>
+                            {subjectGrade.remarks}
+                        </span>
+                    ) : null}
                 </div>
             ))}
         </div>
@@ -128,9 +140,17 @@ const GuardianDashboard = ({ user }) => {
                             : ''}
                     </p>
                     <p className={styles.metricMeta}>
-                        {child.latest_average_score != null
-                            ? `Average score ${child.latest_average_score}%`
-                            : 'No scores recorded yet'}
+                        {child.latest_average_score != null ? (
+                            <span className={styles.averageWithBadge}>
+                                Average score {child.latest_average_score}%
+                                <GradeLetterBadge
+                                    grade={`${child.latest_average_score}%`}
+                                    bands={child?.grade_bands}
+                                />
+                            </span>
+                        ) : (
+                            'No scores recorded yet'
+                        )}
                     </p>
                 </div>
 
@@ -338,11 +358,29 @@ const GuardianDashboard = ({ user }) => {
                                                 : '—'}
                                         </td>
                                         <td>
-                                            {record.average_score != null
-                                                ? `${record.average_score}%`
-                                                : '—'}
+                                            {record.average_score != null ? (
+                                                <span
+                                                    className={
+                                                        styles.averageWithBadge
+                                                    }>
+                                                    {record.average_score}%
+                                                    <GradeLetterBadge
+                                                        grade={`${record.average_score}%`}
+                                                        bands={
+                                                            child?.grade_bands
+                                                        }
+                                                    />
+                                                </span>
+                                            ) : (
+                                                '—'
+                                            )}
                                         </td>
-                                        <td>{renderSubjectGrades(record)}</td>
+                                        <td>
+                                            {renderSubjectGrades(
+                                                record,
+                                                child?.grade_bands,
+                                            )}
+                                        </td>
                                         <td>
                                             {record.comment ||
                                                 'No comment added.'}

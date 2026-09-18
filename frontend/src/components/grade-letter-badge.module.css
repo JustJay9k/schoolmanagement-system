@@ -1,0 +1,36 @@
+.badge.badge {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.6rem;
+    height: 1.6rem;
+    padding: 0 0.4rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 900;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.badge.toneGreen {
+    background: color-mix(in srgb, #16a34a 16%, var(--surface-card-soft));
+    color: #15803d;
+    border: 1px solid color-mix(in srgb, #16a34a 28%, var(--line));
+}
+
+.badge.toneBlue {
+    background: color-mix(in srgb, #2563eb 14%, var(--surface-card-soft));
+    color: #1d4ed8;
+    border: 1px solid color-mix(in srgb, #2563eb 26%, var(--line));
+}
+
+.badge.toneRed {
+    background: color-mix(in srgb, #dc2626 14%, var(--surface-card-soft));
+    color: #b91c1c;
+    border: 1px solid color-mix(in srgb, #dc2626 26%, var(--line));
+}
+
+.badge.toneNeutral {
+    background: var(--surface-tint);
+    color: var(--accent-strong);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+}

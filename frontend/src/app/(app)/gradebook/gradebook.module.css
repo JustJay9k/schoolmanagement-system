@@ -343,6 +343,85 @@
     line-height: 1;
 }
 
+.classGroupToolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 0.75rem;
+}
+
+.classGroupToolbarLabel {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.classGroupToolbarActions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.classGroupRow td {
+    background: var(--surface-tint);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    padding: 0 !important;
+}
+
+.classGroupToggle {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 0.75rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    padding: 0.6rem 0.85rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.classGroupToggle:hover {
+    background: var(--surface-tint-strong);
+}
+
+.classGroupToggle:focus-visible {
+    outline: 2px solid var(--focus-ring-strong);
+    outline-offset: -2px;
+}
+
+.classGroupName {
+    font-size: 0.86rem;
+    font-weight: 800;
+    color: var(--accent-strong);
+}
+
+.classGroupCount {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.classGroupIcon {
+    display: inline-grid;
+    width: 1.7rem;
+    height: 1.7rem;
+    flex: 0 0 1.7rem;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-card-soft);
+    color: var(--accent-strong);
+    font-size: 1rem;
+    line-height: 1;
+}
+
 .termBadgeActive,
 .termBadgeInactive,
 .termBadgeNeutral {

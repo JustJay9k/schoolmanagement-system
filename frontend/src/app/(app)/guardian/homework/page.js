@@ -12,6 +12,7 @@ import axios from '@/lib/axios'
 import useSWR from 'swr'
 import Input from '@/components/Input'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import GradeLetterBadge from '@/components/GradeLetterBadge'
 import GradeScaleLegend from '@/components/GradeScaleLegend'
 import { useToast } from '@/components/ToastProvider'
 
@@ -127,9 +128,19 @@ function TermGradesSection({ performanceRecords, isLoading, gradeBands }) {
                                                         </div>
                                                         <div className={homeworkStyles.termRecordStats}>
                                                             {record.average_score != null ? (
-                                                                <span className={homeworkStyles.averageChip}>
-                                                                    Avg {record.average_score}%
+                                                                <span
+                                                                    className={
+                                                                        homeworkStyles.averageChip
+                                                                    }>
+                                                                    Avg{' '}
+                                                                    {record.average_score}%
                                                                 </span>
+                                                            ) : null}
+                                                            {record.average_score != null ? (
+                                                                <GradeLetterBadge
+                                                                    grade={`${record.average_score}%`}
+                                                                    bands={gradeBands}
+                                                                />
                                                             ) : null}
                                                             {record.class_position != null ? (
                                                                 <span className={homeworkStyles.positionChip}>
@@ -173,8 +184,24 @@ function TermGradesSection({ performanceRecords, isLoading, gradeBands }) {
                                                                             </td>
                                                                             <td>
                                                                                 <span
-                                                                                    className={homeworkStyles.subjectGradeValue}>
-                                                                                    {sg.grade ?? '—'}
+                                                                                    className={
+                                                                                        homeworkStyles.subjectGradeCell
+                                                                                    }>
+                                                                                    <span
+                                                                                        className={
+                                                                                            homeworkStyles.subjectGradeValue
+                                                                                        }>
+                                                                                        {sg.grade ??
+                                                                                            '—'}
+                                                                                    </span>
+                                                                                    <GradeLetterBadge
+                                                                                        grade={
+                                                                                            sg.grade
+                                                                                        }
+                                                                                        bands={
+                                                                                            gradeBands
+                                                                                        }
+                                                                                    />
                                                                                 </span>
                                                                             </td>
                                                                             <td>

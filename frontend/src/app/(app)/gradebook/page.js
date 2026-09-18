@@ -5,10 +5,12 @@ import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import managementStyles from '@/app/(app)/management/management-tools.module.css'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import GradeLetterBadge from '@/components/GradeLetterBadge'
 import Input from '@/components/Input'
 import InputError from '@/components/InputError'
 import { useToast } from '@/components/ToastProvider'
 import axios from '@/lib/axios'
+import { parseGradeToNumber } from '@/lib/gradeBands'
 import { useAuth } from '@/hooks/auth'
 import {
     canManageGradebook,
@@ -92,57 +94,6 @@ const getPerformanceForPeriod = (student, periodId, term) =>
 const studentHasSavedRecords = student =>
     (student.performances ?? []).length > 0
 
-const parseGradeToNumber = grade => {
-    if (typeof grade === 'number' && Number.isFinite(grade)) {
-        return grade <= 100 ? grade : null
-    }
-
-    const text = (grade ?? '').trim()
-
-    if (!text) {
-        return null
-    }
-
-    const fractionMatch = text.match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/)
-
-    if (fractionMatch && Number(fractionMatch[2]) > 0) {
-        return (Number(fractionMatch[1]) / Number(fractionMatch[2])) * 100
-    }
-
-    const percentMatch = text.match(/^(\d+(?:\.\d+)?)%$/)
-
-    if (percentMatch) {
-        return Number(percentMatch[1])
-    }
-
-    if (/^\d+(?:\.\d+)?$/.test(text)) {
-        const value = Number(text)
-
-        return value <= 100 ? value : null
-    }
-
-    const letterMap = {
-        'A+': 97,
-        A: 93,
-        'A-': 90,
-        'B+': 87,
-        B: 83,
-        'B-': 80,
-        'C+': 77,
-        C: 73,
-        'C-': 70,
-        'D+': 67,
-        D: 63,
-        'D-': 60,
-        F: 50,
-        E: 40,
-    }
-
-    const upper = text.toUpperCase()
-
-    return upper in letterMap ? letterMap[upper] : null
-}
-
 const computeAverage = values => {
     const numbers = values
         .map(parseGradeToNumber)
@@ -177,26 +128,6 @@ const createEmptyBandForm = () => ({
     min_percentage: '',
     max_percentage: '',
 })
-
-const getGradeLetter = (grade, bands) => {
-    const value = parseGradeToNumber(grade)
-
-    if (value === null) {
-        return null
-    }
-
-    const ordered = [...(bands ?? [])].sort(
-        (a, b) => (b.min_percentage ?? 0) - (a.min_percentage ?? 0),
-    )
-
-    const match = ordered.find(
-        band =>
-            value >= (band.min_percentage ?? 0) &&
-            value <= (band.max_percentage ?? 100),
-    )
-
-    return match ? match.letter : null
-}
 
 const gradebookTerms = [
     { value: 'first', label: 'First Term' },
@@ -247,6 +178,7 @@ export default function GradebookPage() {
     const [deletingBandId, setDeletingBandId] = useState(null)
     const [editingBandId, setEditingBandId] = useState(null)
     const [confirmingBand, setConfirmingBand] = useState(null)
+    const [collapsedClasses, setCollapsedClasses] = useState({})
     const activeTermRef = useRef(null)
     const [promotionOpen, setPromotionOpen] = useState(false)
     const [promotionSelected, setPromotionSelected] = useState([])
@@ -369,6 +301,69 @@ export default function GradebookPage() {
     const editableTerms = managementMode
         ? gradebookTerms
         : gradebookTerms.filter(term => term.value === activeTerm)
+
+    const studentClassGroups = (() => {
+        const groups = []
+
+        for (const student of students) {
+            const classKey = `${student.school_track}::${student.class_name}`
+            const existing = groups.find(group => group.classKey === classKey)
+
+            if (existing) {
+                existing.students.push(student)
+            } else {
+                groups.push({
+                    classKey,
+                    school_track_label: student.school_track_label,
+                    class_name: student.class_name,
+                    students: [student],
+                })
+            }
+        }
+
+        return groups
+    })()
+
+    const toggleClassCollapsed = classKey =>
+        setCollapsedClasses(current => ({
+            ...current,
+            [classKey]: !current[classKey],
+        }))
+
+    const collapseAllClasses = () =>
+        setCollapsedClasses(
+            Object.fromEntries(
+                studentClassGroups.map(group => [group.classKey, true]),
+            ),
+        )
+
+    const expandAllClasses = () => setCollapsedClasses({})
+
+    const learnerRows = (() => {
+        if (!managementMode) {
+            return students.map(student => ({ type: 'student', student }))
+        }
+
+        return studentClassGroups.flatMap(group => {
+            const isCollapsed = Boolean(collapsedClasses[group.classKey])
+
+            return [
+                {
+                    type: 'group',
+                    classKey: group.classKey,
+                    label: `${group.school_track_label} | ${group.class_name}`,
+                    count: group.students.length,
+                    isCollapsed,
+                },
+                ...(isCollapsed
+                    ? []
+                    : group.students.map(student => ({
+                          type: 'student',
+                          student,
+                      }))),
+            ]
+        })
+    })()
 
     const computePeriodAverage = (studentId, periodId, term) => {
         const draft = drafts[studentId]?.[makePerformanceKey(term, periodId)]
@@ -2241,6 +2236,51 @@ export default function GradebookPage() {
                                                 <div
                                                     className={styles.termBody}
                                                 >
+                                                    {managementMode &&
+                                                    students.length > 0 ? (
+                                                        <div
+                                                            className={
+                                                                styles.classGroupToolbar
+                                                            }
+                                                        >
+                                                            <span
+                                                                className={
+                                                                    styles.classGroupToolbarLabel
+                                                                }
+                                                            >
+                                                                Learners by class
+                                                            </span>
+                                                            <div
+                                                                className={
+                                                                    styles.classGroupToolbarActions
+                                                                }
+                                                            >
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={
+                                                                        expandAllClasses
+                                                                    }
+                                                                    className={
+                                                                        managementStyles.ghostButton
+                                                                    }
+                                                                >
+                                                                    Expand all
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={
+                                                                        collapseAllClasses
+                                                                    }
+                                                                    className={
+                                                                        managementStyles.ghostButton
+                                                                    }
+                                                                >
+                                                                    Collapse all
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ) : null}
+
                                                     {assessmentPeriods.length ===
                                                     0 ? (
                                                         <p
@@ -2335,8 +2375,79 @@ export default function GradebookPage() {
                                                                         </td>
                                                                     </tr>
                                                                 ) : (
-                                                                    students.map(
-                                                                        student => {
+                                                                    learnerRows.map(
+                                                                        row => {
+                                                                            if (
+                                                                                row.type ===
+                                                                                'group'
+                                                                            ) {
+                                                                                return (
+                                                                                    <tr
+                                                                                        key={`group-${row.classKey}`}
+                                                                                        className={
+                                                                                            styles.classGroupRow
+                                                                                        }
+                                                                                    >
+                                                                                        <td
+                                                                                            colSpan={
+                                                                                                tableColumnCount
+                                                                                            }
+                                                                                        >
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                className={
+                                                                                                    styles.classGroupToggle
+                                                                                                }
+                                                                                                aria-expanded={
+                                                                                                    !row.isCollapsed
+                                                                                                }
+                                                                                                onClick={() =>
+                                                                                                    toggleClassCollapsed(
+                                                                                                        row.classKey,
+                                                                                                    )
+                                                                                                }
+                                                                                            >
+                                                                                                <span
+                                                                                                    className={
+                                                                                                        styles.classGroupName
+                                                                                                    }
+                                                                                                >
+                                                                                                    {
+                                                                                                        row.label
+                                                                                                    }
+                                                                                                </span>
+                                                                                                <span
+                                                                                                    className={
+                                                                                                        styles.classGroupCount
+                                                                                                    }
+                                                                                                >
+                                                                                                    {
+                                                                                                        row.count
+                                                                                                    }{' '}
+                                                                                                    learner
+                                                                                                    {row.count !==
+                                                                                                    1
+                                                                                                        ? 's'
+                                                                                                        : ''}
+                                                                                                </span>
+                                                                                                <span
+                                                                                                    className={
+                                                                                                        styles.classGroupIcon
+                                                                                                    }
+                                                                                                    aria-hidden="true"
+                                                                                                >
+                                                                                                    {row.isCollapsed
+                                                                                                        ? '+'
+                                                                                                        : '−'}
+                                                                                                </span>
+                                                                                            </button>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                )
+                                                                            }
+
+                                                                            const student =
+                                                                                row.student
                                                                             const trackSubjects =
                                                                                 getTrackSubjects(
                                                                                     options,
@@ -2536,30 +2647,20 @@ const readOnly =
                                                                                                         className={
                                                                                                             styles.tableField
                                                                                                         }
-                                                                                                    />
-                                                                                                    {getGradeLetter(
-                                                                                                        draft
-                                                                                                            .subjectGrades?.[
-                                                                                                            String(
-                                                                                                                subject.id,
-                                                                                                            )
-                                                                                                        ],
-                                                                                                        gradeBands,
-                                                                                                    ) ? (
-                                                                                                        <span className={styles.gradeLetterBadge}>
-                                                                                                            {getGradeLetter(
-                                                                                                                draft
-                                                                                                                    .subjectGrades?.[
-                                                                                                                    String(
-                                                                                                                        subject.id,
-                                                                                                                    )
-                                                                                                                ],
-                                                                                                                gradeBands,
-                                                                                                            )}
-                                                                                                        </span>
-                                                                                                    ) : null}
-                                                                                                </div>
-                                                                                                <Input
+                                                                                                     />
+                                                                                                     <GradeLetterBadge
+                                                                                                         grade={
+                                                                                                             draft
+                                                                                                                 .subjectGrades?.[
+                                                                                                                 String(
+                                                                                                                     subject.id,
+                                                                                                                 )
+                                                                                                             ]
+                                                                                                         }
+                                                                                                         bands={gradeBands}
+                                                                                                     />
+                                                                                                 </div>
+                                                                                                 <Input
                                                                                                                                      type="text"
                                                                                                                                      maxLength={500}
                                                                                                                                      disabled={
@@ -2636,20 +2737,15 @@ const readOnly =
                                                                                                                                           periodAverage
                                                                                                                                       }
 
-                                                                                                                                      %
-                                                                                                                                  </span>
-                                                                                                                                  {getGradeLetter(
-                                                                                                                                      periodAverage,
-                                                                                                                                      gradeBands,
-                                                                                                                                  ) ? (
-                                                                                                                                      <span className={styles.gradeLetterBadge}>
-                                                                                                                                          {getGradeLetter(
-                                                                                                                                              periodAverage,
-                                                                                                                                              gradeBands,
-                                                                                                                                          )}
-                                                                                                                                      </span>
-                                                                                                                                  ) : null}
-                                                                                                                              </span>
+                                                                                                                                       %
+                                                                                                                                   </span>
+                                                                                                                                   <GradeLetterBadge
+                                                                                                                                       grade={
+                                                                                                                                           periodAverage
+                                                                                                                                       }
+                                                                                                                                       bands={gradeBands}
+                                                                                                                                   />
+                                                                                                                               </span>
                                                                                                                           </div>
                                                                                                                       ) : null
                                                                                                                   })()

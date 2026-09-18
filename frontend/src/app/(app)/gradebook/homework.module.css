@@ -591,6 +591,12 @@
     font-size: 0.62rem;
 }
 
+.subjectGradeCell {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
 .subjectGradeValue {
     font-weight: 800;
     color: var(--accent-strong);

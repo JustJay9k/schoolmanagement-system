@@ -56,6 +56,7 @@ class GuardianPortalTest extends TestCase
                     'subject_name' => 'English',
                     'subject_code' => 'ENG',
                     'grade' => 'A',
+                    'remarks' => 'Excellent reading skills.',
                 ],
                 [
                     'subject_id' => 12,
@@ -92,6 +93,10 @@ class GuardianPortalTest extends TestCase
             ->assertJsonPath(
                 'child.performance_records.0.subject_grades.0.grade',
                 'A',
+            )
+            ->assertJsonPath(
+                'child.performance_records.0.subject_grades.0.remarks',
+                'Excellent reading skills.',
             )
             ->assertJsonPath('child.fees_balance', 45000)
             ->assertJsonPath('child.books_paid', true)
