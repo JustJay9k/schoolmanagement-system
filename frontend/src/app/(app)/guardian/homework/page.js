@@ -12,6 +12,7 @@ import axios from '@/lib/axios'
 import useSWR from 'swr'
 import Input from '@/components/Input'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import GradeScaleLegend from '@/components/GradeScaleLegend'
 import { useToast } from '@/components/ToastProvider'
 
 const TERMS = [
@@ -37,7 +38,7 @@ function ChevronIcon({ open }) {
     )
 }
 
-function TermGradesSection({ performanceRecords, isLoading }) {
+function TermGradesSection({ performanceRecords, isLoading, gradeBands }) {
     const [openTerms, setOpenTerms] = useState({ first: true, second: false, third: false })
 
     const recordsByTerm = useMemo(() => {
@@ -71,7 +72,9 @@ function TermGradesSection({ performanceRecords, isLoading }) {
                     the school publishes results for each term.
                 </p>
             ) : (
-                <div className={homeworkStyles.termStack}>
+                <div>
+                    <GradeScaleLegend bands={gradeBands} />
+                    <div className={homeworkStyles.termStack}>
                     {TERMS.map(({ key, label }) => {
                         const records = recordsByTerm[key] ?? []
                         const isOpen = openTerms[key] ?? false
@@ -204,6 +207,7 @@ function TermGradesSection({ performanceRecords, isLoading }) {
                             </article>
                         )
                     })}
+                </div>
                 </div>
             )}
         </section>
@@ -864,6 +868,7 @@ export default function GuardianHomeworkPage() {
             {isGuardian ? (
                 <TermGradesSection
                     performanceRecords={childData?.child?.performance_records ?? null}
+                    gradeBands={childData?.child?.grade_bands ?? []}
                     isLoading={childLoading}
                 />
             ) : null}

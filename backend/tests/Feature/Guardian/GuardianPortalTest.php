@@ -4,6 +4,7 @@ namespace Tests\Feature\Guardian;
 
 use App\Models\GradeAssessmentPeriod;
 use App\Models\School;
+use App\Models\SchoolGradeBand;
 use App\Models\SchoolMerchandiseItem;
 use App\Models\StudentPerformanceRecord;
 use App\Models\StudentRecord;
@@ -99,6 +100,49 @@ class GuardianPortalTest extends TestCase
                 'child.performance_records.0.comment',
                 'Consistent work across the term.',
             );
+    }
+
+    public function test_guardian_can_view_the_school_grade_scale_on_the_child_report_card(): void
+    {
+        $school = School::query()->create([
+            'name' => 'Kasungu Academy',
+        ]);
+
+        SchoolGradeBand::query()->insert([
+            [
+                'school_id' => $school->id,
+                'letter' => 'A',
+                'min_percentage' => 90,
+                'max_percentage' => 100,
+            ],
+            [
+                'school_id' => $school->id,
+                'letter' => 'C',
+                'min_percentage' => 60,
+                'max_percentage' => 79,
+            ],
+        ]);
+
+        $student = StudentRecord::query()->create([
+            'school_id' => $school->id,
+            'school_track' => 'primary',
+            'class_name' => 'Standard 5',
+            'full_name' => 'Martha Kalua',
+        ]);
+
+        $guardian = User::factory()->guardian()->create([
+            'school_id' => $school->id,
+            'linked_student_record_id' => $student->id,
+        ]);
+
+        $this->actingAs($guardian)
+            ->getJson('/api/guardian/child')
+            ->assertOk()
+            ->assertJsonCount(2, 'child.grade_bands')
+            ->assertJsonPath('child.grade_bands.0.letter', 'A')
+            ->assertJsonPath('child.grade_bands.0.min_percentage', 90)
+            ->assertJsonPath('child.grade_bands.0.max_percentage', 100)
+            ->assertJsonPath('child.grade_bands.1.letter', 'C');
     }
 
     public function test_guardian_can_view_available_school_merchandise(): void

@@ -2,6 +2,7 @@
 
 import useSWR from 'swr'
 import axios from '@/lib/axios'
+import GradeScaleLegend from '@/components/GradeScaleLegend'
 import styles from './dashboard.module.css'
 
 const fetcher = url => axios.get(url).then(response => response.data)
@@ -301,6 +302,9 @@ const GuardianDashboard = ({ user }) => {
                 </div>
 
                 <div className={styles.tableWrap}>
+                    {performanceRecords.length > 0 ? (
+                        <GradeScaleLegend bands={child?.grade_bands} />
+                    ) : null}
                     <table className={styles.compactTable}>
                         <thead>
                             <tr>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\RegisterReport;
 use App\Models\StudentPerformanceRecord;
 use App\Models\StudentRecord;
+use App\Support\GradeBands;
 use App\Support\SchoolContextOptions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -309,9 +310,10 @@ class GuardianChildApiController extends Controller
             'latest_average_score' => $performanceRecords[0]['average_score'] ?? null,
             'latest_class_position' => $performanceRecords[0]['class_position'] ?? null,
             'latest_total_class_students' => $performanceRecords[0]['total_class_students'] ?? null,
-            'latest_comment' => $performanceRecords[0]['comment'] ?? null,
-            'latest_updated_at' => $performanceRecords[0]['updated_at'] ?? null,
-            'performance_records' => $performanceRecords,
+'latest_comment' => $performanceRecords[0]['comment'] ?? null,
+                'latest_updated_at' => $performanceRecords[0]['updated_at'] ?? null,
+                'performance_records' => $performanceRecords,
+                'grade_bands' => GradeBands::forSchool($student->school_id),
         ];
     }
 
