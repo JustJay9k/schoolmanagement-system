@@ -27,11 +27,11 @@ const createEmptyEntry = () => ({
     notes: '',
 })
 
-const createEmptyForm = () => ({
-    title: '',
-    school_track: 'primary',
-    class_name: '',
-    assigned_teacher_id: '',
+const createEmptyForm = (defaultTrack = 'primary', defaultClass = '', defaultTeacherId = '') => ({
+    title: defaultClass ? `${defaultClass} Timetable` : '',
+    school_track: defaultTrack,
+    class_name: defaultClass,
+    assigned_teacher_id: defaultTeacherId,
     notes: '',
     entries: [createEmptyEntry()],
 })
@@ -125,12 +125,12 @@ export default function ManagementTimetablesPage() {
     }
 
     useEffect(() => {
-        if (!user || !canManageManagementWorkspace(user)) {
+        if (!user || !canUseEditor) {
             return
         }
 
         loadTimetables()
-    }, [apiBase, user])
+    }, [apiBase, user, canUseEditor])
 
     useEffect(() => {
         if (teacherMode && user) {
@@ -143,8 +143,45 @@ export default function ManagementTimetablesPage() {
         }
     }, [teacherMode, user])
 
-    const availableClasses = options?.classesByTrack?.[form.school_track] ?? []
-    const availableTeachers = options?.teachersByTrack?.[form.school_track] ?? []
+    const visibleTracks = useMemo(() => {
+        const allTracks = options?.schoolTracks ?? {}
+        if (!teacherMode) {
+            return allTracks
+        }
+        const teacherTrack = user?.school_track
+        if (teacherTrack && allTracks[teacherTrack]) {
+            return { [teacherTrack]: allTracks[teacherTrack] }
+        }
+        if (teacherTrack) {
+            return { [teacherTrack]: teacherTrack.charAt(0).toUpperCase() + teacherTrack.slice(1) }
+        }
+        return allTracks
+    }, [options?.schoolTracks, teacherMode, user?.school_track])
+
+    const availableClasses = useMemo(() => {
+        const classes = options?.classesByTrack?.[form.school_track] ?? []
+        if (classes.length === 0 && teacherMode && user?.assigned_class_name) {
+            return [user.assigned_class_name]
+        }
+        return classes
+    }, [options?.classesByTrack, form.school_track, teacherMode, user?.assigned_class_name])
+
+    const availableTeachers = useMemo(() => {
+        const teachers = options?.teachersByTrack?.[form.school_track] ?? []
+        if (teachers.length === 0 && teacherMode && user) {
+            return [
+                {
+                    id: user.id,
+                    name: user.name,
+                    assigned_class_name: user.assigned_class_name,
+                    school_track: user.school_track,
+                    teaching_roles: ['class_teacher'],
+                },
+            ]
+        }
+        return teachers
+    }, [options?.teachersByTrack, form.school_track, teacherMode, user])
+
     const availableSubjects = options?.subjectsByTrack?.[form.school_track] ?? []
 
     const stats = useMemo(
@@ -156,10 +193,38 @@ export default function ManagementTimetablesPage() {
         [timetables],
     )
 
+    const statCards = useMemo(() => {
+        if (!teacherMode) {
+            return [
+                ['All timetables', stats.total],
+                ['Primary', stats.primary],
+                ['Secondary', stats.secondary],
+            ]
+        }
+
+        const teacherTrack = user?.school_track
+        const trackLabel =
+            options?.schoolTracks?.[teacherTrack] ??
+            (teacherTrack
+                ? teacherTrack.charAt(0).toUpperCase() + teacherTrack.slice(1)
+                : 'My section')
+
+        return [
+            ['My timetables', stats.total],
+            [trackLabel, teacherTrack === 'secondary' ? stats.secondary : stats.primary],
+        ]
+    }, [teacherMode, stats, user?.school_track, options?.schoolTracks])
+
     const resetEditor = () => {
         setEditorMode('create')
         setEditingTimetableId(null)
-        setForm(createEmptyForm())
+        setForm(
+            createEmptyForm(
+                teacherMode && user?.school_track ? user.school_track : 'primary',
+                teacherMode && user?.assigned_class_name ? user.assigned_class_name : '',
+                teacherMode && user?.id ? String(user.id) : '',
+            ),
+        )
         setFormErrors({})
     }
 
@@ -177,10 +242,10 @@ export default function ManagementTimetablesPage() {
         setEditorMode('edit')
         setEditingTimetableId(timetable.id)
         setForm({
-            title: timetable.title ?? '',
-            school_track: timetable.school_track ?? 'primary',
-            class_name: timetable.class_name ?? '',
-            assigned_teacher_id: String(timetable.assigned_teacher?.id ?? ''),
+            title: timetable.title ?? (teacherMode && user?.assigned_class_name ? `${user.assigned_class_name} Timetable` : ''),
+            school_track: timetable.school_track ?? (teacherMode && user?.school_track ? user.school_track : 'primary'),
+            class_name: timetable.class_name ?? (teacherMode && user?.assigned_class_name ? user.assigned_class_name : ''),
+            assigned_teacher_id: String(timetable.assigned_teacher?.id ?? (teacherMode && user?.id ? user.id : '')),
             notes: timetable.notes ?? '',
             entries:
                 timetable.entries?.length > 0
@@ -423,11 +488,7 @@ export default function ManagementTimetablesPage() {
             ) : null}
 
             <section className={managementStyles.statsGrid}>
-                {[
-                    ['All timetables', stats.total],
-                    ['Primary', stats.primary],
-                    ['Secondary', stats.secondary],
-                ].map(([label, value]) => (
+                {statCards.map(([label, value]) => (
                     <article key={label} className={workspaceStyles.statCard}>
                         <p className={workspaceStyles.statLabel}>{label}</p>
                         <p className={workspaceStyles.statValue}>{value}</p>
@@ -656,7 +717,7 @@ export default function ManagementTimetablesPage() {
                                     className={`${managementStyles.field} ${managementStyles.fullWidth}`}>
                                     <span className={managementStyles.fieldLabel}>School track</span>
                                     <div className={managementStyles.radioGrid}>
-                                        {Object.entries(options?.schoolTracks ?? {}).map(
+                                        {Object.entries(visibleTracks).map(
                                             ([value, label]) => (
                                                 <label
                                                     key={value}

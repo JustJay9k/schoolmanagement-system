@@ -387,4 +387,45 @@ class TimetableManagementTest extends TestCase
             ->assertSee('Mathematics')
             ->assertDontSee('Chemistry');
     }
+
+    public function test_teacher_only_receives_options_for_the_stream_they_teach_while_head_teacher_receives_both_streams(): void
+    {
+        $school = School::query()->create(['name' => 'Combined School']);
+        $primaryTeacher = User::factory()->teacher()->create([
+            'school_id' => $school->id,
+            'school_track' => 'primary',
+            'assigned_class_name' => 'Standard 4',
+        ]);
+        $secondaryTeacher = User::factory()->teacher()->create([
+            'school_id' => $school->id,
+            'school_track' => 'secondary',
+            'assigned_class_name' => 'Form 2',
+        ]);
+        $headTeacher = User::factory()->management()->create([
+            'school_id' => $school->id,
+        ]);
+
+        $primaryResponse = $this->actingAs($primaryTeacher)
+            ->getJson('/api/teacher/timetables')
+            ->assertOk();
+
+        $this->assertSame(['primary' => 'Primary'], $primaryResponse->json('options.schoolTracks'));
+        $this->assertArrayHasKey('primary', $primaryResponse->json('options.classesByTrack'));
+        $this->assertArrayNotHasKey('secondary', $primaryResponse->json('options.classesByTrack'));
+
+        $secondaryResponse = $this->actingAs($secondaryTeacher)
+            ->getJson('/api/teacher/timetables')
+            ->assertOk();
+
+        $this->assertSame(['secondary' => 'Secondary'], $secondaryResponse->json('options.schoolTracks'));
+        $this->assertArrayHasKey('secondary', $secondaryResponse->json('options.classesByTrack'));
+        $this->assertArrayNotHasKey('primary', $secondaryResponse->json('options.classesByTrack'));
+
+        $headResponse = $this->actingAs($headTeacher)
+            ->getJson('/api/management/timetables')
+            ->assertOk();
+
+        $this->assertArrayHasKey('primary', $headResponse->json('options.schoolTracks'));
+        $this->assertArrayHasKey('secondary', $headResponse->json('options.schoolTracks'));
+    }
 }

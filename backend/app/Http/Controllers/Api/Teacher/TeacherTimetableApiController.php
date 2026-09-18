@@ -36,16 +36,27 @@ class TeacherTimetableApiController extends Controller
                 'full_class',
             ));
 
+        $teacherTrack = $teacher->school_track;
+        $allTracks = SchoolContextOptions::tracks();
+        $teacherTracks = ($teacherTrack && isset($allTracks[$teacherTrack]))
+            ? [$teacherTrack => $allTracks[$teacherTrack]]
+            : [];
+
+        $allClasses = SchoolContextOptions::classesByTrack($teacher->school_id);
+        $teacherClasses = ($teacherTrack && isset($allClasses[$teacherTrack]))
+            ? [$teacherTrack => $allClasses[$teacherTrack]]
+            : [];
+
         return response()->json([
             'timetables' => $timetables->values(),
             'daysOfWeek' => TimetableOptions::daysOfWeek(),
             'options' => [
-                'schoolTracks' => SchoolContextOptions::tracks(),
-                'classesByTrack' => SchoolContextOptions::classesByTrack($teacher->school_id),
+                'schoolTracks' => $teacherTracks,
+                'classesByTrack' => $teacherClasses,
                 'subjectsByTrack' => [
-                    $teacher->school_track => SchoolSubject::query()
+                    $teacherTrack => SchoolSubject::query()
                         ->where('school_id', $teacher->school_id)
-                        ->where('school_track', $teacher->school_track)
+                        ->where('school_track', $teacherTrack)
                         ->orderBy('name')
                         ->get(['id', 'name', 'code'])
                         ->map(fn (SchoolSubject $subject): array => [
@@ -54,7 +65,17 @@ class TeacherTimetableApiController extends Controller
                             'code' => $subject->code,
                         ])->values()->all(),
                 ],
-                'teachersByTrack' => [],
+                'teachersByTrack' => $teacherTrack ? [
+                    $teacherTrack => [
+                        [
+                            'id' => $teacher->id,
+                            'name' => $teacher->name,
+                            'assigned_class_name' => $teacher->assigned_class_name,
+                            'school_track' => $teacherTrack,
+                            'teaching_roles' => ['class_teacher'],
+                        ],
+                    ],
+                ] : [],
                 'daysOfWeek' => TimetableOptions::daysOfWeek(),
             ],
         ]);
