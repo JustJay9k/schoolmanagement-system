@@ -49,6 +49,8 @@ class GuardianPortalTest extends TestCase
             'student_record_id' => $student->id,
             'teacher_id' => $teacher->id,
             'assessment_period_id' => $period->id,
+            'school_track' => 'secondary',
+            'class_name' => 'Form 2',
             'grade' => 'English: A; Mathematics: 78%',
             'subject_grades' => [
                 [
@@ -97,6 +99,14 @@ class GuardianPortalTest extends TestCase
             ->assertJsonPath(
                 'child.performance_records.0.subject_grades.0.remarks',
                 'Excellent reading skills.',
+            )
+            ->assertJsonPath(
+                'child.performance_records.0.class_name',
+                'Form 2',
+            )
+            ->assertJsonPath(
+                'child.performance_records.0.class_label',
+                'Form 2 · Secondary',
             )
             ->assertJsonPath('child.fees_balance', 45000)
             ->assertJsonPath('child.books_paid', true)
@@ -193,5 +203,89 @@ class GuardianPortalTest extends TestCase
             ->assertJsonPath('items.0.category', 'Uniform')
             ->assertJsonPath('items.0.price', 15000)
             ->assertJsonPath('items.0.description', 'White branded school shirt.');
+    }
+
+    public function test_guardian_keeps_the_class_each_term_was_graded_in_after_promotion(): void
+    {
+        $school = School::query()->create([
+            'name' => 'Kasungu Academy',
+        ]);
+
+        $teacher = User::factory()->teacher()->create([
+            'school_id' => $school->id,
+            'school_track' => 'secondary',
+            'assigned_class_name' => 'Form 2',
+        ]);
+
+        $student = StudentRecord::query()->create([
+            'school_id' => $school->id,
+            'school_track' => 'secondary',
+            'class_name' => 'Form 2',
+            'full_name' => 'Brian Chirwa',
+        ]);
+
+        $firstTermPeriod = GradeAssessmentPeriod::query()->create([
+            'school_id' => $school->id,
+            'name' => 'End of First Term Results',
+            'position' => 1,
+        ]);
+
+        $olderRecord = StudentPerformanceRecord::query()->create([
+            'student_record_id' => $student->id,
+            'teacher_id' => $teacher->id,
+            'assessment_period_id' => $firstTermPeriod->id,
+            'term' => 'first',
+            'school_track' => 'secondary',
+            'class_name' => 'Form 1',
+            'grade' => 'English: A',
+            'subject_grades' => [
+                [
+                    'subject_id' => 11,
+                    'subject_name' => 'English',
+                    'subject_code' => 'ENG',
+                    'grade' => 'A',
+                ],
+            ],
+            'status' => StudentPerformanceRecord::STATUS_APPROVED,
+        ]);
+
+        $olderRecord->created_at = now()->subMonths(3);
+        $olderRecord->updated_at = now()->subMonths(3);
+        $olderRecord->save();
+
+        StudentPerformanceRecord::query()->create([
+            'student_record_id' => $student->id,
+            'teacher_id' => $teacher->id,
+            'assessment_period_id' => $firstTermPeriod->id,
+            'term' => 'second',
+            'school_track' => 'secondary',
+            'class_name' => 'Form 2',
+            'grade' => 'English: B',
+            'subject_grades' => [
+                [
+                    'subject_id' => 11,
+                    'subject_name' => 'English',
+                    'subject_code' => 'ENG',
+                    'grade' => 'B',
+                ],
+            ],
+            'status' => StudentPerformanceRecord::STATUS_APPROVED,
+        ]);
+
+        $guardian = User::factory()->guardian()->create([
+            'school_id' => $school->id,
+            'linked_student_record_id' => $student->id,
+        ]);
+
+        $this->actingAs($guardian)
+            ->getJson('/api/guardian/child')
+            ->assertOk()
+            ->assertJsonCount(2, 'child.performance_records')
+            ->assertJsonPath('child.performance_records.0.class_name', 'Form 2')
+            ->assertJsonPath('child.performance_records.0.class_label', 'Form 2 · Secondary')
+            ->assertJsonPath('child.performance_records.0.assessment_period_term', 'second')
+            ->assertJsonPath('child.performance_records.1.class_name', 'Form 1')
+            ->assertJsonPath('child.performance_records.1.class_label', 'Form 1 · Secondary')
+            ->assertJsonPath('child.performance_records.1.assessment_period_term', 'first');
     }
 }

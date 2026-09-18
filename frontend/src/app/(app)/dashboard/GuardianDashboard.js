@@ -1,12 +1,33 @@
 'use client'
 
+import { Fragment, useMemo, useState } from 'react'
 import useSWR from 'swr'
 import axios from '@/lib/axios'
 import GradeLetterBadge from '@/components/GradeLetterBadge'
 import GradeScaleLegend from '@/components/GradeScaleLegend'
+import { buildClassTermGroups } from '@/lib/performanceHistory'
 import styles from './dashboard.module.css'
 
 const fetcher = url => axios.get(url).then(response => response.data)
+
+function ChevronIcon({ open }) {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className={`${styles.chevron} ${
+                open ? styles.chevronOpen : ''
+            }`}
+            aria-hidden="true">
+            <path
+                fillRule="evenodd"
+                d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
+                clipRule="evenodd"
+            />
+        </svg>
+    )
+}
 
 const formatCurrency = value =>
     new Intl.NumberFormat('en-MW', {
@@ -71,6 +92,58 @@ const GuardianDashboard = ({ user }) => {
     const attendanceClass = todayAttendance?.code
         ? styles[attendanceStatusClasses[todayAttendance.code]]
         : styles.statusBadgeMuted
+
+    const gradeHistory = useMemo(
+        () => buildClassTermGroups(performanceRecords),
+        [performanceRecords],
+    )
+
+    const [collapsedClasses, setCollapsedClasses] = useState(
+        () => new Set(),
+    )
+    const [collapsedTerms, setCollapsedTerms] = useState(() => new Set())
+
+    const toggleClassGroup = key =>
+        setCollapsedClasses(current => {
+            const next = new Set(current)
+
+            if (next.has(key)) {
+                next.delete(key)
+            } else {
+                next.add(key)
+            }
+
+            return next
+        })
+
+    const toggleTermGroup = key =>
+        setCollapsedTerms(current => {
+            const next = new Set(current)
+
+            if (next.has(key)) {
+                next.delete(key)
+            } else {
+                next.add(key)
+            }
+
+            return next
+        })
+
+    const collapseAllHistory = () => {
+        setCollapsedClasses(new Set(gradeHistory.map(group => group.key)))
+        setCollapsedTerms(
+            new Set(
+                gradeHistory.flatMap(group =>
+                    group.terms.map(term => `${group.key}:${term.key}`),
+                ),
+            ),
+        )
+    }
+
+    const expandAllHistory = () => {
+        setCollapsedClasses(new Set())
+        setCollapsedTerms(new Set())
+    }
 
     if (isLoading) {
         return (
@@ -323,7 +396,32 @@ const GuardianDashboard = ({ user }) => {
 
                 <div className={styles.tableWrap}>
                     {performanceRecords.length > 0 ? (
-                        <GradeScaleLegend bands={child?.grade_bands} />
+                        <>
+                            <GradeScaleLegend bands={child?.grade_bands} />
+                            <div className={styles.historyToolbar}>
+                                <span className={styles.historyToolbarMeta}>
+                                    {performanceRecords.length} graded record
+                                    {performanceRecords.length === 1 ? '' : 's'}
+                                </span>
+                                <div
+                                    className={
+                                        styles.historyToolbarActions
+                                    }>
+                                    <button
+                                        type="button"
+                                        className={styles.historyToolbarButton}
+                                        onClick={expandAllHistory}>
+                                        Expand all
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={styles.historyToolbarButton}
+                                        onClick={collapseAllHistory}>
+                                        Collapse all
+                                    </button>
+                                </div>
+                            </div>
+                        </>
                     ) : null}
                     <table className={styles.compactTable}>
                         <thead>
@@ -345,48 +443,214 @@ const GuardianDashboard = ({ user }) => {
                                     </td>
                                 </tr>
                             ) : (
-                                performanceRecords.map(record => (
-                                    <tr key={record.id}>
-                                        <td>
-                                            {record.assessment_period_name ||
-                                                'General'}
-                                        </td>
-                                        <td>{record.teacher_name}</td>
-                                        <td>
-                                            {record.class_position != null
-                                                ? `${record.class_position}${record.total_class_students != null ? ` of ${record.total_class_students}` : ''}`
-                                                : '—'}
-                                        </td>
-                                        <td>
-                                            {record.average_score != null ? (
-                                                <span
-                                                    className={
-                                                        styles.averageWithBadge
-                                                    }>
-                                                    {record.average_score}%
-                                                    <GradeLetterBadge
-                                                        grade={`${record.average_score}%`}
-                                                        bands={
-                                                            child?.grade_bands
+                                gradeHistory.map(classGroup => {
+                                    const classIsCollapsed =
+                                        collapsedClasses.has(classGroup.key)
+
+                                    return (
+                                        <Fragment key={classGroup.key}>
+                                            <tr
+                                                className={
+                                                    styles.classGroupRow
+                                                }>
+                                                <td colSpan={6}>
+                                                    <button
+                                                        type="button"
+                                                        className={
+                                                            styles.classGroupToggle
                                                         }
-                                                    />
-                                                </span>
-                                            ) : (
-                                                '—'
-                                            )}
-                                        </td>
-                                        <td>
-                                            {renderSubjectGrades(
-                                                record,
-                                                child?.grade_bands,
-                                            )}
-                                        </td>
-                                        <td>
-                                            {record.comment ||
-                                                'No comment added.'}
-                                        </td>
-                                    </tr>
-                                ))
+                                                        onClick={() =>
+                                                            toggleClassGroup(
+                                                                classGroup.key,
+                                                            )
+                                                        }
+                                                        aria-expanded={
+                                                            !classIsCollapsed
+                                                        }>
+                                                        <ChevronIcon
+                                                            open={
+                                                                !classIsCollapsed
+                                                            }
+                                                        />
+                                                        <span
+                                                            className={
+                                                                styles.classGroupName
+                                                            }>
+                                                            {classGroup.label}
+                                                        </span>
+                                                        <span
+                                                            className={
+                                                                styles.classGroupMeta
+                                                            }>
+                                                            {
+                                                                classGroup.terms.length
+                                                            }{' '}
+                                                            term
+                                                            {classGroup.terms
+                                                                .length === 1
+                                                                ? ''
+                                                                : 's'}
+                                                            {` · ${classGroup.terms.reduce(
+                                                                (sum, term) =>
+                                                                    sum +
+                                                                    term.records
+                                                                        .length,
+                                                                0,
+                                                            )} record${
+                                                                classGroup.terms.reduce(
+                                                                    (sum, term) =>
+                                                                        sum +
+                                                                        term
+                                                                            .records
+                                                                            .length,
+                                                                    0,
+                                                                ) === 1
+                                                                    ? ''
+                                                                    : 's'
+                                                            }`}
+                                                        </span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+
+                                            {!classIsCollapsed
+                                                ? classGroup.terms.map(
+                                                      termGroup => {
+                                                          const termIsCollapsed =
+                                                              collapsedTerms.has(
+                                                                  `${classGroup.key}:${termGroup.key}`,
+                                                              )
+
+                                                          return (
+                                                              <Fragment
+                                                                  key={
+                                                                      termGroup.key
+                                                                  }>
+                                                                  <tr
+                                                                      className={
+                                                                          styles.termGroupRow
+                                                                      }>
+                                                                      <td
+                                                                          colSpan={
+                                                                              6
+                                                                          }>
+                                                                          <button
+                                                                              type="button"
+                                                                              className={
+                                                                                  styles.termGroupToggle
+                                                                              }
+                                                                              onClick={() =>
+                                                                                  toggleTermGroup(
+                                                                                      `${classGroup.key}:${termGroup.key}`,
+                                                                                  )
+                                                                              }
+                                                                              aria-expanded={
+                                                                                  !termIsCollapsed
+                                                                              }>
+                                                                              <ChevronIcon
+                                                                                  open={
+                                                                                      !termIsCollapsed
+                                                                                  }
+                                                                              />
+                                                                              <span
+                                                                                  className={
+                                                                                      styles.termGroupName
+                                                                                  }>
+                                                                                  {
+                                                                                      termGroup.label
+                                                                                  }
+                                                                              </span>
+                                                                              <span
+                                                                                  className={
+                                                                                      styles.termGroupMeta
+                                                                                  }>
+                                                                                  {
+                                                                                      termGroup.records.length
+                                                                                  }{' '}
+                                                                                  record
+                                                                                  {termGroup.records
+                                                                                      .length ===
+                                                                                  1
+                                                                                      ? ''
+                                                                                      : 's'}
+                                                                              </span>
+                                                                          </button>
+                                                                      </td>
+                                                                  </tr>
+
+                                                                  {!termIsCollapsed
+                                                                      ? termGroup.records.map(
+                                                                            record => (
+                                                                                <tr
+                                                                                    key={
+                                                                                        record.id
+                                                                                    }>
+                                                                                    <td>
+                                                                                        {record.assessment_period_name ||
+                                                                                            'General'}
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {
+                                                                                            record.teacher_name
+                                                                                        }
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {record.class_position !=
+                                                                                        null
+                                                                                            ? `${record.class_position}${
+                                                                                                  record.total_class_students !=
+                                                                                                  null
+                                                                                                      ? ` of ${record.total_class_students}`
+                                                                                                      : ''
+                                                                                              }`
+                                                                                            : '—'}
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {record.average_score !=
+                                                                                        null ? (
+                                                                                            <span
+                                                                                                className={
+                                                                                                    styles.averageWithBadge
+                                                                                                }>
+                                                                                                {
+                                                                                                    record.average_score
+                                                                                                }
+                                                                                                %
+                                                                                                <GradeLetterBadge
+                                                                                                    grade={`${record.average_score}%`}
+                                                                                                    bands={
+                                                                                                        child
+                                                                                                            ?.grade_bands
+                                                                                                    }
+                                                                                                />
+                                                                                            </span>
+                                                                                        ) : (
+                                                                                            '—'
+                                                                                        )}
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {renderSubjectGrades(
+                                                                                            record,
+                                                                                            child
+                                                                                                ?.grade_bands,
+                                                                                        )}
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {record.comment ||
+                                                                                            'No comment added.'}
+                                                                                    </td>
+                                                                                </tr>
+                                                                            ),
+                                                                        )
+                                                                      : null}
+                                                              </Fragment>
+                                                          )
+                                                      },
+                                                  )
+                                                : null}
+                                        </Fragment>
+                                    )
+                                })
                             )}
                         </tbody>
                     </table>

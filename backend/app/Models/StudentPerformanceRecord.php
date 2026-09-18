@@ -30,6 +30,8 @@ class StudentPerformanceRecord extends Model
         'teacher_id',
         'assessment_period_id',
         'term',
+        'school_track',
+        'class_name',
         'grade',
         'subject_grades',
         'comment',

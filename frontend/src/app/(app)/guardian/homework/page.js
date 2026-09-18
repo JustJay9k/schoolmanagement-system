@@ -14,13 +14,8 @@ import Input from '@/components/Input'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import GradeLetterBadge from '@/components/GradeLetterBadge'
 import GradeScaleLegend from '@/components/GradeScaleLegend'
+import { buildClassTermGroups } from '@/lib/performanceHistory'
 import { useToast } from '@/components/ToastProvider'
-
-const TERMS = [
-    { key: 'first', label: 'First Term' },
-    { key: 'second', label: 'Second Term' },
-    { key: 'third', label: 'Third Term' },
-]
 
 function ChevronIcon({ open }) {
     return (
@@ -41,20 +36,40 @@ function ChevronIcon({ open }) {
 
 function TermGradesSection({ performanceRecords, isLoading, gradeBands }) {
     const [openTerms, setOpenTerms] = useState({ first: true, second: false, third: false })
+    const [collapsedClasses, setCollapsedClasses] = useState(() => new Set())
 
-    const recordsByTerm = useMemo(() => {
-        const map = { first: [], second: [], third: [] }
-        ;(performanceRecords ?? []).forEach(record => {
-            const term = record.assessment_period_term ?? 'first'
-            if (map[term]) map[term].push(record)
-        })
-        return map
-    }, [performanceRecords])
+    const gradeHistory = useMemo(
+        () => buildClassTermGroups(performanceRecords),
+        [performanceRecords],
+    )
 
     const totalGrades = (performanceRecords ?? []).length
 
     const toggleTerm = key =>
         setOpenTerms(current => ({ ...current, [key]: !current[key] }))
+
+    const toggleClass = key =>
+        setCollapsedClasses(current => {
+            const next = new Set(current)
+
+            if (next.has(key)) {
+                next.delete(key)
+            } else {
+                next.add(key)
+            }
+
+            return next
+        })
+
+    const collapseAll = () => {
+        setCollapsedClasses(new Set(gradeHistory.map(group => group.key)))
+        setOpenTerms({ first: false, second: false, third: false })
+    }
+
+    const expandAll = () => {
+        setCollapsedClasses(new Set())
+        setOpenTerms({ first: true, second: true, third: true })
+    }
 
     return (
         <section className={workspaceStyles.fullPanel}>
@@ -75,21 +90,72 @@ function TermGradesSection({ performanceRecords, isLoading, gradeBands }) {
             ) : (
                 <div>
                     <GradeScaleLegend bands={gradeBands} />
+                    <div className={homeworkStyles.termHistoryToolbar}>
+                        <span className={homeworkStyles.termHistoryMeta}>
+                            {totalGrades} graded record
+                            {totalGrades === 1 ? '' : 's'}
+                        </span>
+                        <div className={homeworkStyles.termHistoryActions}>
+                            <button
+                                type="button"
+                                className={homeworkStyles.termHistoryButton}
+                                onClick={expandAll}>
+                                Expand all
+                            </button>
+                            <button
+                                type="button"
+                                className={homeworkStyles.termHistoryButton}
+                                onClick={collapseAll}>
+                                Collapse all
+                            </button>
+                        </div>
+                    </div>
                     <div className={homeworkStyles.termStack}>
-                    {TERMS.map(({ key, label }) => {
-                        const records = recordsByTerm[key] ?? []
-                        const isOpen = openTerms[key] ?? false
+                    {gradeHistory.map(classGroup => {
+                        const classIsCollapsed = collapsedClasses.has(classGroup.key)
+                        const classRecordCount = classGroup.terms.reduce(
+                            (sum, termGroup) => sum + termGroup.records.length,
+                            0,
+                        )
 
                         return (
-                            <article key={key} className={homeworkStyles.termCard}>
+                            <article key={classGroup.key} className={homeworkStyles.classGroup}>
                                 <button
-                                    id={`term-grades-${key}`}
+                                    type="button"
+                                    className={homeworkStyles.classGroupToggle}
+                                    onClick={() => toggleClass(classGroup.key)}
+                                    aria-expanded={!classIsCollapsed}>
+                                    <div className={homeworkStyles.classGroupHeader}>
+                                        <span className={homeworkStyles.classGroupName}>
+                                            {classGroup.label}
+                                        </span>
+                                        <span className={homeworkStyles.classGroupMeta}>
+                                            {classGroup.terms.length} term
+                                            {classGroup.terms.length === 1 ? '' : 's'}
+                                            {` · ${classRecordCount} record${classRecordCount === 1 ? '' : 's'}`}
+                                        </span>
+                                    </div>
+                                    <div className={workspaceStyles.collapseRight}>
+                                        <ChevronIcon open={!classIsCollapsed} />
+                                    </div>
+                                </button>
+
+                                {classIsCollapsed ? null : (
+                                    <div className={homeworkStyles.classGroupBody}>
+                                        {classGroup.terms.map(termGroup => {
+                                            const records = termGroup.records
+                                            const isOpen = openTerms[termGroup.term] ?? false
+
+                                            return (
+                                                <article key={termGroup.key} className={homeworkStyles.termCard}>
+                                <button
+                                    id={`term-grades-${termGroup.term}`}
                                     type="button"
                                     className={workspaceStyles.collapseTrigger}
-                                    onClick={() => toggleTerm(key)}
+                                    onClick={() => toggleTerm(termGroup.term)}
                                     aria-expanded={isOpen}>
                                     <div className={homeworkStyles.termCardHeader}>
-                                        <span className={homeworkStyles.termCardLabel}>{label}</span>
+                                        <span className={homeworkStyles.termCardLabel}>{termGroup.label}</span>
                                         <span
                                             className={
                                                 records.length > 0
@@ -110,7 +176,7 @@ function TermGradesSection({ performanceRecords, isLoading, gradeBands }) {
                                     <div className={homeworkStyles.termCardBody}>
                                         {records.length === 0 ? (
                                             <p className={homeworkStyles.termEmptyNote}>
-                                                No grades have been entered for {label} yet.
+                                                No grades have been entered for {termGroup.label} yet.
                                             </p>
                                         ) : (
                                             records.map(record => (
@@ -231,6 +297,11 @@ function TermGradesSection({ performanceRecords, isLoading, gradeBands }) {
                                         )}
                                     </div>
                                 ) : null}
+                            </article>
+                                        )
+                                    })}
+                                    </div>
+                                )}
                             </article>
                         )
                     })}

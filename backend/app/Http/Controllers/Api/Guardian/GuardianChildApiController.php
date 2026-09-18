@@ -258,6 +258,9 @@ class GuardianChildApiController extends Controller
                     'assessment_period_id' => $record->assessment_period_id,
                     'assessment_period_term' => $record->term,
                     'assessment_period_term_label' => $this->termLabel($record->term),
+                    'school_track' => $record->school_track,
+                    'class_name' => $record->class_name,
+                    'class_label' => $this->classLabel($record->school_track, $record->class_name),
                     'assessment_period_name' => $record->assessmentPeriod?->name ?? 'General',
                     'teacher_name' => $record->teacher?->name ?? 'Teacher',
                     'grade' => $record->grade,
@@ -331,5 +334,18 @@ class GuardianChildApiController extends Controller
     private function performanceKey(?string $term, ?int $periodId): string
     {
         return ($term ?: 'first') . ':' . (int) $periodId;
+    }
+
+    private function classLabel(?string $schoolTrack, ?string $className): ?string
+    {
+        if (! filled($className)) {
+            return null;
+        }
+
+        $trackLabel = SchoolContextOptions::tracks()[$schoolTrack] ?? null;
+
+        return filled($trackLabel)
+            ? "{$className} · {$trackLabel}"
+            : $className;
     }
 }

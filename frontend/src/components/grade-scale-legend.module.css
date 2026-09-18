@@ -49,6 +49,40 @@
     padding: 0 0.3rem;
 }
 
+.legendBand.toneGreen {
+    border-color: color-mix(in srgb, #16a34a 28%, var(--line));
+}
+
+.legendBand.toneGreen strong {
+    background: color-mix(in srgb, #16a34a 16%, var(--surface-card-soft));
+    color: #15803d;
+    border: 1px solid color-mix(in srgb, #16a34a 28%, var(--line));
+}
+
+.legendBand.toneBlue {
+    border-color: color-mix(in srgb, #2563eb 26%, var(--line));
+}
+
+.legendBand.toneBlue strong {
+    background: color-mix(in srgb, #2563eb 14%, var(--surface-card-soft));
+    color: #1d4ed8;
+    border: 1px solid color-mix(in srgb, #2563eb 26%, var(--line));
+}
+
+.legendBand.toneRed {
+    border-color: color-mix(in srgb, #dc2626 26%, var(--line));
+}
+
+.legendBand.toneRed strong {
+    background: color-mix(in srgb, #dc2626 14%, var(--surface-card-soft));
+    color: #b91c1c;
+    border: 1px solid color-mix(in srgb, #dc2626 26%, var(--line));
+}
+
+.legendBand.toneNeutral strong {
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+}
+
 .legendBand small {
     font-size: 0.72rem;
     font-weight: 600;

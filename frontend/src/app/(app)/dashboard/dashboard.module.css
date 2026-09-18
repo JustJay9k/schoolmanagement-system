@@ -913,6 +913,107 @@
     gap: 0.4rem;
 }
 
+.chevron {
+    width: 1rem;
+    height: 1rem;
+    color: var(--muted);
+    transition: transform 0.18s ease;
+}
+
+.chevronOpen {
+    transform: rotate(180deg);
+}
+
+.historyToolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.6rem 0.75rem;
+    margin-bottom: 0.7rem;
+}
+
+.historyToolbarMeta {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.historyToolbarActions {
+    display: inline-flex;
+    gap: 0.5rem;
+}
+
+.historyToolbarButton {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-card-soft);
+    color: var(--ink);
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 0.32rem 0.8rem;
+    cursor: pointer;
+    transition: border-color 160ms ease, color 160ms ease;
+}
+
+.historyToolbarButton:hover {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+    color: var(--accent-strong);
+}
+
+.classGroupRow td,
+.termGroupRow td {
+    padding: 0.4rem 0.6rem !important;
+    border-bottom: 1px solid var(--line) !important;
+}
+
+.classGroupRow td {
+    background: var(--surface-field);
+}
+
+.termGroupRow td {
+    background: var(--surface-card-soft);
+}
+
+.classGroupToggle,
+.termGroupToggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    padding: 0.25rem 0.15rem;
+    color: var(--ink);
+    cursor: pointer;
+    text-align: left;
+}
+
+.classGroupToggle .chevron,
+.termGroupToggle .chevron {
+    flex: none;
+}
+
+.classGroupName {
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.classGroupMeta,
+.termGroupMeta {
+    margin-left: auto;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.termGroupName {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--accent-strong);
+}
+
 .compactTable tbody tr:last-child td,
 .table tbody tr:last-child td {
     border-bottom: 0;

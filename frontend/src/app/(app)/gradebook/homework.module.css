@@ -453,6 +453,96 @@
     gap: 0.65rem;
 }
 
+.termHistoryToolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.6rem 0.75rem;
+    margin-bottom: 0.65rem;
+}
+
+.termHistoryMeta {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.termHistoryActions {
+    display: inline-flex;
+    gap: 0.5rem;
+}
+
+.termHistoryButton {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-card-soft);
+    color: var(--ink);
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 0.32rem 0.8rem;
+    cursor: pointer;
+    transition: border-color 160ms ease, color 160ms ease;
+}
+
+.termHistoryButton:hover {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+    color: var(--accent-strong);
+}
+
+.classGroup {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.classGroupToggle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background: var(--surface-field);
+    color: var(--ink);
+    padding: 0.85rem 1rem;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 160ms ease;
+}
+
+.classGroupToggle:hover {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+.classGroupHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.classGroupName {
+    font-size: 0.98rem;
+    font-weight: 800;
+}
+
+.classGroupMeta {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.classGroupBody {
+    display: grid;
+    gap: 0.65rem;
+    padding-left: 0.9rem;
+    border-left: 2px solid color-mix(in srgb, var(--accent) 25%, var(--line));
+    animation: termBodyIn 160ms ease both;
+}
+
 .termCard {
     border: 1px solid var(--line);
     border-radius: 1rem;

@@ -203,20 +203,29 @@ class TeacherGradebookApiController extends Controller
             abort(422, 'This grade has already been submitted and is awaiting approval. Ask the head teacher to reopen grading before editing.');
         }
 
-        $record = StudentPerformanceRecord::query()->updateOrCreate(
-            [
-                'student_record_id' => $student->id,
-                'assessment_period_id' => $assessmentPeriod->id,
-                'term' => $term,
-            ],
-            [
-                'teacher_id' => $actor->id,
-                'grade' => $this->buildGradeSummary($subjectGrades),
-                'subject_grades' => $subjectGrades,
-                'comment' => $validated['comment'] ?? null,
-                'status' => StudentPerformanceRecord::STATUS_DRAFT,
-            ],
-        );
+        $isNewRecord = $record === null;
+
+        if ($isNewRecord) {
+            $record = new StudentPerformanceRecord;
+            $record->student_record_id = $student->id;
+            $record->assessment_period_id = $assessmentPeriod->id;
+            $record->term = $term;
+        }
+
+        $record->fill([
+            'teacher_id' => $actor->id,
+            'grade' => $this->buildGradeSummary($subjectGrades),
+            'subject_grades' => $subjectGrades,
+            'comment' => $validated['comment'] ?? null,
+            'status' => StudentPerformanceRecord::STATUS_DRAFT,
+        ]);
+
+        if ($isNewRecord) {
+            $record->school_track = $student->school_track;
+            $record->class_name = $student->class_name;
+        }
+
+        $record->save();
 
         return response()->json([
             'message' => 'Learner grade draft saved successfully. Submit the grades to publish them to school leadership.',
