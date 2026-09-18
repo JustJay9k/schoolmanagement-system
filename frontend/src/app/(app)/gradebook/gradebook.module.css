@@ -131,6 +131,26 @@
     gap: 0.35rem;
 }
 
+.gradeInputRow {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.gradeLetterBadge {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    background: var(--accent-soft, var(--surface-tint));
+    color: var(--accent-strong);
+    font-size: 0.72rem;
+    font-weight: 900;
+    padding: 0 0.45rem;
+}
+
 .subjectGradeLabel {
     font-size: 0.78rem;
     font-weight: 800;
@@ -169,6 +189,14 @@
     margin-top: 0.2rem;
     color: var(--muted);
     line-height: 1.4;
+}
+
+.bandActions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
 }
 
 .commentField {
@@ -212,6 +240,12 @@
     font-size: 0.95rem;
     font-weight: 800;
     color: var(--accent-strong);
+}
+
+.periodAverageScore {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
 }
 
 .positionNumber {

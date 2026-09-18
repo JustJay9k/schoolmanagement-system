@@ -10,6 +10,7 @@ use App\Models\SchoolSubject;
 use App\Models\StudentPerformanceRecord;
 use App\Models\StudentRecord;
 use App\Models\User;
+use App\Support\GradeBands;
 use App\Support\SchoolContextOptions;
 use App\Support\UserNotificationCenter;
 use Illuminate\Http\JsonResponse;
@@ -146,6 +147,7 @@ class TeacherGradebookApiController extends Controller
                 'assessmentPeriods' => $assessmentPeriods,
                 'registerScheduleByTrack' => SchoolContextOptions::registerScheduleByTrack(),
                 'activeTerm' => SchoolContextOptions::activeTerm($actor->school_id),
+                'gradeBands' => GradeBands::forSchool($actor->school_id),
             ],
             'registerReport' => $currentRegisterReport ? [
                 'id' => $currentRegisterReport->id,

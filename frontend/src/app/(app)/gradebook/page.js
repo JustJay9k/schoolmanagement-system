@@ -172,6 +172,32 @@ const gradeFallsOutsidePercentageRange = grade => {
     return Number.isFinite(value) && (value < 0 || value > 100)
 }
 
+const createEmptyBandForm = () => ({
+    letter: '',
+    min_percentage: '',
+    max_percentage: '',
+})
+
+const getGradeLetter = (grade, bands) => {
+    const value = parseGradeToNumber(grade)
+
+    if (value === null) {
+        return null
+    }
+
+    const ordered = [...(bands ?? [])].sort(
+        (a, b) => (b.min_percentage ?? 0) - (a.min_percentage ?? 0),
+    )
+
+    const match = ordered.find(
+        band =>
+            value >= (band.min_percentage ?? 0) &&
+            value <= (band.max_percentage ?? 100),
+    )
+
+    return match ? match.letter : null
+}
+
 const gradebookTerms = [
     { value: 'first', label: 'First Term' },
     { value: 'second', label: 'Second Term' },
@@ -214,6 +240,13 @@ export default function GradebookPage() {
     const [reopening, setReopening] = useState(false)
     const [openTerms, setOpenTerms] = useState(defaultOpenTerms)
     const [positionsTerm, setPositionsTerm] = useState('first')
+    const [gradeBands, setGradeBands] = useState([])
+    const [bandForm, setBandForm] = useState(createEmptyBandForm())
+    const [bandErrors, setBandErrors] = useState({})
+    const [savingBand, setSavingBand] = useState(false)
+    const [deletingBandId, setDeletingBandId] = useState(null)
+    const [editingBandId, setEditingBandId] = useState(null)
+    const [confirmingBand, setConfirmingBand] = useState(null)
     const activeTermRef = useRef(null)
     const [promotionOpen, setPromotionOpen] = useState(false)
     const [promotionSelected, setPromotionSelected] = useState([])
@@ -238,6 +271,7 @@ export default function GradebookPage() {
             setStats(response.data?.stats ?? null)
             setScope(nextScope)
             setOptions(nextOptions)
+            setGradeBands(nextOptions?.gradeBands ?? [])
             setDrafts(createDrafts(nextStudents, nextAssessmentPeriods))
             setLoadError(null)
 
@@ -1104,6 +1138,113 @@ export default function GradebookPage() {
         }
     }
 
+    const reloadGradeBands = async () => {
+        try {
+            const response = await axios.get('/api/teacher/grade-bands')
+
+            setGradeBands(response.data?.gradeBands ?? [])
+        } catch {
+            // Keep the current bands if the refresh fails.
+        }
+    }
+
+    const resetBandForm = () => {
+        setEditingBandId(null)
+        setBandForm(createEmptyBandForm())
+        setBandErrors({})
+    }
+
+    const startEditBand = band => {
+        setEditingBandId(band.id)
+        setBandForm({
+            letter: band.letter ?? '',
+            min_percentage: band.min_percentage ?? '',
+            max_percentage: band.max_percentage ?? '',
+        })
+        setBandErrors({})
+    }
+
+    const saveBand = async event => {
+        event.preventDefault()
+        setSavingBand(true)
+        setBandErrors({})
+
+        const payload = {
+            letter: bandForm.letter.trim(),
+            min_percentage: bandForm.min_percentage,
+            max_percentage: bandForm.max_percentage,
+        }
+
+        try {
+            if (editingBandId) {
+                const response = await axios.put(
+                    `/api/teacher/grade-bands/${editingBandId}`,
+                    payload,
+                )
+
+                showToast({
+                    type: 'success',
+                    message:
+                        response.data?.message ??
+                        'Grade band updated successfully.',
+                })
+            } else {
+                const response = await axios.post('/api/teacher/grade-bands', payload)
+
+                showToast({
+                    type: 'success',
+                    message:
+                        response.data?.message ?? 'Grade band saved successfully.',
+                })
+            }
+
+            resetBandForm()
+            await reloadGradeBands()
+        } catch (error) {
+            setBandErrors(error?.response?.data?.errors ?? {})
+            showToast({
+                type: 'error',
+                message:
+                    error?.response?.data?.message ??
+                    'Unable to save this grade band.',
+            })
+        } finally {
+            setSavingBand(false)
+        }
+    }
+
+    const deleteBand = async band => {
+        setDeletingBandId(band.id)
+        setBandErrors({})
+
+        try {
+            const response = await axios.delete(
+                `/api/teacher/grade-bands/${band.id}`,
+            )
+
+            if (editingBandId === band.id) {
+                resetBandForm()
+            }
+
+            showToast({
+                type: 'success',
+                message:
+                    response.data?.message ?? 'Grade band removed successfully.',
+            })
+            await reloadGradeBands()
+        } catch (error) {
+            showToast({
+                type: 'error',
+                message:
+                    error?.response?.data?.message ??
+                    'Unable to remove this grade band.',
+            })
+        } finally {
+            setDeletingBandId(null)
+            setConfirmingBand(null)
+        }
+    }
+
     const submittedRecordsCount = students.reduce(
         (count, student) =>
             count +
@@ -1712,126 +1853,301 @@ export default function GradebookPage() {
                                 </section>
                             ) : null}
 
-                            <article className={workspaceStyles.fullPanel}>
-                                <div className={workspaceStyles.panelHeader}>
-                                    <div>
-                                        <p
-                                            className={
-                                                workspaceStyles.panelEyebrow
-                                            }
-                                        >
-                                            Filters
-                                        </p>
-                                        <h2
-                                            className={
-                                                workspaceStyles.panelTitle
-                                            }
-                                        >
-                                            Gradebook scope
-                                        </h2>
+                            {isTeacherUser(user) ? (
+                                <article className={workspaceStyles.fullPanel}>
+                                    <div className={workspaceStyles.panelHeader}>
+                                        <div>
+                                            <p
+                                                className={
+                                                    workspaceStyles.panelEyebrow
+                                                }
+                                            >
+                                                Grading scale
+                                            </p>
+                                            <h2
+                                                className={
+                                                    workspaceStyles.panelTitle
+                                                }
+                                            >
+                                                Define Grades
+                                            </h2>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className={styles.toolbar}>
-                                    <div className={styles.filterGrid}>
-                                        <label
-                                            className={managementStyles.field}
+                                    <div className={styles.toolbar}>
+                                        <div className={managementStyles.notice}>
+                                            Set the letter grades and percentage
+                                            ranges that apply to this school. A
+                                            learner's grade letter appears next
+                                            to every percentage they score.
+                                        </div>
+
+                                        <form
+                                            onSubmit={saveBand}
+                                            className={managementStyles.stack}
                                         >
-                                            <span
-                                                className={
-                                                    managementStyles.fieldLabel
-                                                }
-                                            >
-                                                School track
-                                            </span>
-                                            <select
-                                                value={filters.school_track}
-                                                onChange={event =>
-                                                    setFilters(() => ({
-                                                        school_track:
-                                                            event.target.value,
-                                                        class_name: '',
-                                                    }))
-                                                }
-                                                disabled={Boolean(
-                                                    scope?.locked_track,
-                                                )}
-                                                className={
-                                                    managementStyles.select
-                                                }
-                                            >
-                                                <option value="">
-                                                    All visible tracks
-                                                </option>
-                                                {Object.entries(
-                                                    options?.schoolTracks ?? {},
-                                                ).map(([value, label]) => (
-                                                    <option
-                                                        key={value}
-                                                        value={value}
+                                            <div className={managementStyles.formGrid}>
+                                                <label className={managementStyles.field}>
+                                                    <span className={managementStyles.fieldLabel}>
+                                                        Letter
+                                                    </span>
+                                                    <Input
+                                                        value={bandForm.letter}
+                                                        onChange={event =>
+                                                            setBandForm(current => ({
+                                                                ...current,
+                                                                letter: event.target.value,
+                                                            }))
+                                                        }
+                                                        placeholder="e.g. A"
+                                                        maxLength={4}
+                                                        required
+                                                    />
+                                                    <span className={managementStyles.fieldHint}>
+                                                        The grade shown on reports, e.g. A, B+, C.
+                                                    </span>
+                                                    <InputError messages={bandErrors.letter} />
+                                                </label>
+
+                                                <label className={managementStyles.field}>
+                                                    <span className={managementStyles.fieldLabel}>
+                                                        From %
+                                                    </span>
+                                                    <Input
+                                                        type="number"
+                                                        min="0"
+                                                        max="100"
+                                                        value={bandForm.min_percentage}
+                                                        onChange={event =>
+                                                            setBandForm(current => ({
+                                                                ...current,
+                                                                min_percentage: event.target.value,
+                                                            }))
+                                                        }
+                                                        placeholder="90"
+                                                        required
+                                                    />
+                                                    <InputError messages={bandErrors.min_percentage} />
+                                                </label>
+
+                                                <label className={managementStyles.field}>
+                                                    <span className={managementStyles.fieldLabel}>
+                                                        To %
+                                                    </span>
+                                                    <Input
+                                                        type="number"
+                                                        min="0"
+                                                        max="100"
+                                                        value={bandForm.max_percentage}
+                                                        onChange={event =>
+                                                            setBandForm(current => ({
+                                                                ...current,
+                                                                max_percentage: event.target.value,
+                                                            }))
+                                                        }
+                                                        placeholder="100"
+                                                        required
+                                                    />
+                                                    <InputError messages={bandErrors.max_percentage} />
+                                                </label>
+                                            </div>
+
+                                            <div className={managementStyles.actions}>
+                                                {editingBandId ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={resetBandForm}
+                                                        disabled={savingBand}
+                                                        className={managementStyles.secondaryButton}
                                                     >
-                                                        {label}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </label>
+                                                        Cancel
+                                                    </button>
+                                                ) : null}
+                                                <button
+                                                    type="submit"
+                                                    disabled={savingBand}
+                                                    className={workspaceStyles.button}
+                                                >
+                                                    {savingBand
+                                                        ? 'Saving...'
+                                                        : editingBandId
+                                                          ? 'Save band'
+                                                          : 'Add grade'}
+                                                </button>
+                                            </div>
+                                        </form>
 
-                                        <label
-                                            className={managementStyles.field}
-                                        >
-                                            <span
-                                                className={
-                                                    managementStyles.fieldLabel
-                                                }
-                                            >
-                                                Class
-                                            </span>
-                                            <select
-                                                value={filters.class_name}
-                                                onChange={event =>
-                                                    setFilters(current => ({
-                                                        ...current,
-                                                        class_name:
-                                                            event.target.value,
-                                                    }))
-                                                }
-                                                disabled={
-                                                    Boolean(
-                                                        scope?.locked_class_name,
-                                                    ) || activeTrack === ''
-                                                }
-                                                className={
-                                                    managementStyles.select
-                                                }
-                                            >
-                                                <option value="">
-                                                    {activeTrack === ''
-                                                        ? 'Choose a track first'
-                                                        : 'All visible classes'}
-                                                </option>
-                                                {availableClasses.map(
-                                                    className => (
-                                                        <option
-                                                            key={className}
-                                                            value={className}
+                                        {gradeBands.length > 0 ? (
+                                            <div className={styles.criteriaList}>
+                                                {gradeBands.map(band => {
+                                                    return (
+                                                        <div
+                                                            key={band.id ?? band.letter}
+                                                            className={styles.criteriaCard}
                                                         >
-                                                            {className}
-                                                        </option>
-                                                    ),
-                                                )}
-                                            </select>
-                                        </label>
+                                                            <div>
+                                                                <strong>{band.letter}</strong>
+                                                                <small>
+                                                                    {band.min_percentage}% - {band.max_percentage}%
+                                                                </small>
+                                                            </div>
+                                                            <div className={styles.bandActions}>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => startEditBand(band)}
+                                                                    className={managementStyles.ghostButton}
+                                                                >
+                                                                    Edit
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setConfirmingBand(band)}
+                                                                    disabled={deletingBandId === band.id}
+                                                                    className={managementStyles.dangerButton}
+                                                                >
+                                                                    {deletingBandId === band.id
+                                                                        ? 'Removing...'
+                                                                        : 'Remove'}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <div className={styles.toolbar}>
+                                                <div className={managementStyles.notice}>
+                                                    No grades defined yet. Use the
+                                                    fields above to add the letter
+                                                    grades and percentage ranges that
+                                                    apply to this school.
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </article>
+                            ) : (
+                                <article className={workspaceStyles.fullPanel}>
+                                    <div className={workspaceStyles.panelHeader}>
+                                        <div>
+                                            <p
+                                                className={
+                                                    workspaceStyles.panelEyebrow
+                                                }
+                                            >
+                                                Filters
+                                            </p>
+                                            <h2
+                                                className={
+                                                    workspaceStyles.panelTitle
+                                                }
+                                            >
+                                                Gradebook scope
+                                            </h2>
+                                        </div>
                                     </div>
 
-                                    <div className={managementStyles.notice}>
-                                        {scope?.locked_class_name
-                                            ? `This account is locked to ${scope.locked_class_name}.`
-                                            : scope?.locked_track
-                                              ? `This account can work within the ${scope.locked_track} section.`
-                                              : 'Management accounts can switch between classes and school sections.'}
+                                    <div className={styles.toolbar}>
+                                        <div className={styles.filterGrid}>
+                                            <label
+                                                className={managementStyles.field}
+                                            >
+                                                <span
+                                                    className={
+                                                        managementStyles.fieldLabel
+                                                    }
+                                                >
+                                                    School track
+                                                </span>
+                                                <select
+                                                    value={filters.school_track}
+                                                    onChange={event =>
+                                                        setFilters(() => ({
+                                                            school_track:
+                                                                event.target.value,
+                                                            class_name: '',
+                                                        }))
+                                                    }
+                                                    disabled={Boolean(
+                                                        scope?.locked_track,
+                                                    )}
+                                                    className={
+                                                        managementStyles.select
+                                                    }
+                                                >
+                                                    <option value="">
+                                                        All visible tracks
+                                                    </option>
+                                                    {Object.entries(
+                                                        options?.schoolTracks ?? {},
+                                                    ).map(([value, label]) => (
+                                                        <option
+                                                            key={value}
+                                                            value={value}
+                                                        >
+                                                            {label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </label>
+
+                                            <label
+                                                className={managementStyles.field}
+                                            >
+                                                <span
+                                                    className={
+                                                        managementStyles.fieldLabel
+                                                    }
+                                                >
+                                                    Class
+                                                </span>
+                                                <select
+                                                    value={filters.class_name}
+                                                    onChange={event =>
+                                                        setFilters(current => ({
+                                                            ...current,
+                                                            class_name:
+                                                                event.target.value,
+                                                        }))
+                                                    }
+                                                    disabled={
+                                                        Boolean(
+                                                            scope?.locked_class_name,
+                                                        ) || activeTrack === ''
+                                                    }
+                                                    className={
+                                                        managementStyles.select
+                                                    }
+                                                >
+                                                    <option value="">
+                                                        {activeTrack === ''
+                                                            ? 'Choose a track first'
+                                                            : 'All visible classes'}
+                                                    </option>
+                                                    {availableClasses.map(
+                                                        className => (
+                                                            <option
+                                                                key={className}
+                                                                value={className}
+                                                            >
+                                                                {className}
+                                                            </option>
+                                                        ),
+                                                    )}
+                                                </select>
+                                            </label>
+                                        </div>
+
+                                        <div className={managementStyles.notice}>
+                                            {scope?.locked_class_name
+                                                ? `This account is locked to ${scope.locked_class_name}.`
+                                                : scope?.locked_track
+                                                  ? `This account can work within the ${scope.locked_track} section.`
+                                                  : 'Management accounts can switch between classes and school sections.'}
+                                        </div>
                                     </div>
-                                </div>
-                            </article>
+                                </article>
+                            )}
 
                             {loadError ? (
                                 <div
@@ -2173,54 +2489,77 @@ const readOnly =
                                                                                                                                         ? `${subject.name} (${subject.code})`
                                                                                                                                         : subject.name}
                                                                                                                                 </span>
-                                                                                                                                <Input
-                                                                                                                                    type="number"
-                                                                                                                                    min="0"
-                                                                                                                                    max="100"
-                                                                                                                                    step="0.1"
-                                                                                                                                    disabled={
-                                                                                                                                        readOnly ||
-                                                                                                                                        Boolean(
-                                                                                                                                            savingKey,
-                                                                                                                                        )
-                                                                                                                                    }
-                                                                                                                                    value={
-                                                                                                                                        draft
-                                                                                                                                            .subjectGrades?.[
-                                                                                                                                            String(
-                                                                                                                                                subject.id,
-                                                                                                                                            )
-                                                                                                                                        ] ??
-                                                                                                                                        ''
-                                                                                                                                    }
-                                                                                                                                    onChange={event => {
-                                                                                                                                        const nextValue =
-                                                                                                                                            event
-                                                                                                                                                .target
-                                                                                                                                                .value
+<div className={styles.gradeInputRow}>
+                                                                                                    <Input
+                                                                                                        type="number"
+                                                                                                        min="0"
+                                                                                                        max="100"
+                                                                                                        step="0.1"
+                                                                                                        disabled={
+                                                                                                            readOnly ||
+                                                                                                            Boolean(
+                                                                                                                savingKey,
+                                                                                                            )
+                                                                                                        }
+                                                                                                        value={
+                                                                                                            draft
+                                                                                                                .subjectGrades?.[
+                                                                                                                String(
+                                                                                                                    subject.id,
+                                                                                                                )
+                                                                                                            ] ??
+                                                                                                            ''
+                                                                                                        }
+                                                                                                        onChange={event => {
+                                                                                                            const nextValue =
+                                                                                                                event
+                                                                                                                    .target
+                                                                                                                    .value
 
-                                                                                                                                        if (
-                                                                                                                                            gradeFallsOutsidePercentageRange(
-                                                                                                                                                nextValue,
-                                                                                                                                            )
-                                                                                                                                        ) {
-                                                                                                                                            return
-                                                                                                                                        }
+                                                                                                            if (
+                                                                                                                gradeFallsOutsidePercentageRange(
+                                                                                                                    nextValue,
+                                                                                                                )
+                                                                                                            ) {
+                                                                                                                return
+                                                                                                            }
 
-                                                                                                                                        updateSubjectGradeDraft(
-                                                                                                                                            student.id,
-                                                                                                                                            period.id,
-                                                                                                                                            term.value,
-                                                                                                                                            subject.id,
-                                                                                                                                            nextValue,
-                                                                                                                                        )
-                                                                                                                                    }}
-placeholder="Grade"
-                                                                                                                                     className={
-                                                                                                                                         styles.tableField
-                                                                                                                                     }
-                                                                                                                                 />
-                                                                                                                                 <Input
+                                                                                                            updateSubjectGradeDraft(
+                                                                                                                student.id,
+                                                                                                                period.id,
+                                                                                                                term.value,
+                                                                                                                subject.id,
+                                                                                                                nextValue,
+                                                                                                            )
+                                                                                                        }}
+                                                                                                        placeholder="Grade"
+                                                                                                        className={
+                                                                                                            styles.tableField
+                                                                                                        }
+                                                                                                    />
+                                                                                                    {getGradeLetter(
+                                                                                                        draft
+                                                                                                            .subjectGrades?.[
+                                                                                                            String(
+                                                                                                                subject.id,
+                                                                                                            )
+                                                                                                        ],
+                                                                                                        gradeBands,
+                                                                                                    ) ? (
+                                                                                                        <span className={styles.gradeLetterBadge}>
+                                                                                                            {getGradeLetter(
+                                                                                                                draft
+                                                                                                                    .subjectGrades?.[
+                                                                                                                    String(
+                                                                                                                        subject.id,
+                                                                                                                    )
+                                                                                                                ],
+                                                                                                                gradeBands,
+                                                                                                            )}
+                                                                                                        </span>
+                                                                                                    ) : null}
+                                                                                                </div>
+                                                                                                <Input
                                                                                                                                      type="text"
                                                                                                                                      maxLength={500}
                                                                                                                                      disabled={
@@ -2285,14 +2624,31 @@ placeholder="Grade"
                                                                                                                               </span>
                                                                                                                               <span
                                                                                                                                   className={
-                                                                                                                                      styles.periodAverageValue
+                                                                                                                                      styles.periodAverageScore
                                                                                                                                   }
                                                                                                                               >
-                                                                                                                                  {
-                                                                                                                                      periodAverage
-                                                                                                                                  }
+                                                                                                                                  <span
+                                                                                                                                      className={
+                                                                                                                                          styles.periodAverageValue
+                                                                                                                                      }
+                                                                                                                                  >
+                                                                                                                                      {
+                                                                                                                                          periodAverage
+                                                                                                                                      }
 
-                                                                                                                                  %
+                                                                                                                                      %
+                                                                                                                                  </span>
+                                                                                                                                  {getGradeLetter(
+                                                                                                                                      periodAverage,
+                                                                                                                                      gradeBands,
+                                                                                                                                  ) ? (
+                                                                                                                                      <span className={styles.gradeLetterBadge}>
+                                                                                                                                          {getGradeLetter(
+                                                                                                                                              periodAverage,
+                                                                                                                                              gradeBands,
+                                                                                                                                          )}
+                                                                                                                                      </span>
+                                                                                                                                  ) : null}
                                                                                                                               </span>
                                                                                                                           </div>
                                                                                                                       ) : null
@@ -2529,6 +2885,29 @@ placeholder="Grade"
                 onConfirm={() => {
                     if (confirmingAssessment) {
                         deleteAssessmentPeriod(confirmingAssessment)
+                    }
+                }}
+            />
+            <ConfirmDialog
+                open={Boolean(confirmingBand)}
+                eyebrow="Remove grade band"
+                title="Remove this grade band?"
+                message={
+                    confirmingBand
+                        ? `Delete grade ${confirmingBand.letter} (${confirmingBand.min_percentage}% - ${confirmingBand.max_percentage}%) from the school grade scale?`
+                        : ''
+                }
+                confirmLabel="Remove band"
+                busyLabel="Removing..."
+                tone="danger"
+                busy={
+                    deletingBandId != null &&
+                    deletingBandId === confirmingBand?.id
+                }
+                onClose={() => setConfirmingBand(null)}
+                onConfirm={() => {
+                    if (confirmingBand) {
+                        deleteBand(confirmingBand)
                     }
                 }}
             />

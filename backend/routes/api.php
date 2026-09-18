@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\Management\ManagementTeacherSubjectAssignmentApiCon
 use App\Http\Controllers\Api\Management\ManagementTimetableApiController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProfileSettingsController;
+use App\Http\Controllers\Api\Teacher\TeacherGradeBandApiController;
 use App\Http\Controllers\Api\Teacher\TeacherGradebookApiController;
 use App\Http\Controllers\Api\Teacher\TeacherHomeworkApiController;
 use App\Http\Controllers\Api\Teacher\TeacherClassPromotionApiController;
@@ -185,6 +186,10 @@ Route::middleware(['auth:sanctum', 'portal'])->prefix('teacher')->group(function
     Route::get('/gradebook', [TeacherGradebookApiController::class, 'index']);
     Route::put('/gradebook/students/{student}/performance', [TeacherGradebookApiController::class, 'upsert']);
     Route::post('/gradebook/submit', [TeacherGradebookApiController::class, 'submit']);
+    Route::get('/grade-bands', [TeacherGradeBandApiController::class, 'index']);
+    Route::post('/grade-bands', [TeacherGradeBandApiController::class, 'store']);
+    Route::put('/grade-bands/{band}', [TeacherGradeBandApiController::class, 'update']);
+    Route::delete('/grade-bands/{band}', [TeacherGradeBandApiController::class, 'destroy']);
     Route::get('/class-promotions/status', [TeacherClassPromotionApiController::class, 'status']);
     Route::post('/class-promotions', [TeacherClassPromotionApiController::class, 'store']);
     Route::get('/register-reports', [TeacherRegisterReportApiController::class, 'index']);
