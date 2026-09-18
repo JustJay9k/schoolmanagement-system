@@ -428,4 +428,49 @@ class TimetableManagementTest extends TestCase
         $this->assertArrayHasKey('primary', $headResponse->json('options.schoolTracks'));
         $this->assertArrayHasKey('secondary', $headResponse->json('options.schoolTracks'));
     }
+
+    public function test_management_timetable_endpoint_exposes_break_entries_as_break_time(): void
+    {
+        $headTeacher = User::factory()->management()->create();
+        $subject = SchoolSubject::query()->create([
+            'name' => 'Science',
+            'school_track' => 'primary',
+        ]);
+
+        $timetable = Timetable::query()->create([
+            'title' => 'Standard 4 Timetable',
+            'school_track' => 'primary',
+            'class_name' => 'Standard 4',
+            'assigned_teacher_id' => $headTeacher->id,
+            'status' => 'submitted',
+            'submitted_at' => now(),
+        ]);
+        TimetableEntry::query()->create([
+            'timetable_id' => $timetable->id,
+            'day_of_week' => 'monday',
+            'period_label' => 'Period 1',
+            'subject_id' => $subject->id,
+        ]);
+        TimetableEntry::query()->create([
+            'timetable_id' => $timetable->id,
+            'day_of_week' => 'monday',
+            'period_label' => 'Lunch',
+            'subject_id' => null,
+            'is_break' => true,
+        ]);
+
+        $this->actingAs($headTeacher)
+            ->getJson('/api/management/timetables')
+            ->assertOk()
+            ->assertJsonFragment([
+                'period_label' => 'Lunch',
+                'is_break' => true,
+            ])
+            ->assertJsonPath('timetables.0.entries.0.subject', null)
+            ->assertJsonFragment([
+                'period_label' => 'Period 1',
+                'is_break' => false,
+            ])
+            ->assertJsonPath('timetables.0.entries.1.subject.name', 'Science');
+    }
 }

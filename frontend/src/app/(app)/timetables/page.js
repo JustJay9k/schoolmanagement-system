@@ -188,8 +188,10 @@ export default function TimetablesPage() {
                                                             className={managementStyles.periodItem}>
                                                             <strong>{entry.period_label}</strong>
                                                             <p>
-                                                                {entry.subject?.name ??
-                                                                    'Subject missing'}
+                                                                {entry.is_break
+                                                                    ? '☕ Break / Free period'
+                                                                    : (entry.subject?.name ??
+                                                                      'Subject missing')}
                                                             </p>
                                                             <small>
                                                                 {entry.start_time || '--:--'} -{' '}
