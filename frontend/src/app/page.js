@@ -34,7 +34,7 @@ const roleCards = [
         role: 'Class Teacher',
         heading:
             'Run attendance, give out assignments, and manage student records from one screen',
-        copy: 'At the heart of PCMS is a fast, mobile-first register interface that lets teachers capture attendance, give out assignments, and submit attendance and class reports in seconds.',
+        copy: 'At the heart of MCMS is a fast, mobile-first register interface that lets teachers capture attendance, give out assignments, and submit attendance and class reports in seconds.',
     },
     {
         role: 'Head Teacher',
@@ -128,7 +128,7 @@ const aboutFeatures = [
         ),
         title: 'Scalable architecture',
         description:
-            'A headless API-first design means PCMS adapts to single-campus primaries and multi-site secondary networks alike.',
+            'A headless API-first design means MCMS adapts to single-campus primaries and multi-site secondary networks alike.',
     },
 ]
 
@@ -159,7 +159,7 @@ const Home = () => {
                                     built in.
                                 </h1>
                                 <p className="max-w-2xl text-lg text-white/90 sm:text-xl">
-                                    Phunziro Class Management System (PCMS)
+                                    Masambiro Class Management System (MCMS)
                                     unifies primary and secondary attendance
                                     flows, student insight, timetable control,
                                     and fee tracking in one fast headless
@@ -198,7 +198,7 @@ const Home = () => {
                                 One register flow for teachers and leadership.
                             </h2>
                             <p className="mt-4 max-w-xl text-[var(--muted)]">
-                                PCMS keeps classroom capture fast while giving
+                                MCMS keeps classroom capture fast while giving
                                 head teachers the oversight they need to spot
                                 gaps before they become reporting problems.
                             </p>
@@ -309,13 +309,13 @@ const Home = () => {
                 <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
                     <div className="mx-auto max-w-2xl text-center">
                         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-amber-300">
-                            About PCMS
+                            About MCMS
                         </p>
                         <h2 className="mt-4 font-[var(--font-display)] text-4xl text-white sm:text-5xl">
                             Purpose-built for Malawian schools
                         </h2>
                         <p className="mt-5 text-teal-50/[0.82] sm:text-lg">
-                            PCMS was designed from the ground up for the
+                            MCMS was designed from the ground up for the
                             realities of K-12 education — unreliable
                             connectivity, shared devices, multi-role staff, and
                             compliance pressure. Every screen, every flow, every
@@ -364,7 +364,7 @@ const Home = () => {
                                     Get in touch
                                 </h2>
                                 <p className="mt-5 max-w-md text-teal-50/[0.82]">
-                                    Have questions about PCMS, need a demo, or
+                                    Have questions about MCMS, need a demo, or
                                     want to discuss enterprise pricing?
                                     We&apos;d love to hear from you.
                                 </p>
@@ -388,7 +388,7 @@ const Home = () => {
                                                 />
                                             </svg>
                                         ),
-                                        label: 'support@pcms.mw',
+                                        label: 'support@masambiro.mw',
                                     },
                                     {
                                         icon: (

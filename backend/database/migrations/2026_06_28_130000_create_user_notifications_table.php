@@ -31,7 +31,7 @@ return new class extends Migration
 
         $rows = $users->map(fn ($user) => [
             'user_id' => $user->id,
-            'title' => 'Welcome to PCMS',
+            'title' => 'Welcome to Masambiro Class Management System',
             'message' => 'Your account is active. Open your workspace modules, review school settings assigned to you, and keep this notification for future reference.',
             'level' => 'info',
             'action_url' => '/dashboard',

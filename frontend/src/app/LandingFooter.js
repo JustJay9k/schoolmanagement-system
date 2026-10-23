@@ -61,14 +61,14 @@ const LandingFooter = () => {
                         <Link
                             href="/"
                             className="group inline-flex items-center gap-2.5"
-                            aria-label="PCMS Home">
+                            aria-label="MCMS Home">
                             <ApplicationLogo className="h-10 w-10 text-[var(--accent)] transition-transform duration-300 group-hover:scale-110" />
                             <span className="font-[var(--font-display)] text-xl font-bold tracking-tight text-[var(--ink)]">
-                                PCMS
+                                MCMS
                             </span>
                         </Link>
                         <p className="text-sm leading-relaxed text-[var(--muted)]">
-                            Phunziro Class Management System — unifying attendance,
+                            Masambiro Class Management System — unifying attendance,
                             discipline, timetables, and finance into one fast,
                             headless platform for K-12 schools.
                         </p>
@@ -120,7 +120,7 @@ const LandingFooter = () => {
                 {/* ── Bottom bar ── */}
                 <div className="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
                     <p className="text-xs text-[var(--muted)]">
-                        &copy; {year} Phunziro Class Management System. All rights
+                        &copy; {year} Masambiro Class Management System. All rights
                         reserved.
                     </p>
                     <div className="flex items-center gap-5">

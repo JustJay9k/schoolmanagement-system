@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 export const metadata = {
-    title: 'Account request sent - PCMS',
+    title: 'Account request sent - MCMS',
 }
 
 export default function PendingTeacherApprovalPage() {
@@ -21,7 +21,7 @@ export default function PendingTeacherApprovalPage() {
             </div>
 
             <div className="rounded-2xl border border-[var(--status-info-border)] bg-[var(--status-info-bg)] px-4 py-3 text-sm font-medium text-[var(--status-info-ink)]">
-                If you try to sign in before approval, PCMS will remind you that
+                If you try to sign in before approval, MCMS will remind you that
                 your request is still waiting for confirmation.
             </div>
 

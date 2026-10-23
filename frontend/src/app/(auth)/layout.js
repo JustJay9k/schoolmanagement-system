@@ -3,7 +3,7 @@ import AuthCard from '@/app/(auth)/AuthCard'
 import ApplicationLogo from '@/components/ApplicationLogo'
 
 export const metadata = {
-    title: 'Phunziro Class Management System (PCMS)',
+    title: 'Masambiro Class Management System (MCMS)',
 }
 
 const Layout = ({ children }) => {

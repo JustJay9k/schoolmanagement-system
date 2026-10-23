@@ -29,7 +29,7 @@ final class UserNotificationCenter
     {
         return self::createForUser(
             $user,
-            'Welcome to PCMS',
+            'Welcome to Masambiro Class Management System',
             'Your account is ready. Review your assigned school and workspace modules, then continue from your dashboard.',
             'success',
             '/dashboard',

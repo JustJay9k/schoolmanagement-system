@@ -44,7 +44,7 @@ const AuthCard = ({ logo, children }) => {
                                         ? 'text-[var(--auth-hero-muted)]'
                                         : 'text-[var(--muted)]'
                                 }`}>
-                                Phunziro Class Management System (PCMS)
+                                Masambiro Class Management System (MCMS)
                             </p>
                             <h1
                                 className={`font-[var(--font-display)] text-[1.3rem] ${

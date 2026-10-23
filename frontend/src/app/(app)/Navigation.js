@@ -427,9 +427,9 @@ const Navigation = ({ user, sidebarCollapsed, onToggleSidebar }) => {
                                 isCollapsed ? styles.brandCopyCollapsed : ''
                             }`}
                         >
-                            <p className={styles.schoolName}>PCMS</p>
+                            <p className={styles.schoolName}>MCMS</p>
                             <p className={styles.schoolMeta}>
-                                Phunziro Class Management System
+                                Masambiro Class Management System
                             </p>
                         </div>
                         {!isCollapsed ? (
@@ -549,7 +549,7 @@ const Navigation = ({ user, sidebarCollapsed, onToggleSidebar }) => {
                         <ApplicationLogo className="h-7 w-7 fill-current" />
                     </div>
                     <div>
-                        <p className={styles.schoolName}>PCMS</p>
+                        <p className={styles.schoolName}>MCMS</p>
                         <p className={styles.schoolMeta}>
                             {activeItem?.label ?? 'Workspace'}
                         </p>

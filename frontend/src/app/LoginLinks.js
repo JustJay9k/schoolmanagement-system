@@ -45,10 +45,10 @@ const LoginLinks = () => {
                     <Link
                         href="/"
                         className="group flex items-center gap-2.5"
-                        aria-label="PCMS Home">
+                        aria-label="MCMS Home">
                         <ApplicationLogo className="h-9 w-9 text-[var(--accent)] transition-transform duration-300 group-hover:scale-110" />
                         <span className="font-[var(--font-display)] text-lg font-bold tracking-tight text-[var(--ink)] transition-colors group-hover:text-[var(--accent)]">
-                            PCMS
+                            MCMS
                         </span>
                     </Link>
 

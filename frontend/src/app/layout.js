@@ -37,9 +37,14 @@ const RootLayout = ({ children }) => {
 }
 
 export const metadata = {
-    title: 'Phunziro Class Management System (PCMS)',
+    title: 'Masambiro Class Management System (MCMS)',
     description:
-        'PCMS workspace for attendance, discipline, timetables, and finance.',
+        'MCMS workspace for attendance, discipline, timetables, and finance.',
+    icons: {
+        icon: '/images/mcms-logo.png',
+        shortcut: '/images/mcms-logo.png',
+        apple: '/images/mcms-logo.png',
+    },
 }
 
 export default RootLayout
