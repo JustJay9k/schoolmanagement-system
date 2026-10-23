@@ -1,6 +1,6 @@
 (() => {
     try {
-        const accentOptions = ['teal', 'blue', 'indigo', 'rose', 'amber', 'emerald']
+        const accentOptions = ['masambiro', 'teal', 'blue', 'indigo', 'rose', 'amber', 'emerald']
         const publicPrefixes = [
             '/forgot-password',
             '/login',
@@ -28,10 +28,10 @@
                 : 'light'
         const accent = accentOptions.includes(storedAccent)
             ? storedAccent
-            : 'teal'
+            : 'masambiro'
 
         document.documentElement.dataset.theme = theme
-        document.documentElement.dataset.accent = usesPublicTheme ? 'teal' : accent
+        document.documentElement.dataset.accent = usesPublicTheme ? 'masambiro' : accent
         document.documentElement.style.colorScheme = theme
     } catch (error) {}
 })();

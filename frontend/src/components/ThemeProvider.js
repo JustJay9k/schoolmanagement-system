@@ -11,12 +11,18 @@ import {
 } from 'react'
 
 const ThemeContext = createContext(null)
-const defaultAccent = 'teal'
+const defaultAccent = 'masambiro'
 
 const publicThemeKey = 'pcms-theme-public'
 const userIdKey = 'pcms-user-id'
 
 export const accentThemes = [
+    {
+        id: 'masambiro',
+        label: 'Masambiro Brand',
+        accent: '#211b6b',
+        accentStrong: '#17134e',
+    },
     { id: 'teal', label: 'Teal', accent: '#0f766e', accentStrong: '#0b5d57' },
     { id: 'blue', label: 'Blue', accent: '#2563eb', accentStrong: '#1d4ed8' },
     { id: 'indigo', label: 'Indigo', accent: '#4f46e5', accentStrong: '#4338ca' },

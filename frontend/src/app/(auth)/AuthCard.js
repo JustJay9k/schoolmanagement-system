@@ -23,7 +23,7 @@ const AuthCard = ({ logo, children }) => {
                     <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,14,24,0.28),rgba(7,14,24,0.56)),radial-gradient(circle_at_top_left,rgba(var(--accent-rgb),0.22),transparent_30%)]" />
                 </>
             ) : (
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(var(--accent-rgb),0.16),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(217,119,6,0.12),transparent_28%)]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(var(--accent-rgb),0.16),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(255,149,24,0.12),transparent_28%)]" />
             )}
 
             <div

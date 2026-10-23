@@ -442,7 +442,7 @@ export default function SettingsPage() {
                             <h2 className={workspaceStyles.panelTitle}>Accent palette</h2>
                         </div>
                         <span className={workspaceStyles.badge}>
-                            {activeAccent?.label ?? 'Teal'} selected
+                            {activeAccent?.label ?? 'Masambiro Brand'} selected
                         </span>
                     </div>
 

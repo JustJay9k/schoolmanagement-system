@@ -4,27 +4,27 @@
 
 :root,
 [data-theme='light'] {
-    --accent-rgb: 15, 118, 110;
-    --accent: #0f766e;
-    --accent-strong: #0b5d57;
+    --accent-rgb: 33, 27, 107;
+    --accent: #211b6b;
+    --accent-strong: #17134e;
     --accent-contrast: #ffffff;
     --canvas: #f4f1ea;
     --canvas-deep: #e6dfd2;
     --panel: rgba(255, 252, 246, 0.84);
     --panel-strong: #fffdf8;
-    --line: rgba(16, 64, 71, 0.14);
-    --ink: #123239;
+    --line: rgba(33, 27, 107, 0.14);
+    --ink: #17134e;
     --muted: #5f7777;
     --accent-soft: rgba(var(--accent-rgb), 0.14);
-    --signal: #d97706;
+    --signal: #ff9518;
     --danger: #b45309;
     --info: #7255cb;
     --bg-start: #fbf8f2;
     --bg-mid: #f4f1ea;
     --bg-end: #ede6da;
     --bg-glow-primary: rgba(var(--accent-rgb), 0.18);
-    --bg-glow-secondary: rgba(217, 119, 6, 0.12);
-    --grid-line: rgba(18, 50, 57, 0.04);
+    --bg-glow-secondary: rgba(255, 149, 24, 0.14);
+    --grid-line: rgba(33, 27, 107, 0.05);
     --surface-sidebar: rgba(255, 252, 246, 0.92);
     --surface-card: rgba(255, 252, 246, 0.9);
     --surface-card-strong: rgba(255, 253, 248, 0.94);
@@ -42,8 +42,8 @@
     --auth-hero-card: rgba(255, 252, 246, 0.72);
     --auth-hero-ink: #ffffff;
     --auth-hero-muted: rgba(255, 255, 255, 0.8);
-    --shadow-soft: rgba(18, 50, 57, 0.08);
-    --shadow-strong: rgba(18, 50, 57, 0.14);
+    --shadow-soft: rgba(23, 19, 78, 0.08);
+    --shadow-strong: rgba(23, 19, 78, 0.14);
     --focus-ring: rgba(var(--accent-rgb), 0.18);
     --focus-ring-strong: rgba(var(--accent-rgb), 0.28);
     --table-row-border: rgba(16, 64, 71, 0.08);
@@ -82,14 +82,14 @@
     --ink: #e5eef4;
     --muted: #a7b7ca;
     --accent-soft: rgba(var(--accent-rgb), 0.18);
-    --signal: #f59e0b;
+    --signal: #ff9518;
     --danger: #f87171;
     --info: #a78bfa;
     --bg-start: #0c1116;
     --bg-mid: #111823;
     --bg-end: #0f1720;
     --bg-glow-primary: rgba(var(--accent-rgb), 0.24);
-    --bg-glow-secondary: rgba(245, 158, 11, 0.1);
+    --bg-glow-secondary: rgba(255, 149, 24, 0.14);
     --grid-line: rgba(148, 163, 184, 0.08);
     --surface-sidebar: rgba(10, 15, 22, 0.88);
     --surface-card: rgba(15, 23, 32, 0.88);
@@ -137,6 +137,12 @@
     --status-info-bg: rgba(30, 64, 175, 0.28);
     --status-info-ink: #bfdbfe;
     color-scheme: dark;
+}
+
+[data-accent='masambiro'] {
+    --accent-rgb: 33, 27, 107;
+    --accent: #211b6b;
+    --accent-strong: #17134e;
 }
 
 [data-accent='teal'] {
