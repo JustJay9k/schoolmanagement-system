@@ -131,13 +131,20 @@ class ManagementStudentRecordApiController extends Controller
         ]);
     }
 
-    public function destroy(StudentRecord $student): JsonResponse
+    public function destroy(Request $request, StudentRecord $student): JsonResponse
     {
-        abort_unless(
-            request()->user()?->canManageTimetables()
-                && $student->school_id === request()->user()?->school_id,
-            403,
-        );
+        $user = $request->user();
+        $canDelete = $user?->canManageTimetables()
+            && $student->school_id === $user->school_id;
+
+        if ($user?->isTeacher()) {
+            $canDelete = $user->canManageAssignedStudentClass(
+                $student->school_track,
+                $student->class_name,
+            );
+        }
+
+        abort_unless($canDelete, 403);
 
         $student->delete();
 

@@ -209,6 +209,87 @@ class StudentManagementTest extends TestCase
             ]);
     }
 
+    public function test_teacher_can_move_a_student_from_their_assigned_class_to_deleted_records(): void
+    {
+        $school = School::query()->create(['name' => 'Teacher School']);
+        $teacher = User::factory()->teacher()->create([
+            'school_id' => $school->id,
+            'school_track' => 'primary',
+            'assigned_class_name' => 'Standard 1',
+        ]);
+        $student = StudentRecord::query()->create([
+            'school_id' => $school->id,
+            'school_track' => 'primary',
+            'class_name' => 'Standard 1',
+            'full_name' => 'Teacher Deleted Learner',
+        ]);
+
+        $this->actingAs($teacher)
+            ->deleteJson("/api/teacher/students/{$student->id}")
+            ->assertOk()
+            ->assertJsonPath('message', 'Student record deleted successfully.');
+
+        $this->assertSoftDeleted('student_records', ['id' => $student->id]);
+    }
+
+    public function test_teacher_cannot_delete_a_student_outside_their_assigned_class(): void
+    {
+        $school = School::query()->create(['name' => 'Teacher School']);
+        $teacher = User::factory()->teacher()->create([
+            'school_id' => $school->id,
+            'school_track' => 'primary',
+            'assigned_class_name' => 'Standard 1',
+        ]);
+        $student = StudentRecord::query()->create([
+            'school_id' => $school->id,
+            'school_track' => 'primary',
+            'class_name' => 'Standard 2',
+            'full_name' => 'Protected Learner',
+        ]);
+
+        $this->actingAs($teacher)
+            ->deleteJson("/api/teacher/students/{$student->id}")
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('student_records', [
+            'id' => $student->id,
+            'deleted_at' => null,
+        ]);
+    }
+
+    public function test_teacher_can_update_a_student_in_their_assigned_class(): void
+    {
+        $school = School::query()->create(['name' => 'Teacher School']);
+        $teacher = User::factory()->teacher()->create([
+            'school_id' => $school->id,
+            'school_track' => 'primary',
+            'assigned_class_name' => 'Standard 1',
+        ]);
+        $student = StudentRecord::query()->create([
+            'school_id' => $school->id,
+            'school_track' => 'primary',
+            'class_name' => 'Standard 1',
+            'full_name' => 'Original Learner',
+        ]);
+
+        $this->actingAs($teacher)
+            ->putJson("/api/teacher/students/{$student->id}", [
+                'school_track' => 'primary',
+                'class_name' => 'Standard 1',
+                'full_name' => 'Updated Learner',
+                'student_code' => 'UPDATED-001',
+                'guardian_name' => 'Updated Guardian',
+            ])
+            ->assertOk()
+            ->assertJsonPath('student.full_name', 'Updated Learner');
+
+        $this->assertDatabaseHas('student_records', [
+            'id' => $student->id,
+            'full_name' => 'Updated Learner',
+            'student_code' => 'UPDATED-001',
+        ]);
+    }
+
     public function test_management_user_cannot_update_or_delete_student_records_from_another_school(): void
     {
         $managedSchool = School::query()->create(['name' => 'Managed School']);

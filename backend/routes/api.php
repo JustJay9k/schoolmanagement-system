@@ -180,6 +180,8 @@ Route::middleware(['auth:sanctum', 'portal'])->prefix('teacher')->group(function
     Route::delete('/timetables/{timetable}', [TeacherTimetableApiController::class, 'destroy']);
     Route::post('/timetables/{timetable}/submit', [TeacherTimetableApiController::class, 'submit']);
     Route::get('/students', [ManagementStudentRecordApiController::class, 'index']);
+    Route::delete('/students/{student}', [ManagementStudentRecordApiController::class, 'destroy']);
+    Route::put('/students/{student}', [ManagementStudentRecordApiController::class, 'update']);
     Route::post('/students', [ManagementStudentRecordApiController::class, 'store']);
     Route::post('/students/import', [ManagementStudentRecordApiController::class, 'import']);
     Route::get('/timetables', [TeacherTimetableApiController::class, 'index']);

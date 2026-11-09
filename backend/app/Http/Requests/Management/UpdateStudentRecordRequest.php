@@ -12,10 +12,21 @@ class UpdateStudentRecordRequest extends FormRequest
     public function authorize(): bool
     {
         $student = $this->route('student');
+        $user = $this->user();
 
-        return ($this->user()?->canManageTimetables() ?? false)
-            && $student instanceof StudentRecord
-            && $student->school_id === $this->user()?->school_id;
+        if (! $student instanceof StudentRecord || ! $user) {
+            return false;
+        }
+
+        if ($user->isTeacher()) {
+            return $user->canManageAssignedStudentClass(
+                $student->school_track,
+                $student->class_name,
+            );
+        }
+
+        return $user->canManageTimetables()
+            && $student->school_id === $user->school_id;
     }
 
     protected function prepareForValidation(): void

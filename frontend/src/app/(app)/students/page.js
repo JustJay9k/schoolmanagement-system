@@ -6,8 +6,13 @@ import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
 import managementStyles from '@/app/(app)/management/management-tools.module.css'
 import studentsStyles from './students.module.css'
-import { ExportIcon } from '@/app/(app)/admin/action-icons'
+import {
+    DeleteIcon,
+    EditIcon,
+    ExportIcon,
+} from '@/app/(app)/admin/action-icons'
 import Button from '@/components/Button'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import Input from '@/components/Input'
 import InputError from '@/components/InputError'
 import { useToast } from '@/components/ToastProvider'
@@ -297,6 +302,12 @@ export default function StudentsPage() {
     const [collapsedClasses, setCollapsedClasses] = useState(new Set())
     const [classFilter, setClassFilter] = useState('')
     const [exportingKeys, setExportingKeys] = useState(new Set())
+    const [confirmingDeleteStudent, setConfirmingDeleteStudent] = useState(null)
+    const [deletingStudentId, setDeletingStudentId] = useState(null)
+    const [editingStudent, setEditingStudent] = useState(null)
+    const [editForm, setEditForm] = useState(null)
+    const [editErrors, setEditErrors] = useState({})
+    const [editSaving, setEditSaving] = useState(false)
     const schoolMeta = useMemo(() => getSchoolMeta(user), [user])
 
     const loadStudents = async () => {
@@ -348,6 +359,94 @@ export default function StudentsPage() {
     const resetManualEditor = () => {
         setManualForm(createManualForm())
         setManualErrors({})
+    }
+
+    const deleteStudent = async student => {
+        setDeletingStudentId(student.id)
+
+        try {
+            await axios.delete(`${studentApiBase}/${student.id}`)
+            showToast({
+                type: 'success',
+                message: 'Student record moved to deleted records.',
+            })
+            setConfirmingDeleteStudent(null)
+            await loadStudents()
+        } catch (error) {
+            showToast({
+                type: 'error',
+                message:
+                    error?.response?.data?.message ??
+                    'Unable to delete this student record.',
+            })
+        } finally {
+            setDeletingStudentId(null)
+        }
+    }
+
+    const openEditStudent = student => {
+        setEditingStudent(student)
+        setEditForm({
+            school_track: student.school_track ?? '',
+            class_name: student.class_name ?? '',
+            full_name: student.full_name ?? '',
+            sex: student.sex ?? '',
+            date_of_birth: student.date_of_birth ?? '',
+            age: student.age ?? '',
+            student_code: student.student_code ?? '',
+            orphan_status: student.orphan_status ?? '',
+            disability_name: student.disability_name ?? '',
+            guardian_name: student.guardian_name ?? '',
+            guardian_phone: student.guardian_phone ?? '',
+            guardian_email: student.guardian_email ?? '',
+            residence: student.residence ?? '',
+            first_entry_date: student.first_entry_date ?? '',
+        })
+        setEditErrors({})
+    }
+
+    const closeEditStudent = () => {
+        if (!editSaving) {
+            setEditingStudent(null)
+            setEditForm(null)
+            setEditErrors({})
+        }
+    }
+
+    const submitEditStudent = async event => {
+        event.preventDefault()
+        if (!editingStudent || !editForm) return
+
+        const errors = {}
+        if (editForm.full_name.trim() === '') {
+            errors.full_name = ['Full name is required.']
+        }
+        if (Object.keys(errors).length > 0) {
+            setEditErrors(errors)
+            return
+        }
+
+        setEditSaving(true)
+        setEditErrors({})
+
+        try {
+            await axios.put(`${studentApiBase}/${editingStudent.id}`, {
+                ...editForm,
+                age: editForm.age === '' ? null : Number(editForm.age),
+            })
+            showToast({
+                type: 'success',
+                message: 'Student record updated successfully.',
+            })
+            setEditingStudent(null)
+            setEditForm(null)
+            setEditErrors({})
+            await loadStudents()
+        } catch (error) {
+            setEditErrors(toFriendlyFieldErrors(error?.response?.data?.errors))
+        } finally {
+            setEditSaving(false)
+        }
     }
 
     const groupedStudents = useMemo(() => {
@@ -1447,6 +1546,7 @@ export default function StudentsPage() {
                                                                         </th>
                                                                         <th>Residence</th>
                                                                         <th>Entry date</th>
+                                                                        {isTeacher ? <th>Actions</th> : null}
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
@@ -1502,6 +1602,42 @@ export default function StudentsPage() {
                                                                                     {student.first_entry_date ||
                                                                                         'N/A'}
                                                                                 </td>
+                                                                                {isTeacher ? (
+                                                                                    <td data-label="Actions">
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() =>
+                                                                                                openEditStudent(
+                                                                                                    student,
+                                                                                                )
+                                                                                            }
+                                                                                            title={`Edit ${student.full_name}`}
+                                                                                            className={`${managementStyles.secondaryButton} ${studentsStyles.studentActionButton}`}>
+                                                                                            <span className={studentsStyles.srOnly}>
+                                                                                                {`Edit ${student.full_name}`}
+                                                                                            </span>
+                                                                                            <EditIcon />
+                                                                                        </button>
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() =>
+                                                                                                setConfirmingDeleteStudent(
+                                                                                                    student,
+                                                                                                )
+                                                                                            }
+                                                                                            disabled={
+                                                                                                deletingStudentId ===
+                                                                                                student.id
+                                                                                            }
+                                                                                            title={`Move ${student.full_name} to deleted records`}
+                                                                                            className={`${managementStyles.dangerButton} ${studentsStyles.deleteStudentButton}`}>
+                                                                                            <span className={studentsStyles.srOnly}>
+                                                                                                {`Move ${student.full_name} to deleted records`}
+                                                                                            </span>
+                                                                                            <DeleteIcon />
+                                                                                        </button>
+                                                                                    </td>
+                                                                                ) : null}
                                                                             </tr>
                                                                         ),
                                                                     )}
@@ -1519,6 +1655,127 @@ export default function StudentsPage() {
                     </>
                 )}
             </section>
+
+            <ConfirmDialog
+                open={Boolean(confirmingDeleteStudent)}
+                eyebrow="Delete student record"
+                title="Delete this record?"
+                message={
+                    confirmingDeleteStudent
+                        ? `Are you sure you want to delete ${confirmingDeleteStudent.full_name}?`
+                        : ''
+                }
+                confirmLabel="Delete record"
+                busyLabel="Moving..."
+                tone="danger"
+                busy={Boolean(deletingStudentId)}
+                onClose={() => setConfirmingDeleteStudent(null)}
+                onConfirm={() => {
+                    if (confirmingDeleteStudent) {
+                        deleteStudent(confirmingDeleteStudent)
+                    }
+                }}
+            />
+
+            {editingStudent && editForm ? (
+                <div
+                    className={studentsStyles.editOverlay}
+                    role="presentation"
+                    onClick={closeEditStudent}>
+                    <section
+                        className={studentsStyles.editModal}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="edit-student-title"
+                        onClick={event => event.stopPropagation()}>
+                        <div className={workspaceStyles.panelHeader}>
+                            <div>
+                                <p className={workspaceStyles.panelEyebrow}>Student record</p>
+                                <h2 id="edit-student-title" className={workspaceStyles.panelTitle}>
+                                    Edit {editingStudent.full_name}
+                                </h2>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={closeEditStudent}
+                                disabled={editSaving}
+                                className={managementStyles.secondaryButton}>
+                                Close
+                            </button>
+                        </div>
+                        <form onSubmit={submitEditStudent} className={managementStyles.stack}>
+                            <div className={managementStyles.formGrid}>
+                                {[
+                                    ['full_name', 'Full name'],
+                                    ['student_code', 'Student code'],
+                                    ['date_of_birth', 'Date of birth'],
+                                    ['age', 'Age'],
+                                    ['guardian_name', 'Parent / guardian'],
+                                    ['guardian_phone', 'Guardian phone'],
+                                    ['guardian_email', 'Guardian email'],
+                                    ['residence', 'Residence'],
+                                    ['first_entry_date', 'First entry date'],
+                                    ['orphan_status', 'Orphan status'],
+                                    ['disability_name', 'Disability'],
+                                ].map(([field, label]) => (
+                                    <label key={field} className={managementStyles.field}>
+                                        <span className={managementStyles.fieldLabel}>{label}</span>
+                                        <Input
+                                            type={
+                                                field.includes('date')
+                                                    ? 'date'
+                                                    : field === 'age'
+                                                      ? 'number'
+                                                      : field === 'guardian_email'
+                                                        ? 'email'
+                                                        : 'text'
+                                            }
+                                            value={editForm[field]}
+                                            onChange={event =>
+                                                setEditForm(current => ({
+                                                    ...current,
+                                                    [field]: event.target.value,
+                                                }))
+                                            }
+                                            className={fieldErrorClass(editErrors[field])}
+                                        />
+                                        <InputError messages={editErrors[field]} />
+                                    </label>
+                                ))}
+                                <label className={managementStyles.field}>
+                                    <span className={managementStyles.fieldLabel}>Sex</span>
+                                    <select
+                                        value={editForm.sex}
+                                        onChange={event =>
+                                            setEditForm(current => ({
+                                                ...current,
+                                                sex: event.target.value,
+                                            }))
+                                        }
+                                        className={managementStyles.select}>
+                                        <option value="">Select sex</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <div className={managementStyles.actions}>
+                                <button
+                                    type="button"
+                                    onClick={closeEditStudent}
+                                    disabled={editSaving}
+                                    className={managementStyles.secondaryButton}>
+                                    Cancel
+                                </button>
+                                <Button disabled={editSaving}>
+                                    {editSaving ? 'Saving...' : 'Save changes'}
+                                </Button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+            ) : null}
         </WorkspacePageShell>
     )
 }
