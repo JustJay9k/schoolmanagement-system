@@ -174,6 +174,39 @@ class RegisterReportWorkflowTest extends TestCase
             ->assertJsonPath('reports.0.teacher_id', $teacherA->id);
     }
 
+    public function test_preschool_teacher_can_save_a_register_report(): void
+    {
+        $school = School::query()->create(['name' => 'Preschool Academy']);
+        $teacher = User::factory()->teacher()->create([
+            'school_id' => $school->id,
+            'school_track' => 'preschool',
+            'assigned_class_name' => 'Baby Class',
+        ]);
+        $student = StudentRecord::query()->create([
+            'school_id' => $school->id,
+            'school_track' => 'preschool',
+            'class_name' => 'Baby Class',
+            'full_name' => 'Preschool Learner',
+            'student_code' => 'PS-001',
+        ]);
+
+        $this->actingAs($teacher)
+            ->putJson('/api/teacher/register-reports/current', [
+                'school_track' => 'preschool',
+                'class_name' => 'Baby Class',
+                'periods' => [
+                    ['label' => 'AM', 'start_time' => '07:30', 'end_time' => '08:00'],
+                ],
+                'entries' => [[
+                    'student_id' => $student->id,
+                    'status' => 'P',
+                    'note' => '',
+                ]],
+            ])
+            ->assertOk()
+            ->assertJsonPath('report.status', 'draft');
+    }
+
     public function test_teacher_can_start_a_fresh_register_on_a_new_day_after_submitting_yesterday(): void
     {
         $school = School::query()->create([

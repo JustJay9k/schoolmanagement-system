@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Teacher;
 
+use App\Support\SchoolContextOptions;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,7 +16,7 @@ class SaveTeacherRegisterReportRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'school_track' => ['required', 'string', Rule::in(['primary', 'secondary'])],
+            'school_track' => ['required', 'string', Rule::in(SchoolContextOptions::trackValues())],
             'class_name' => ['required', 'string', 'max:255'],
             'periods' => ['required', 'array', 'min:1'],
             'periods.*.label' => ['required', 'string', 'max:255'],
