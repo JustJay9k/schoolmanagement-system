@@ -381,6 +381,87 @@ class StudentManagementTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_admin_can_permanently_delete_selected_archived_student_records(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $school = School::query()->create(['name' => 'Bulk Delete School']);
+        $archivedStudents = collect([
+            StudentRecord::query()->create([
+                'school_id' => $school->id,
+                'school_track' => 'primary',
+                'class_name' => 'Standard 1',
+                'full_name' => 'Archived One',
+            ]),
+            StudentRecord::query()->create([
+                'school_id' => $school->id,
+                'school_track' => 'primary',
+                'class_name' => 'Standard 1',
+                'full_name' => 'Archived Two',
+            ]),
+        ]);
+        $archivedStudents->each->delete();
+        $activeStudent = StudentRecord::query()->create([
+            'school_id' => $school->id,
+            'school_track' => 'primary',
+            'class_name' => 'Standard 1',
+            'full_name' => 'Active Student',
+        ]);
+
+        $this->actingAs($admin)
+            ->postJson('/api/admin/deleted-records/students/bulk-delete', [
+                'ids' => $archivedStudents->pluck('id')->all(),
+            ])
+            ->assertOk()
+            ->assertJsonPath('deleted', 2);
+
+        $this->assertDatabaseMissing('student_records', [
+            'id' => $archivedStudents->first()->id,
+        ]);
+        $this->assertDatabaseMissing('student_records', [
+            'id' => $archivedStudents->last()->id,
+        ]);
+        $this->assertDatabaseHas('student_records', [
+            'id' => $activeStudent->id,
+        ]);
+    }
+
+    public function test_admin_can_restore_selected_archived_student_records(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $school = School::query()->create(['name' => 'Bulk Restore School']);
+        $archivedStudents = collect([
+            StudentRecord::query()->create([
+                'school_id' => $school->id,
+                'school_track' => 'secondary',
+                'class_name' => 'Form 1',
+                'full_name' => 'Restore One',
+            ]),
+            StudentRecord::query()->create([
+                'school_id' => $school->id,
+                'school_track' => 'secondary',
+                'class_name' => 'Form 1',
+                'full_name' => 'Restore Two',
+            ]),
+        ]);
+        $archivedStudents->each->delete();
+
+        $this->actingAs($admin)
+            ->postJson('/api/admin/deleted-records/students/bulk-restore', [
+                'ids' => $archivedStudents->pluck('id')->all(),
+            ])
+            ->assertOk()
+            ->assertJsonPath('restored', 2);
+
+        $this->assertDatabaseHas('student_records', [
+            'id' => $archivedStudents->first()->id,
+            'deleted_at' => null,
+        ]);
+        $this->assertDatabaseHas('student_records', [
+            'id' => $archivedStudents->last()->id,
+            'deleted_at' => null,
+        ]);
+    }
+
     public function test_student_record_requires_class_to_match_track(): void
     {
         $headTeacher = User::factory()->management()->create();

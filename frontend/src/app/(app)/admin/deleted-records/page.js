@@ -41,8 +41,13 @@ export default function AdminDeletedRecordsPage() {
     const [loadError, setLoadError] = useState(null)
     const [restoringStudentId, setRestoringStudentId] = useState(null)
     const [deletingStudentId, setDeletingStudentId] = useState(null)
+    const [selectedStudentIds, setSelectedStudentIds] = useState(new Set())
+    const [bulkRestoring, setBulkRestoring] = useState(false)
+    const [bulkDeleting, setBulkDeleting] = useState(false)
     const [confirmingRestoreStudent, setConfirmingRestoreStudent] = useState(null)
     const [confirmingDeleteStudent, setConfirmingDeleteStudent] = useState(null)
+    const [confirmingBulkRestore, setConfirmingBulkRestore] = useState(false)
+    const [confirmingBulkDelete, setConfirmingBulkDelete] = useState(false)
 
     const loadDeletedRecords = async () => {
         setLoading(true)
@@ -53,6 +58,7 @@ export default function AdminDeletedRecordsPage() {
             setStudents(response.data?.students ?? [])
             setStats(response.data?.stats ?? null)
             setOptions(response.data?.options ?? null)
+            setSelectedStudentIds(new Set())
             setLoadError(null)
         } catch (error) {
             setLoadError(
@@ -100,6 +106,38 @@ export default function AdminDeletedRecordsPage() {
         })
     }, [filters, students])
 
+    const allFilteredSelected =
+        filteredStudents.length > 0 &&
+        filteredStudents.every(student => selectedStudentIds.has(student.id))
+
+    const toggleStudentSelection = studentId => {
+        setSelectedStudentIds(current => {
+            const next = new Set(current)
+
+            if (next.has(studentId)) {
+                next.delete(studentId)
+            } else {
+                next.add(studentId)
+            }
+
+            return next
+        })
+    }
+
+    const toggleAllFilteredStudents = () => {
+        setSelectedStudentIds(current => {
+            const next = new Set(current)
+
+            if (allFilteredSelected) {
+                filteredStudents.forEach(student => next.delete(student.id))
+            } else {
+                filteredStudents.forEach(student => next.add(student.id))
+            }
+
+            return next
+        })
+    }
+
     const restoreStudent = async student => {
         setRestoringStudentId(student.id)
 
@@ -145,6 +183,56 @@ export default function AdminDeletedRecordsPage() {
         } finally {
             setDeletingStudentId(null)
             setConfirmingDeleteStudent(null)
+        }
+    }
+
+    const permanentlyDeleteSelectedStudents = async () => {
+        setBulkDeleting(true)
+
+        try {
+            await axios.post('/api/admin/deleted-records/students/bulk-delete', {
+                ids: Array.from(selectedStudentIds),
+            })
+            showToast({
+                type: 'success',
+                message: 'Selected student records permanently deleted successfully.',
+            })
+            await loadDeletedRecords()
+        } catch (error) {
+            showToast({
+                type: 'error',
+                message:
+                    error?.response?.data?.message ??
+                    'Unable to permanently delete the selected student records.',
+            })
+        } finally {
+            setBulkDeleting(false)
+            setConfirmingBulkDelete(false)
+        }
+    }
+
+    const restoreSelectedStudents = async () => {
+        setBulkRestoring(true)
+
+        try {
+            await axios.post('/api/admin/deleted-records/students/bulk-restore', {
+                ids: Array.from(selectedStudentIds),
+            })
+            showToast({
+                type: 'success',
+                message: 'Selected student records restored successfully.',
+            })
+            await loadDeletedRecords()
+        } catch (error) {
+            showToast({
+                type: 'error',
+                message:
+                    error?.response?.data?.message ??
+                    'Unable to restore the selected student records.',
+            })
+        } finally {
+            setBulkRestoring(false)
+            setConfirmingBulkRestore(false)
         }
     }
 
@@ -281,10 +369,41 @@ export default function AdminDeletedRecordsPage() {
                         </label>
                     </div>
 
+                    <div className={adminStyles.tableActions}>
+                        <label>
+                            <input
+                                type="checkbox"
+                                checked={allFilteredSelected}
+                                onChange={toggleAllFilteredStudents}
+                                disabled={filteredStudents.length === 0}
+                            />{' '}
+                            Select all visible records
+                        </label>
+                        {selectedStudentIds.size > 0 ? (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={() => setConfirmingBulkRestore(true)}
+                                    disabled={bulkRestoring}
+                                    className={`${adminStyles.statusButton} ${adminStyles.statusEnabled}`}>
+                                    Restore {selectedStudentIds.size} selected
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setConfirmingBulkDelete(true)}
+                                    disabled={bulkDeleting}
+                                    className={adminStyles.dangerButton}>
+                                    Permanently delete {selectedStudentIds.size} selected
+                                </button>
+                            </>
+                        ) : null}
+                    </div>
+
                     <div className={workspaceStyles.tableWrap}>
                         <table className={workspaceStyles.table}>
                             <thead>
                                 <tr>
+                                    <th aria-label="Select records"></th>
                                     <th>Student</th>
                                     <th>School</th>
                                     <th>Class</th>
@@ -297,19 +416,29 @@ export default function AdminDeletedRecordsPage() {
                             <tbody>
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="7" className={adminStyles.muted}>
+                                        <td colSpan="8" className={adminStyles.muted}>
                                             Loading deleted student records...
                                         </td>
                                     </tr>
                                 ) : filteredStudents.length === 0 ? (
                                     <tr>
-                                        <td colSpan="7" className={adminStyles.muted}>
+                                        <td colSpan="8" className={adminStyles.muted}>
                                             No deleted student records match the current filters.
                                         </td>
                                     </tr>
                                 ) : (
                                     filteredStudents.map(student => (
                                         <tr key={student.id}>
+                                            <td>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedStudentIds.has(student.id)}
+                                                    onChange={() =>
+                                                        toggleStudentSelection(student.id)
+                                                    }
+                                                    aria-label={`Select ${student.full_name}`}
+                                                />
+                                            </td>
                                             <td>
                                                 <strong>{student.full_name}</strong>
                                                 <small>
@@ -430,6 +559,31 @@ export default function AdminDeletedRecordsPage() {
                         permanentlyDeleteStudent(confirmingDeleteStudent)
                     }
                 }}
+            />
+
+            <ConfirmDialog
+                open={confirmingBulkRestore}
+                eyebrow="Restore records"
+                title="Restore selected records?"
+                message={`This will restore ${selectedStudentIds.size} selected student records to the school register.`}
+                confirmLabel="Restore selected records"
+                busyLabel="Restoring..."
+                busy={bulkRestoring}
+                onClose={() => setConfirmingBulkRestore(false)}
+                onConfirm={restoreSelectedStudents}
+            />
+
+            <ConfirmDialog
+                open={confirmingBulkDelete}
+                eyebrow="Permanent deletion"
+                title="Permanently delete selected records?"
+                message={`This will permanently remove ${selectedStudentIds.size} selected student records. They cannot be restored.`}
+                confirmLabel="Delete selected records"
+                busyLabel="Deleting..."
+                tone="danger"
+                busy={bulkDeleting}
+                onClose={() => setConfirmingBulkDelete(false)}
+                onConfirm={permanentlyDeleteSelectedStudents}
             />
         </>
     )

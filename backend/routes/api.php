@@ -114,7 +114,9 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::put('/school-structure/active-term', [AdminSchoolStructureApiController::class, 'updateActiveTerm']);
 
     Route::get('/deleted-records/students', [AdminDeletedStudentRecordApiController::class, 'index']);
+    Route::post('/deleted-records/students/bulk-restore', [AdminDeletedStudentRecordApiController::class, 'bulkRestore']);
     Route::patch('/deleted-records/students/{student}/restore', [AdminDeletedStudentRecordApiController::class, 'restore']);
+    Route::post('/deleted-records/students/bulk-delete', [AdminDeletedStudentRecordApiController::class, 'bulkDestroy']);
     Route::delete('/deleted-records/students/{student}', [AdminDeletedStudentRecordApiController::class, 'destroy']);
 });
 

@@ -77,6 +77,27 @@ class AdminDeletedStudentRecordApiController extends Controller
         ]);
     }
 
+    public function bulkRestore(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $records = StudentRecord::onlyTrashed()
+            ->whereIn('id', array_unique($validated['ids']))
+            ->get();
+
+        foreach ($records as $record) {
+            $record->restore();
+        }
+
+        return response()->json([
+            'message' => 'Selected student records restored successfully.',
+            'restored' => $records->count(),
+        ]);
+    }
+
     public function destroy(int $student): JsonResponse
     {
         $record = StudentRecord::onlyTrashed()->findOrFail($student);
@@ -84,6 +105,27 @@ class AdminDeletedStudentRecordApiController extends Controller
 
         return response()->json([
             'message' => 'Student record permanently deleted successfully.',
+        ]);
+    }
+
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $records = StudentRecord::onlyTrashed()
+            ->whereIn('id', array_unique($validated['ids']))
+            ->get();
+
+        foreach ($records as $record) {
+            $record->forceDelete();
+        }
+
+        return response()->json([
+            'message' => 'Selected student records permanently deleted successfully.',
+            'deleted' => $records->count(),
         ]);
     }
 
