@@ -80,19 +80,54 @@ const importFieldMessages = {
     records: 'Add at least one learner record to import.',
 }
 
-const toFriendlyImportErrors = errors =>
+const importRecordMessages = {
+    full_name: ['Full name', "Add the learner's full name."],
+    sex: ['Sex', 'Choose Male, Female, or Other for the learner sex.'],
+    date_of_birth: ['Date of birth', 'Enter a valid date of birth.'],
+    age: ['Age', 'Enter an age from 0 to 120.'],
+    student_code: ['Student code', 'Enter a unique student code.'],
+    guardian_email: [
+        'Guardian email',
+        'Enter a valid email address or leave it blank.',
+    ],
+    first_entry_date: ['First entry date', 'Enter a valid first entry date.'],
+}
+
+const friendlyImportRecordMessage = (field, message, value) => {
+    if (message.includes('same student code')) {
+        return `Student code "${value}" is repeated in the spreadsheet. Use a unique code.`
+    }
+
+    if (message.includes('deleted student record')) {
+        return `Student code "${value}" belongs to a deleted record. Restore that record first or use a different code.`
+    }
+
+    const [label, guidance] = importRecordMessages[field] ?? [
+        field,
+        "Check this learner's information.",
+    ]
+    const displayedValue = value === '' || value == null ? '(blank)' : `"${value}"`
+
+    return `${label} ${displayedValue}: ${guidance}`
+}
+
+const toFriendlyImportErrors = (errors, records) =>
     Object.entries(errors ?? {}).reduce((acc, [field, messages]) => {
         const entries = Array.isArray(messages) ? messages : [messages]
 
         const rowMatch = field.match(/^records\.(\d+)\.(.+)$/)
 
         if (rowMatch) {
-            const [, rowIndex] = rowMatch
-            const rowLabel = `Imported row ${Number(rowIndex) + 1}`
+            const [, rowIndex, rowField] = rowMatch
+            const rowLabel = `Record ${Number(rowIndex) + 1}`
+            const recordValue = records?.[Number(rowIndex)]?.[rowField]
 
             acc.records = [
                 ...(acc.records ?? []),
-                ...entries.map(message => `${rowLabel}: ${message}`),
+                ...entries.map(
+                    message =>
+                        `${rowLabel}, ${friendlyImportRecordMessage(rowField, message, recordValue)}`,
+                ),
             ]
 
             return acc
@@ -865,13 +900,14 @@ export default function StudentsPage() {
         } catch (error) {
             const friendlyErrors = toFriendlyImportErrors(
                 error?.response?.data?.errors,
+                importForm.records,
             )
 
             setImportErrors(friendlyErrors)
             setPageStatus({
                 type: 'error',
                 message:
-                    'Unable to import the student records. Check the highlighted fields and try again.',
+                    'Some student records could not be imported. Review the items below, correct the spreadsheet, and try again.',
                 details: Object.values(friendlyErrors).flat(),
             })
             requestAnimationFrame(() => {
