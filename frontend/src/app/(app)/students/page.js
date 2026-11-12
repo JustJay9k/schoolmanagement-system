@@ -84,6 +84,20 @@ const toFriendlyImportErrors = errors =>
     Object.entries(errors ?? {}).reduce((acc, [field, messages]) => {
         const entries = Array.isArray(messages) ? messages : [messages]
 
+        const rowMatch = field.match(/^records\.(\d+)\.(.+)$/)
+
+        if (rowMatch) {
+            const [, rowIndex] = rowMatch
+            const rowLabel = `Imported row ${Number(rowIndex) + 1}`
+
+            acc.records = [
+                ...(acc.records ?? []),
+                ...entries.map(message => `${rowLabel}: ${message}`),
+            ]
+
+            return acc
+        }
+
         if (entries.length > 0) {
             acc[field] = [importFieldMessages[field] ?? entries[0]]
         }
