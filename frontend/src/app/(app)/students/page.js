@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import ExcelJS from 'exceljs/dist/exceljs.min.js'
 import WorkspacePageShell from '@/app/(app)/WorkspacePageShell'
 import workspaceStyles from '@/app/(app)/workspace-page.module.css'
@@ -322,6 +322,7 @@ export default function StudentsPage() {
     const [editForm, setEditForm] = useState(null)
     const [editErrors, setEditErrors] = useState({})
     const [editSaving, setEditSaving] = useState(false)
+    const pageStatusRef = useRef(null)
     const schoolMeta = useMemo(() => getSchoolMeta(user), [user])
 
     const loadStudents = async () => {
@@ -862,11 +863,22 @@ export default function StudentsPage() {
             })
             await loadStudents()
         } catch (error) {
-            setImportErrors(toFriendlyImportErrors(error?.response?.data?.errors))
+            const friendlyErrors = toFriendlyImportErrors(
+                error?.response?.data?.errors,
+            )
+
+            setImportErrors(friendlyErrors)
             setPageStatus({
                 type: 'error',
                 message:
                     'Unable to import the student records. Check the highlighted fields and try again.',
+                details: Object.values(friendlyErrors).flat(),
+            })
+            requestAnimationFrame(() => {
+                pageStatusRef.current?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                })
             })
         } finally {
             setImporting(false)
@@ -911,13 +923,20 @@ export default function StudentsPage() {
                 </button>
             }>
             {pageStatus ? (
-                <section className={workspaceStyles.panel}>
+                <section ref={pageStatusRef} className={workspaceStyles.panel}>
                     <p
                         className={`${managementStyles.notice} ${
                             pageStatus.type === 'error' ? managementStyles.dangerText : ''
                         }`}>
                         {pageStatus.message}
                     </p>
+                    {pageStatus.details?.length ? (
+                        <ul className={managementStyles.stack}>
+                            {pageStatus.details.map((detail, index) => (
+                                <li key={`${detail}-${index}`}>{detail}</li>
+                            ))}
+                        </ul>
+                    ) : null}
                 </section>
             ) : null}
 
@@ -1319,7 +1338,6 @@ export default function StudentsPage() {
                                     Opharn, Name of Disability, Parents Name/Guidian, Guardian
                                     Phone, Guardian Email, Place of Residence, 1st Date of Entery.
                                 </span>
-                                <InputError messages={importErrors.records} />
                             </label>
                         </div>
 
